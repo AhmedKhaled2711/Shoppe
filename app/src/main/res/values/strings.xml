@@ -1,0 +1,121 @@
+<resources>
+    <string name="app_name">Shoppe</string>
+
+    //SignUp Strings
+    <string name="sign_up">Sign Up</string>
+    <string name="create_account">Create Account</string>
+    <string name="create">Create</string>
+    <string name="get_started">Let\'s Get Started!</string>
+    <string name="signup_success_message">Sign Up Successful!</string>
+    <string name="f_name">First Name</string>
+    <string name="l_name">Last Name</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirmPassword">Confirm Password</string>
+    <string name="skip">S k i p</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="login">Login</string>
+    <string name="invalid_email_address">Invalid email address.</string>
+    <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
+    <string name="password_error">Passwords must match and be at least 6 characters</string>
+    <string name="fill_both">Please fill both first and last name</string>
+
+    //NetworkErrorBox Strings
+    <string name="network_message_first">No internet connection found.</string>
+    <string name="network_message_main">No Internet Connection</string>
+    <string name="network_message_second">Please check your internet settings.</string>
+    <string name="network_message">Your network message here</string>
+
+    //login page
+    <string name="login_title1">Welcome Back</string>
+    <string name="login_title2">Sign in to continue</string>
+    <string name="orSignup">Don’t have a account?</string>
+    <string name="or">OR</string>
+    <string name="google">Login With Google</string>
+    <string name="client_id">66204164017-37alqjjkcmhro5d9e791urj8ddi16lmp.apps.googleusercontent.com</string>
+
+
+    //auth message
+    <string name="auth">Authentication</string>
+    <string name="error_login">Login failed, please try again"</string>
+    <string name="error_signup">Create account failed, please try again</string>
+    <string name="email_message">Please verify your email, then try to login again</string>
+    <string name="error_email_verify">Login failed, please verify your email first</string>
+    <string name="exist">Already Exist</string>
+    <string name="not_exist">Not Exist</string>
+    <string name="empty">Empty Field</string>
+    <string name="error_email_format">Invalid email format</string>
+    <string name="error_password_format">At least contains 8 characters
+at least one upper letter, one lowercase letter, and one digit</string>
+    <string name="error_not_match">Password and confirm password doesn\'t match</string>
+    <string name="error_name_format">At least 3 characters</string>
+
+    //OnboardingScreen
+    <string name="onboarding_title_hello">Hello</string>
+    <string name="onboarding_description_hello">Discover an extensive selection of premium products designed to perfectly suit your needs. Explore high-quality items crafted with care to match your unique lifestyle and preferences.</string>
+    <string name="onboarding_title_enjoy">Enjoy</string>
+    <string name="onboarding_description_enjoy">Enjoy exclusive deals and unbeatable prices every single day.</string>
+
+    <!-- Home -->
+    <string name="shoppe">Shoppe</string>
+    <string name="brands">Brands</string>
+    <string name="category">Category</string>
+    <string name="search">Search</string>
+    <string name="all">All</string>
+    <string name="women">WOMEN</string>
+    <string name="kid">KID</string>
+    <string name="men">MEN</string>
+    <string name="sale">SALE</string>
+    <string name="pieces">Pieces</string>
+
+    //category
+    <string name="price">Price Range</string>
+    <string name="from">From</string>
+    <string name="to">To</string>
+    <string name="dialog_filter">Filtering</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+    <string name="validate">Validate</string>
+    <string name="valid">Valid</string>
+    <string name="sure">Sure</string>
+
+    <string name="decrease_quantity_message">Cannot decrease below 1 quantity</string>
+    <string name="increase_quantity_message_1">Cannot increase above</string>
+    <string name="increase_quantity_message_2">quantity</string>
+    <string name="delete_d_address_title">Cannot Delete Default Address</string>
+    <string name="delete_d_address_body">The default address cannot be deleted.</string>
+    <string name="delete">Delete</string>
+    <string name="delete_address_body">Are you sure you want to delete this address?</string>
+    <string name="d_address_success">Default Address Successfully</string>
+    <string name="permission_denied">Permission Denied</string>
+    <string name="no_current_location">Unable to get current location, please turn your Location Setting</string>
+    <string name="your_location">Your Location</string>
+    <string name="network_error">Network Error</string>
+    <string name="failed_load_data">Failed to load data. Please try again.</string>
+    <string name="clicked_on">Clicked on</string>
+    <string name="copy_discount_code">Discount code copied to clipboard</string>
+    <string name="coupon_success">Coupon Applied Successfully</string>
+    <string name="invalid_coupon">Invalid Coupon</string>
+    <string name="invalid_coupon_body">The coupon you entered is invalid.</string>
+    <string name="choose_payment_method">Choose Your Payment Method</string>
+    <string name="order_placed_success">Order placed successfully</string>
+    <string name="order_not_found">Order Not Found</string>
+    <string name="order_not_found_body">The order details could not be found.</string>
+    <string name="visa_select">Visa Card selected</string>
+    <string name="cash_select">Cash on Delivery selected</string>
+    <string name="select_payment_method">Please select a payment method</string>
+    <string name="payment_success">Payment successful</string>
+    <string name="payment_finish">Payment process finished</string>
+    <string name="must_select_variant">You Must Select Variant !</string>
+    <string name="product_not_available">Product information not available</string>
+    <string name="add_product_success">Product added successfully</string>
+    <string name="selected">Selected</string>
+    <string name="choose_language">Choose Language</string>
+    <string name="quantity_change_success">Quantity Changed Successfully</string>
+
+
+
+
+</resources>
+

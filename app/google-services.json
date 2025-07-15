@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "66204164017",
+    "project_id": "shoppe-cefff",
+    "storage_bucket": "shoppe-cefff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:66204164017:android:5cea35dcf416bc3eb6e790",
+        "android_client_info": {
+          "package_name": "com.lee.shoppe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "66204164017-mgeo0maqlg5j1gvp7h0g9bu678a3c5dp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lee.shoppe",
+            "certificate_hash": "3fd92d53f8f28d460e88b446ddae3ec46d724f7d"
+          }
+        },
+        {
+          "client_id": "66204164017-37alqjjkcmhro5d9e791urj8ddi16lmp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArh26pWktxazsbFW-qVu2PC8DHILKYXTo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "66204164017-37alqjjkcmhro5d9e791urj8ddi16lmp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
