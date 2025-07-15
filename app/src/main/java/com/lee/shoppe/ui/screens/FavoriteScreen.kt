@@ -2,6 +2,7 @@ package com.lee.shoppe.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,8 +70,8 @@ import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import kotlin.random.Random
+import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoriteScreen(
     navController: NavController,
@@ -191,34 +194,7 @@ fun FavoriteScreen(
             when {
                 // Network not connected
                 !isNetworkConnected -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.StarOutline,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No Internet Connection",
-                            color = Color.Black,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Please check your internet connection and try again",
-                            color = Color.Gray,
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                    }
+                    NetworkErrorBox(show = true)
                 }
                 
                 // User not logged in
@@ -336,8 +312,6 @@ fun FavoriteScreen(
                             )
                         }
                     } else {
-                        android.util.Log.d("FavoriteScreen", "Rendering UI: favoriteProducts.size = ${favoriteProducts.size}")
-                        
                         if (favoriteProducts.isEmpty()) {
                             Column(
                                 modifier = Modifier
@@ -346,24 +320,37 @@ fun FavoriteScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.FavoriteBorder,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = Color.Gray
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(50), // Oval shape
+                                    color = Color.White,        // Gray background
+                                    tonalElevation = 2.dp,          // Elevation (for Material 3)
+                                    shadowElevation = 2.dp,         // Optional: for Material 2
+                                    modifier = Modifier.size(100.dp) // Size of the oval container
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.favorites_empty),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Fit, // Adjust depending on your image type
+                                        modifier = Modifier
+                                            .padding(20.dp)
+                                            .fillMaxSize()
+                                    )
+                                }
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = "No favorite products yet",
                                     color = Color.Black,
                                     fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center
+
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = "Start adding products to your favorites!",
                                     color = Color.Gray,
                                     fontSize = 16.sp,
+                                    textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(horizontal = 32.dp)
                                 )
                             }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,6 +72,14 @@ import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.LocalFocusManager
 
 
 @Composable
@@ -86,6 +95,8 @@ fun HomeScreen(
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf<Pair<String, String>?>(null) }
     var isOffline by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         if (!isNetworkConnected(context)) {
@@ -179,7 +190,7 @@ fun HomeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
@@ -189,22 +200,62 @@ fun HomeScreen(
                                 fontSize = 25.sp,
                             )
                             Spacer(modifier = Modifier.width(12.dp))
-                            Box(
+                            // Professional SearchBar
+                            Card(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(40.dp)
-                                    .background(
-                                        color = Color(0xFFF8F8F8), // light gray
-                                        shape = RoundedCornerShape(20.dp)
-                                    )
-                                    .padding(horizontal = 16.dp),
-                                contentAlignment = Alignment.CenterStart
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                elevation = CardDefaults.cardElevation(4.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F8F8))
                             ) {
-                                Text(
-                                    text = "Search",
-                                    color = Color(0xFFC7C7C7), // dark gray
-                                    fontSize = 16.sp,
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Search",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        BasicTextField(
+                                            value = searchQuery,
+                                            onValueChange = { searchQuery = it },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            textStyle = androidx.compose.ui.text.TextStyle(
+                                                color = Color.Black,
+                                                fontSize = 16.sp
+                                            ),
+                                            singleLine = true,
+                                            keyboardActions = KeyboardActions(
+                                                onSearch = {
+                                                    focusManager.clearFocus()
+                                                    if (searchQuery.text.isNotBlank()) {
+                                                        navController.navigate("category?search=" + searchQuery.text)
+                                                    }
+                                                }
+                                            ),
+                                            keyboardOptions = KeyboardOptions.Default.copy(
+                                                imeAction = ImeAction.Search
+                                            ),
+                                            decorationBox = { innerTextField ->
+                                                if (searchQuery.text.isEmpty()) {
+                                                    Text(
+                                                        text = "Search products...",
+                                                        color = Color.Gray,
+                                                        fontSize = 16.sp
+                                                    )
+                                                }
+                                                innerTextField()
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                         if (priceRulesState is NetworkState.Success) {

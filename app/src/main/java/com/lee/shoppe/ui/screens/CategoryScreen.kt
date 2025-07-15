@@ -1,16 +1,556 @@
 package com.lee.shoppe.ui.screens
 
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.lee.shoppe.R
+import com.lee.shoppe.data.model.CustomerData
+import com.lee.shoppe.data.model.ProductResponse
+import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.viewmodel.CategoryViewModel
+import com.lee.shoppe.ui.viewmodel.FavViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.LottieComposition
+import androidx.compose.material.icons.filled.ArrowBack
+import com.lee.shoppe.ui.theme.BlueLight
+import androidx.compose.material.icons.filled.FavoriteBorder
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryScreen(
+    navController: NavController,
+    categoryViewModel: CategoryViewModel = hiltViewModel(),
+    favViewModel: FavViewModel = hiltViewModel()
+) {
+    val context = LocalContext.current
+    val productsState by categoryViewModel.products.collectAsState()
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    var mainCategory by remember { mutableStateOf(" ") }
+    var subCategory by remember { mutableStateOf("") }
+    var favoriteStates by remember { mutableStateOf(mutableMapOf<Long, Boolean>()) }
+    val favoriteStatesSnapshot by remember { derivedStateOf { favoriteStates.toMap() } }
+    val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.box))
+    val customerData = CustomerData.getInstance(context)
+    val sheetState = rememberModalBottomSheetState()
+    var showRemoveDialog by remember { mutableStateOf(false) }
+    var productToRemove by remember { mutableStateOf<com.lee.shoppe.data.model.Product?>(null) }
+
+    // Load products on first composition
+    LaunchedEffect(Unit) {
+        categoryViewModel.getProducts("")
+    }
+
+    Box {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            // Main content with horizontal padding
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                SearchBarCategory(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = {
+                        searchQuery = it
+                        categoryViewModel.searchProducts(it.text)
+                    },
+                    onFilterClick = { showFilterSheet = true }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CategoryToggleRow(
+                    selected = mainCategory,
+                    onCategorySelected = {
+                        mainCategory = it
+                        categoryViewModel.filterProducts(mainCategory, subCategory)
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                // Product Grid or State
+                Box(modifier = Modifier.weight(1f)) {
+                    when (productsState) {
+                        is NetworkState.Loading -> {
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White.copy(alpha = 0.7f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        is NetworkState.Success -> {
+                            val products = (productsState as NetworkState.Success<ProductResponse>).data.products ?: emptyList()
+                            // Check favorite status for all products when they are loaded
+                            LaunchedEffect(products) {
+                                if (customerData.isLogged && customerData.favListId > 0) {
+                                    products.forEach { product ->
+                                        product.id?.let { id ->
+                                            favViewModel.isFavProduct(
+                                                id = id,
+                                                listId = customerData.favListId,
+                                                favTrue = {
+                                                    favoriteStates = favoriteStates.toMutableMap().apply { put(id, true) }
+                                                },
+                                                favFalse = {
+                                                    favoriteStates = favoriteStates.toMutableMap().apply { put(id, false) }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            if (products.isEmpty()) {
+                                EmptyStateLottie(lottieComposition)
+                            } else {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(2),
+                                    contentPadding = PaddingValues(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    items(products) { product ->
+                                        val productId = product.id ?: 0L
+                                        val isFav = favoriteStatesSnapshot[productId] ?: false
+                                        ProductCard(
+                                            product = product,
+                                            onFavoriteClick = {
+                                                if (customerData.isLogged) {
+                                                    if (isFav) {
+                                                        productToRemove = product
+                                                        showRemoveDialog = true
+                                                    } else {
+                                                        favViewModel.insertFavProduct(product, customerData.favListId)
+                                                        favoriteStates = favoriteStates.toMutableMap().apply { put(productId, true) }
+                                                    }
+                                                }
+                                            },
+                                            onCardClick = {
+                                                navController.navigate("product_details/${product.id}")
+                                            },
+                                            isFavorite = isFav
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        is NetworkState.Failure -> {
+                            EmptyStateLottie(lottieComposition)
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+        // Bottom Sheet Filter
+        if (showFilterSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showFilterSheet = false },
+                sheetState = sheetState,
+                containerColor = Color.White
+            ) {
+                FilterSheetContent(
+                    mainCategory = mainCategory,
+                    subCategory = subCategory,
+                    onCategoryChange = { mainCategory = it },
+                    onSubCategoryChange = { subCategory = it },
+                    onApply = { from, to ->
+                        categoryViewModel.filterProducts(mainCategory, subCategory)
+                        categoryViewModel.filterProductsByPrice(from, to)
+                        showFilterSheet = false
+                    },
+                    onClose = { showFilterSheet = false }
+                )
+            }
+        }
+        // Remove from Favorite Dialog
+        if (showRemoveDialog && productToRemove != null) {
+            Dialog(onDismissRequest = {
+                showRemoveDialog = false
+                productToRemove = null
+            }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FavoriteBorder,
+                            contentDescription = null,
+                            tint = Color(0xFF0057FF),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Remove from Favorites",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Color(0xFF0057FF),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Are you sure you want to remove this product from your favorites?",
+                            color = Color.Gray,
+                            fontSize = 16.sp,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    showRemoveDialog = false
+                                    productToRemove = null
+                                },
+                                border = BorderStroke(1.dp, Color(0xFF0057FF)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Cancel", color = Color(0xFF0057FF), fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Button(
+                                onClick = {
+                                    productToRemove?.let { product ->
+                                        favViewModel.deleteFavProduct(product.id ?: 0, customerData.favListId)
+                                        favoriteStates = favoriteStates.toMutableMap().apply { put(product.id ?: 0, false) }
+                                    }
+                                    showRemoveDialog = false
+                                    productToRemove = null
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                            ) {
+                                Text("Remove", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
-fun CategoryScreen(navController: NavController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Category Content")
+fun EmptyStateLottie(lottieComposition: LottieComposition?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (lottieComposition != null) {
+            LottieAnimation(
+                composition = lottieComposition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(200.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Product not found",
+                color = Color.Black,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "We couldn’t find any matching product.",
+                color = Color.Gray,
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Try adjusting your search or filters.",
+                color = Color.Gray,
+                fontSize = 16.sp
+            )
+        }
     }
-} 
+}
+
+@Composable
+fun SearchBarCategory(
+    searchQuery: TextFieldValue,
+    onSearchQueryChange: (TextFieldValue) -> Unit,
+    onFilterClick: () -> Unit
+) {
+    val primaryColor = Color(0xFF0057FF)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(Color(0xFFF8F8F8))
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = Color.Gray,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                BasicTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp),
+                    textStyle = TextStyle(
+                        color = Color.Black,
+                        fontSize = 16.sp
+                    ),
+                    singleLine = true,
+                    decorationBox = { innerTextField ->
+                        if (searchQuery.text.isEmpty()) {
+                            Text(
+                                text = "Search products...",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+            }
+            IconButton(
+                onClick = onFilterClick,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_filter),
+                    contentDescription = "Filter",
+                    tint = primaryColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryToggleRow(
+    selected: String,
+    onCategorySelected: (String) -> Unit
+) {
+    val categories = listOf("All", "WOMEN", "KID", "MEN", "SALE")
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        items(categories) { category ->
+            val isSelected = selected.equals(category, ignoreCase = true) || (category == "All" && selected == " ")
+            Button(
+                onClick = { onCategorySelected(if (category == "All") " " else category) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isSelected) Color.Black else Color.White,
+                    contentColor = if (isSelected) Color.White else Color.Black
+                ),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.height(38.dp)
+            ) {
+                Text(category, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterSheetContent(
+    mainCategory: String,
+    subCategory: String,
+    onCategoryChange: (String) -> Unit,
+    onSubCategoryChange: (String) -> Unit,
+    onApply: (Float?, Float?) -> Unit,
+    onClose: () -> Unit
+) {
+    var fromPrice by remember { mutableStateOf("") }
+    var toPrice by remember { mutableStateOf("") }
+    val categories = listOf("All", "WOMEN", "KID", "MEN", "SALE")
+    val subCategories = listOf("", "SHOES", "ACCESSORIES", "T-SHIRTS")
+    val primaryColor = Color(0xFF0057FF)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        // Title
+        Text(
+            text = "Filter Products",
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
+            color = primaryColor,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
+        Spacer(modifier = Modifier.height(16.dp))
+        // Category Section
+        Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(categories) { cat ->
+                FilterChip(
+                    selected = mainCategory == cat || (cat == "All" && mainCategory == " "),
+                    onClick = { onCategoryChange(if (cat == "All") " " else cat) },
+                    label = {
+                        Text(cat, color = if (mainCategory == cat || (cat == "All" && mainCategory == " ")) Color.White else Color.Black)
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = primaryColor,
+                        selectedLabelColor = Color.White,
+                        containerColor = Color(0xFFF5F6FA),
+                        labelColor = Color.Black
+                    )
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
+        Spacer(modifier = Modifier.height(16.dp))
+        // Subcategory Section
+        Text("Subcategory", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(subCategories) { sub ->
+                FilterChip(
+                    selected = subCategory == sub,
+                    onClick = { onSubCategoryChange(sub) },
+                    label = {
+                        Text(if (sub.isBlank()) "All" else sub, color = if (subCategory == sub) Color.White else Color.Black)
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = primaryColor,
+                        selectedLabelColor = Color.White,
+                        containerColor = Color(0xFFF5F6FA),
+                        labelColor = Color.Black
+                    )
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
+        Spacer(modifier = Modifier.height(16.dp))
+        // Price Range Section
+        Text("Price Range", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = fromPrice,
+                onValueChange = { fromPrice = it },
+                label = { Text("From", color = Color.Gray) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                ),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = Color(0xFFE0E0E0)
+                )
+            )
+            OutlinedTextField(
+                value = toPrice,
+                onValueChange = { toPrice = it },
+                label = { Text("To", color = Color.Gray) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                ),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = Color(0xFFE0E0E0)
+                )
+            )
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            OutlinedButton(
+                onClick = onClose,
+                border = BorderStroke(1.dp, primaryColor),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = primaryColor)
+            ) {
+                Text("Cancel", color = primaryColor, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(
+                onClick = {
+                    val from = fromPrice.toFloatOrNull()
+                    val to = toPrice.toFloatOrNull()
+                    onApply(from, to)
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+            ) {
+                Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}

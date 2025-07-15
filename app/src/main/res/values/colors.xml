@@ -9,5 +9,11 @@
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#919191</color>
     <color name="favourite">#FF5353</color>
+    <color name="blue_primary">#004CFF</color>
+    <color name="blue_light">#E5EBFC</color>
+    <color name="blue_accent">#004BFE</color>
+    <color name="red_accent">#D97474</color>
+    <color name="dark">#202020</color>
+    <color name="blue_secondary">#5982DA</color>
 
 </resources>
