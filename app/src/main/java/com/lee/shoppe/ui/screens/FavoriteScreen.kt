@@ -449,80 +449,22 @@ fun FavoriteScreen(
     }
 
     // Delete confirmation dialog
-    if (showDeleteDialog && productToDelete != null)  {
-        Dialog(onDismissRequest = {
+    DeleteCartDialog(
+        show = showDeleteDialog && productToDelete != null,
+        title = "Remove from Favorites",
+        subtitle = "Are you sure you want to remove this product from your favorites?",
+        confirmText = "Remove",
+        onCancel = { showDeleteDialog = false; productToDelete = null },
+        onConfirm = {
+            productToDelete?.let { product ->
+                favViewModel.deleteFavProduct(product.id ?: 0, customerData.favListId)
+                favoriteProducts = favoriteProducts.filter { it.id != product.id }
+                favoriteStates[product.id ?: 0] = false
+            }
             showDeleteDialog = false
             productToDelete = null
-        }) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
-                        contentDescription = null,
-                        tint = Color(0xFF0057FF),
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Remove from Favorites",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = Color(0xFF0057FF),
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Are you sure you want to remove this product from your favorites?",
-                        color = Color.Gray,
-                        fontSize = 16.sp,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                showDeleteDialog = false
-                                productToDelete = null
-                            },
-                            border = BorderStroke(1.dp, Color(0xFF0057FF)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Cancel", color = Color(0xFF0057FF), fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Button(
-                            onClick = {
-                                productToDelete?.let { product ->
-                                    favViewModel.deleteFavProduct(product.id ?: 0, customerData.favListId)
-                                    favoriteProducts = favoriteProducts.filter { it.id != product.id }
-                                    favoriteStates[product.id ?: 0] = false
-                                }
-                                showDeleteDialog = false
-                                productToDelete = null
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                        ) {
-                            Text("Remove", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
         }
-    }
+    )
 }
 
 @Composable

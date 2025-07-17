@@ -82,18 +82,19 @@ class ProductInfoViewModel @Inject constructor(
     }
 
     private fun convertProductToLineItem(product: ProductDetails, vId: Long): DraftOrderResponse.DraftOrder.LineItem {
+        val imageSrc = product.image?.src ?: product.images?.getOrNull(0)?.src ?: ""
         return DraftOrderResponse.DraftOrder.LineItem(
             variant_id = vId,
             quantity = 1,
             id = product.id,
             title = product.title,
             price = product.variants?.get(0)?.price,
-            sku = product.images?.get(0)?.src,
+            sku = "${product.id}*$imageSrc",
             product_id = product.id,
             properties = listOf(
                 DraftOrderResponse.DraftOrder.LineItem.Property(
-                    name = product.images?.get(0)?.src ?: "",
-                    value = "${product.variants?.get(0)?.inventory_quantity}*${product.variants?.get(0)?.price}"
+                    name = "ProductImage(src=$imageSrc)",
+                    value = "${product.variants?.get(0)?.inventory_quantity ?: 1}*${product.variants?.get(0)?.price ?: "0.00"}"
                 )
             )
         )

@@ -81,14 +81,21 @@ class FavViewModel @Inject constructor(
     }
 
     private fun convertProductToLineItem(product: Product): DraftOrderResponse.DraftOrder.LineItem {
+        val imageSrc = product.image?.src ?: ""
         return DraftOrderResponse.DraftOrder.LineItem(
             variant_id = null,
             quantity = 1,
             id = product.id,
             title = product.title,
             price = product.variants?.get(0)?.price,
-            sku = product.id.toString() + "*" + product.image?.src,
-            product_id = product.id
+            sku = "${product.id}*$imageSrc",
+            product_id = product.id,
+            properties = listOf(
+                DraftOrderResponse.DraftOrder.LineItem.Property(
+                    name = "ProductImage(src=$imageSrc)",
+                    value = "${product.variants?.get(0)?.inventory_quantity ?: 1}*${product.variants?.get(0)?.price ?: "0.00"}"
+                )
+            )
         )
     }
 

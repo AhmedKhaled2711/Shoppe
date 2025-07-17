@@ -80,6 +80,7 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <string name="valid">Valid</string>
     <string name="sure">Sure</string>
 
+    //Cart
     <string name="decrease_quantity_message">Cannot decrease below 1 quantity</string>
     <string name="increase_quantity_message_1">Cannot increase above</string>
     <string name="increase_quantity_message_2">quantity</string>
@@ -113,9 +114,11 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <string name="selected">Selected</string>
     <string name="choose_language">Choose Language</string>
     <string name="quantity_change_success">Quantity Changed Successfully</string>
-
-
-
+    <string name="cart">Cart</string>
+    <string name="guest_profile">Guest Profile</string>
+    <string name="guest_profile2">Do you have an Account? </string>
+    <string name="subTotal">Sub Total</string>
+    <string name="checkout">Checkout</string>
 
 </resources>
 
