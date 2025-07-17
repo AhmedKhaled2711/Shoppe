@@ -103,8 +103,7 @@ fun HomeScreen(
             isOffline = true
         } else {
             isOffline = false
-            viewModel.getBrands()
-            viewModel.getDiscountCodes()
+            viewModel.fetchDataIfNeeded()
         }
     }
 
@@ -123,11 +122,18 @@ fun HomeScreen(
     }
 
     // Error dialog logic
-    if (brandsState is NetworkState.Failure) {
-        showDialog = Pair(
-            context.getString(R.string.network_error),
-            context.getString(R.string.failed_load_data)
-        )
+    LaunchedEffect(brandsState) {
+        if (brandsState is NetworkState.Failure) {
+            val error = (brandsState as NetworkState.Failure).error
+            val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
+                "You're making requests too quickly. Please wait a moment and try again."
+            } else {
+                context.getString(R.string.failed_load_data)
+            }
+            coroutineScope.launch {
+                scaffoldState.showSnackbar(message)
+            }
+        }
     }
 
     if (isOffline) {

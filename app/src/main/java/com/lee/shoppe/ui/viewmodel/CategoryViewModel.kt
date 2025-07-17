@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.util.Locale
+import retrofit2.HttpException
 
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
@@ -30,7 +31,13 @@ class CategoryViewModel @Inject constructor(
     fun getProducts(vendor: String) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.getBrandProducts(vendor)
-                .catch { e -> _products.value = NetworkState.Failure(e) }
+                .catch { e ->
+                    if (e is HttpException && e.code() == 429) {
+                        _products.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _products.value = NetworkState.Failure(e)
+                    }
+                }
                 .collect { response ->
                     val productsList = response.products ?: emptyList()
                     _allProducts = productsList

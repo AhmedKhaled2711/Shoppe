@@ -1,6 +1,13 @@
 package com.lee.shoppe.data.network.networking
 
+import com.example.fashionshop.Model.OrderBody
+import com.example.fashionshop.Model.OrderBodyResponse
+import com.example.fashionshop.Model.OrderResponse
+import com.lee.shoppe.data.model.AddressDefaultRequest
+import com.lee.shoppe.data.model.AddressRequest
+import com.lee.shoppe.data.model.AddressUpdateRequest
 import com.lee.shoppe.data.model.BrandResponse
+import com.lee.shoppe.data.model.CheckoutSessionResponse
 import com.lee.shoppe.data.model.CustomerRequest
 import com.lee.shoppe.data.model.CustomerResponse
 import com.lee.shoppe.data.model.DraftOrderResponse
@@ -72,6 +79,49 @@ class NetworkManagerImp private constructor(): NetworkManager {
 
     override suspend fun getProductById(id: Long): ProductResponse {
         return networkService.getProductById(id)
+    }
+
+    override suspend fun addSingleCustomerAddress(
+        id: Long,
+        addressRequest: AddressRequest
+    ): AddressRequest {
+        return networkService.addSingleCustomerAddress(id,addressRequest)
+    }
+
+    override suspend fun editSingleCustomerAddress(
+        customerId: Long,
+        id: Long,
+        addressRequest: AddressDefaultRequest
+    ): AddressUpdateRequest {
+        return networkService.editSingleCustomerAddress(customerId,id,addressRequest)
+    }
+
+    override suspend fun deleteSingleCustomerAddress(customerId: Long, id: Long) {
+        return networkService.deleteSingleCustomerAddress(customerId,id)
+    }
+
+    override suspend fun createCheckoutSession(
+        successUrl: String,
+        cancelUrl: String,
+        customerEmail: String,
+        currency: String,
+        productName: String,
+        productDescription: String,
+        unitAmountDecimal: Int,
+        quantity: Int,
+        mode: String,
+        paymentMethodType: String
+    ): CheckoutSessionResponse {
+        return   networkService.createCheckoutSession(successUrl,cancelUrl,customerEmail,currency,productName,productDescription,unitAmountDecimal,quantity,mode,paymentMethodType)
+
+    }
+
+    override suspend fun createOrder(order: Map<String, OrderBody>): OrderBodyResponse {
+        return networkService.createOrder(order)
+    }
+
+    override suspend fun getSingleOrder(orderId: Long): OrderResponse {
+        return networkService.getSingleOrder(orderId)
     }
 
 }

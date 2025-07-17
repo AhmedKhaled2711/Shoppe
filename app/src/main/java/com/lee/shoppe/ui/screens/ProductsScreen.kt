@@ -48,6 +48,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import okhttp3.internal.wait
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 @Composable
 fun ProductsScreen(
@@ -71,6 +73,24 @@ fun ProductsScreen(
 
     var showRemoveDialog by remember { mutableStateOf(false) }
     var productToRemove by remember { mutableStateOf<Product?>(null) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Show Snackbar for HTTP 429 or too many requests
+    LaunchedEffect(productsState) {
+        if (productsState is NetworkState.Failure) {
+            val error = (productsState as NetworkState.Failure).error
+            val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
+                "You're making requests too quickly. Please wait a moment and try again."
+            } else {
+                error.message ?: "An error occurred. Please try again."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+    }
 
     LaunchedEffect(brandTitle) {
         viewModel.getProducts(brandTitle ?: "")

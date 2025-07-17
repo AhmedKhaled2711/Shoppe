@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import retrofit2.HttpException
 
 @HiltViewModel
 class ProductInfoViewModel @Inject constructor(
@@ -45,7 +46,11 @@ class ProductInfoViewModel @Inject constructor(
             repository.getProductById(id)
                 .catch { e ->
                     Log.e(TAG, "Error fetching product info: ${e.message}", e)
-                    _product.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _product.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     Log.d(TAG, "Product info fetched successfully: $response")
@@ -60,7 +65,11 @@ class ProductInfoViewModel @Inject constructor(
             repository.getBrandProducts(vendor)
                 .catch { e ->
                     Log.e(TAG, "Error fetching product suggestions: ${e.message}", e)
-                    _productSuggestions.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _productSuggestions.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _productSuggestions.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     Log.d(TAG, "Product suggestions fetched successfully: $response")
@@ -107,7 +116,11 @@ class ProductInfoViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error adding product to cart: ${e.message}", e)
-                    _productCard.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _productCard.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _productCard.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { draftOrderResponse ->
                     val draftOrder = draftOrderResponse.draft_order

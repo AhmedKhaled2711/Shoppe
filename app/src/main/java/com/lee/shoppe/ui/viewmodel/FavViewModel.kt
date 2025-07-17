@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import retrofit2.HttpException
 
 @HiltViewModel
 class FavViewModel @Inject constructor(
@@ -33,7 +34,11 @@ class FavViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error fetching favorite products: ${e.message}", e)
-                    _product.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _product.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     Log.d(TAG, "Favorite products fetched successfully: $response")
@@ -55,7 +60,11 @@ class FavViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error checking favorite status: ${e.message}", e)
-                    _product.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _product.value = NetworkState.Failure(e)
+                    }
                     withContext(Dispatchers.Main) {
                         favFalse() // Default to not favorite on error
                     }
@@ -106,7 +115,11 @@ class FavViewModel @Inject constructor(
             repository.createDraftOrders(draftOrderResponse)
                 .catch { e ->
                     Log.e(TAG, "Error creating favorites list: ${e.message}", e)
-                    _product.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _product.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     val newListId = response.draft_order.id
@@ -128,7 +141,11 @@ class FavViewModel @Inject constructor(
                 repository.createDraftOrders(draftOrderResponse)
                     .catch { e ->
                         Log.e(TAG, "Error creating favorites list: ${e.message}", e)
-                        _product.value = NetworkState.Failure(e)
+                        if (e is HttpException && e.code() == 429) {
+                            _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                        } else {
+                            _product.value = NetworkState.Failure(e)
+                        }
                     }
                     .collect { response ->
                         val newListId = response.draft_order.id
@@ -149,7 +166,11 @@ class FavViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error adding product to favorites: ${e.message}", e)
-                    _product.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _product.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect {
                     val draftOrder = it.draft_order
@@ -162,7 +183,11 @@ class FavViewModel @Inject constructor(
                     repository.updateDraftOrder(listId, DraftOrderResponse(updatedDraftOrder))
                         .catch { e ->
                             Log.e(TAG, "Error updating draft order: ${e.message}", e)
-                            _product.value = NetworkState.Failure(e)
+                            if (e is HttpException && e.code() == 429) {
+                                _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                            } else {
+                                _product.value = NetworkState.Failure(e)
+                            }
                         }
                         .collect { response ->
                             Log.d(TAG, "Product added to favorites successfully: $response")
@@ -185,7 +210,11 @@ class FavViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error removing product from favorites: ${e.message}", e)
-                    _product.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _product.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect {
                     val draftOrder = it.draft_order
@@ -200,7 +229,11 @@ class FavViewModel @Inject constructor(
                     repository.updateDraftOrder(listId, DraftOrderResponse(updatedDraftOrder))
                         .catch { e ->
                             Log.e(TAG, "Error updating draft order: ${e.message}", e)
-                            _product.value = NetworkState.Failure(e)
+                            if (e is HttpException && e.code() == 429) {
+                                _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                            } else {
+                                _product.value = NetworkState.Failure(e)
+                            }
                         }
                         .collect { response ->
                             Log.d(TAG, "Product removed from favorites successfully: $response")

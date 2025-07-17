@@ -173,7 +173,23 @@ fun ProductDetailsScreen(
         }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+
+    // Show Snackbar for HTTP 429 or too many requests
+    LaunchedEffect(productState) {
+        if (productState is NetworkState.Failure) {
+            val error = (productState as NetworkState.Failure).error
+            val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
+                "You're making requests too quickly. Please wait a moment and try again."
+            } else {
+                error.message ?: "An error occurred. Please try again."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier
@@ -486,7 +502,7 @@ fun ProductDetailsScreen(
                                         if (suggestions.isNotEmpty()) {
                                             Column(modifier = Modifier.fillMaxWidth()) {
                                                 Text(
-                                                    text = "You may want other",
+                                                    text = "You Might Like",
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 18.sp,
                                                     color = Color.Black,

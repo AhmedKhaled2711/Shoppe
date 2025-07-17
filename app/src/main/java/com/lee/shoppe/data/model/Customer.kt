@@ -1,7 +1,7 @@
 package com.lee.shoppe.data.model
 
 data class Customer(
-    val addresses: List<Addresse>,
+    val addresses: List<Address>,
     val admin_graphql_api_id: String,
     val created_at: String,
     val currency: String,

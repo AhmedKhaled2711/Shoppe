@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import retrofit2.HttpException
 
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
@@ -38,7 +39,11 @@ class ProductsViewModel @Inject constructor(
             repository.getBrandProducts(vendor)
                 .catch { e ->
                     Log.e(TAG, "Error fetching products: ${e.message}", e)
-                    _products.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _products.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _products.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     Log.d(TAG, "products fetched successfully: $response")

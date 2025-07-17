@@ -47,6 +47,9 @@ import com.airbnb.lottie.LottieComposition
 import androidx.compose.material.icons.filled.ArrowBack
 import com.lee.shoppe.ui.theme.BlueLight
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,10 +71,27 @@ fun CategoryScreen(
     val sheetState = rememberModalBottomSheetState()
     var showRemoveDialog by remember { mutableStateOf(false) }
     var productToRemove by remember { mutableStateOf<com.lee.shoppe.data.model.Product?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     // Load products on first composition
     LaunchedEffect(Unit) {
         categoryViewModel.getProducts("")
+    }
+
+    // Show Snackbar for HTTP 429 or too many requests
+    LaunchedEffect(productsState) {
+        if (productsState is NetworkState.Failure) {
+            val error = (productsState as NetworkState.Failure).error
+            val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
+                "You're making requests too quickly. Please wait a moment and try again."
+            } else {
+                error.message ?: "An error occurred. Please try again."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
+        }
     }
 
     Box {

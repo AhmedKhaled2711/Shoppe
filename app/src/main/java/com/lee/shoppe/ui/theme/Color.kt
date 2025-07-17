@@ -1,6 +1,7 @@
 package com.lee.shoppe.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import okhttp3.internal.http2.Header
 
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
@@ -16,3 +17,5 @@ val BlueAccent = Color(0xFF004BFE) // #004BFE
 val RedAccent = Color(0xFFD97474) // #D97474
 val Dark = Color(0xFF202020) // #202020
 val BlueSecondary = Color(0xFF5982DA) // #5982DA
+val HeaderColor = Color(0xFF202020) // #5982DA
+

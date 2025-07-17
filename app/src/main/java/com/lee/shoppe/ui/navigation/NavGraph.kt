@@ -51,6 +51,11 @@ import com.lee.shoppe.ui.screens.StartScreen
 import com.lee.shoppe.ui.screens.ProductsScreen
 import com.lee.shoppe.ui.screens.ProductDetailsScreen
 import com.lee.shoppe.ui.screens.ReviewScreen
+import com.lee.shoppe.ui.screens.ProfileDetailsScreen
+import com.lee.shoppe.ui.screens.ShippingAddressScreen
+import com.lee.shoppe.ui.screens.PaymentScreen
+import com.lee.shoppe.ui.screens.AddressListScreen
+import com.lee.shoppe.ui.screens.AddEditAddressScreen
 
 @Composable
 fun ECommerceNavHost(navController: NavHostController) {
@@ -208,6 +213,24 @@ fun ECommerceNavHost(navController: NavHostController) {
             }
             composable("reviews") {
                 ReviewScreen(onBack = { navController.popBackStack() })
+            }
+            composable("profile_details") {
+                ProfileDetailsScreen(navController)
+            }
+            composable("shipping_address") {
+                ShippingAddressScreen(navController)
+            }
+            composable("payment") {
+                PaymentScreen(navController)
+            }
+            composable("address_list") {
+                AddressListScreen(navController)
+            }
+            composable("add_edit_address?id={id}") { backStackEntry ->
+                AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
+            }
+            composable("add_edit_address") { backStackEntry ->
+                AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
             }
         }
     }

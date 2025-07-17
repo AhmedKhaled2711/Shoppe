@@ -91,6 +91,21 @@ fun CartScreen(
         }
     }
 
+    // Show Snackbar for HTTP 429 or too many requests
+    LaunchedEffect(cartProductsState) {
+        if (cartProductsState is NetworkState.Failure) {
+            val error = (cartProductsState as NetworkState.Failure).error
+            val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
+                "You're making requests too quickly. Please wait a moment and try again."
+            } else {
+                error.message ?: "An error occurred. Please try again."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -217,7 +232,7 @@ fun CartHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(modifier = Modifier.width(8.dp))
@@ -230,7 +245,7 @@ fun CartHeader(
                     text = stringResource(R.string.cart),
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    color = Color.Black
+                    color = HeaderColor
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Box(

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import retrofit2.HttpException
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
@@ -42,7 +43,11 @@ class CartViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error fetching cart products: ${e.message}", e)
-                    _cartProducts.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     Log.d(TAG, "Cart products fetched successfully: $response")
@@ -61,7 +66,11 @@ class CartViewModel @Inject constructor(
                 repository.createDraftOrders(draftOrderResponse)
                     .catch { e ->
                         Log.e(TAG, "Error creating cart list: ${e.message}", e)
-                        _cartProducts.value = NetworkState.Failure(e)
+                        if (e is HttpException && e.code() == 429) {
+                            _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                        } else {
+                            _cartProducts.value = NetworkState.Failure(e)
+                        }
                     }
                     .collect { response ->
                         val newListId = response.draft_order.id
@@ -82,7 +91,11 @@ class CartViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error adding product to cart: ${e.message}", e)
-                    _cartProducts.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect {
                     val draftOrder = it.draft_order
@@ -96,7 +109,11 @@ class CartViewModel @Inject constructor(
                     repository.updateDraftOrder(listId, DraftOrderResponse(updatedDraftOrder))
                         .catch { e ->
                             Log.e(TAG, "Error updating draft order: ${e.message}", e)
-                            _cartProducts.value = NetworkState.Failure(e)
+                            if (e is HttpException && e.code() == 429) {
+                                _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                            } else {
+                                _cartProducts.value = NetworkState.Failure(e)
+                            }
                         }
                         .collect { response ->
                             Log.d(TAG, "Product added to cart successfully: $response")
@@ -119,7 +136,11 @@ class CartViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error removing product from cart: ${e.message}", e)
-                    _cartProducts.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect {
                     val draftOrder = it.draft_order
@@ -136,7 +157,11 @@ class CartViewModel @Inject constructor(
                     repository.updateDraftOrder(listId, DraftOrderResponse(updatedDraftOrder))
                         .catch { e ->
                             Log.e(TAG, "Error updating draft order: ${e.message}", e)
-                            _cartProducts.value = NetworkState.Failure(e)
+                            if (e is HttpException && e.code() == 429) {
+                                _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                            } else {
+                                _cartProducts.value = NetworkState.Failure(e)
+                            }
                         }
                         .collect { response ->
                             Log.d(TAG, "Product removed from cart successfully: $response")
@@ -159,7 +184,11 @@ class CartViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error updating product quantity: ${e.message}", e)
-                    _cartProducts.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     val updatedLineItems = response.draft_order.line_items.map { item ->
@@ -177,7 +206,11 @@ class CartViewModel @Inject constructor(
                     repository.updateDraftOrder(listId, DraftOrderResponse(updatedDraftOrder))
                         .catch { e ->
                             Log.e(TAG, "Error updating draft order: ${e.message}", e)
-                            _cartProducts.value = NetworkState.Failure(e)
+                            if (e is HttpException && e.code() == 429) {
+                                _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                            } else {
+                                _cartProducts.value = NetworkState.Failure(e)
+                            }
                         }
                         .collect { response ->
                             Log.d(TAG, "Product quantity updated successfully: $response")
@@ -200,7 +233,11 @@ class CartViewModel @Inject constructor(
             repository.getDraftOrder(listId)
                 .catch { e ->
                     Log.e(TAG, "Error clearing cart: ${e.message}", e)
-                    _cartProducts.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     // Keep the dummy item structure as required by DraftOrder model
@@ -217,7 +254,11 @@ class CartViewModel @Inject constructor(
                     repository.updateDraftOrder(listId, DraftOrderResponse(updatedDraftOrder))
                         .catch { e ->
                             Log.e(TAG, "Error updating draft order: ${e.message}", e)
-                            _cartProducts.value = NetworkState.Failure(e)
+                            if (e is HttpException && e.code() == 429) {
+                                _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                            } else {
+                                _cartProducts.value = NetworkState.Failure(e)
+                            }
                         }
                         .collect { response ->
                             Log.d(TAG, "Cart cleared successfully: $response")
@@ -234,7 +275,11 @@ class CartViewModel @Inject constructor(
             repository.createDraftOrders(draftOrderResponse)
                 .catch { e ->
                     Log.e(TAG, "Error creating cart list: ${e.message}", e)
-                    _cartProducts.value = NetworkState.Failure(e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                 }
                 .collect { response ->
                     val newListId = response.draft_order.id
@@ -253,30 +298,27 @@ class CartViewModel @Inject constructor(
             notInCart()
             return
         }
-
         viewModelScope.launch(Dispatchers.IO) {
             repository.getDraftOrder(listId)
                 .catch { e ->
-                    Log.e(TAG, "Error checking cart status: ${e.message}", e)
+                    Log.e(TAG, "Error checking if product is in cart: ${e.message}", e)
+                    if (e is HttpException && e.code() == 429) {
+                        _cartProducts.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
+                    } else {
+                        _cartProducts.value = NetworkState.Failure(e)
+                    }
                     withContext(Dispatchers.Main) {
-                        notInCart() // Default to not in cart on error
+                        notInCart()
                     }
                 }
-                .collect {
-                    val response = it.draft_order.line_items
-                    if (response.size > 1) {
-                        val isInCart = response.toMutableList().any { lineItem ->
-                            val values = lineItem.sku?.split("*")
-                            values?.get(0)?.equals(productId.toString()) ?: false
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            if (isInCart) inCart() else notInCart()
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            notInCart()
-                        }
+                .collect { response ->
+                    val isInCart = response.draft_order.line_items.any { item ->
+                        val values = item.sku?.split("*")
+                        val skuProductId = values?.getOrNull(0)
+                        skuProductId == productId.toString() || item.variant_id == productId
+                    }
+                    withContext(Dispatchers.Main) {
+                        if (isInCart) inCart() else notInCart()
                     }
                 }
         }

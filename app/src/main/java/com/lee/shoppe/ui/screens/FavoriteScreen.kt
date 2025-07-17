@@ -71,6 +71,11 @@ import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import kotlin.random.Random
 import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.launch
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun FavoriteScreen(
@@ -158,6 +163,24 @@ fun FavoriteScreen(
             }
 
             NetworkState.Idle -> { /* No content */ }
+        }
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Show Snackbar for HTTP 429 or too many requests
+    LaunchedEffect(favProductsState) {
+        if (favProductsState is NetworkState.Failure) {
+            val error = (favProductsState as NetworkState.Failure).error
+            val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
+                "You're making requests too quickly. Please wait a moment and try again."
+            } else {
+                error.message ?: "Failed to load favorites."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
         }
     }
 
