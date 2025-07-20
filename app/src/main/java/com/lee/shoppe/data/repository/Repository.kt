@@ -33,7 +33,7 @@ interface Repository {
     suspend fun updateDraftOrder(id: Long, draftOrder: DraftOrderResponse): Flow<DraftOrderResponse>
     suspend fun getProductById(id: Long): Flow<ProductResponse>
     suspend fun addSingleCustomerAddress( id: Long,addressRequest: AddressRequest): AddressRequest
-    suspend fun editSingleCustomerAddress(customerId:Long,id:Long,addressRequest: AddressDefaultRequest): AddressUpdateRequest
+    suspend fun editSingleCustomerAddress(customerId:Long,id:Long,addressRequest: AddressUpdateRequest): AddressUpdateRequest
     suspend fun deleteSingleCustomerAddress(customerId:Long,id:Long)
     suspend fun createCheckoutSession(successUrl: String,cancelUrl: String,customerEmail: String,currency: String,productName: String,productDescription: String,
                                       unitAmountDecimal: Int, quantity: Int,mode: String, paymentMethodType: String
@@ -41,5 +41,9 @@ interface Repository {
     suspend fun createOrder(order:  Map<String, OrderBody>): Flow<OrderBodyResponse>
 
     suspend fun getSingleOrder(@Path("id") orderId: Long): Flow<OrderResponse>
-
+    suspend fun editSingleCustomerAddressStar(
+        customerID:Long,
+        id: Long,
+        addressRequest: AddressDefaultRequest
+    ): AddressUpdateRequest
 }

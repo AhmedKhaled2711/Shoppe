@@ -91,9 +91,17 @@ class NetworkManagerImp private constructor(): NetworkManager {
     override suspend fun editSingleCustomerAddress(
         customerId: Long,
         id: Long,
+        addressRequest: AddressUpdateRequest
+    ): AddressUpdateRequest {
+        return networkService.editSingleCustomerAddress(customerId, id, addressRequest)
+    }
+
+    override suspend fun editSingleCustomerAddressStar(
+        customerId: Long,
+        id: Long,
         addressRequest: AddressDefaultRequest
     ): AddressUpdateRequest {
-        return networkService.editSingleCustomerAddress(customerId,id,addressRequest)
+        return networkService.editSingleCustomerAddressStar(customerId, id, addressRequest)
     }
 
     override suspend fun deleteSingleCustomerAddress(customerId: Long, id: Long) {

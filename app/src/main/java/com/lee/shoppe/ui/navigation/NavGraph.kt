@@ -1,10 +1,10 @@
 package com.lee.shoppe.ui.navigation
 
+import MapPickerScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,9 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -52,10 +50,11 @@ import com.lee.shoppe.ui.screens.ProductsScreen
 import com.lee.shoppe.ui.screens.ProductDetailsScreen
 import com.lee.shoppe.ui.screens.ReviewScreen
 import com.lee.shoppe.ui.screens.ProfileDetailsScreen
-import com.lee.shoppe.ui.screens.ShippingAddressScreen
+import com.lee.shoppe.ui.screens.OrdersScreen
 import com.lee.shoppe.ui.screens.PaymentScreen
 import com.lee.shoppe.ui.screens.AddressListScreen
 import com.lee.shoppe.ui.screens.AddEditAddressScreen
+import androidx.navigation.NavBackStackEntry
 
 @Composable
 fun ECommerceNavHost(navController: NavHostController) {
@@ -217,8 +216,8 @@ fun ECommerceNavHost(navController: NavHostController) {
             composable("profile_details") {
                 ProfileDetailsScreen(navController)
             }
-            composable("shipping_address") {
-                ShippingAddressScreen(navController)
+            composable("orders") {
+                OrdersScreen(navController)
             }
             composable("payment") {
                 PaymentScreen(navController)
@@ -231,6 +230,22 @@ fun ECommerceNavHost(navController: NavHostController) {
             }
             composable("add_edit_address") { backStackEntry ->
                 AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
+            }
+            composable(
+                route = "map_picker?for={for}",
+                arguments = listOf(navArgument("for") { type = NavType.StringType; defaultValue = "address1" })
+            ) { backStackEntry ->
+                val forField = backStackEntry.arguments?.getString("for") ?: "address1"
+                MapPickerScreen(
+                    onLocationPicked = { latLng ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            if (forField == "address2") "picked_location2" else "picked_location",
+                            latLng
+                        )
+                        navController.popBackStack()
+                    },
+                    onCancel = { navController.popBackStack() }
+                )
             }
         }
     }

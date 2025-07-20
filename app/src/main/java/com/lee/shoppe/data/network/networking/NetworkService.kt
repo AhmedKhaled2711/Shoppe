@@ -83,13 +83,19 @@ interface NetworkService {
     suspend fun editSingleCustomerAddress(
         @Path("CustomerId") customerId: Long,
         @Path("id") id: Long,
-        @Body addressRequest: AddressDefaultRequest
+        @Body addressRequest: AddressUpdateRequest
     ): AddressUpdateRequest
     @DELETE("customers/{CustomerId}/addresses/{id}.json")
     suspend fun deleteSingleCustomerAddress(
         @Path("CustomerId") customerId: Long,
         @Path("id") id: Long,
     )
+    @PUT("customers/{CustomerId}/addresses/{id}.json")
+    suspend fun editSingleCustomerAddressStar(
+        @Path("CustomerId") customerId: Long,
+        @Path("id") id: Long,
+        @Body addressRequest: AddressDefaultRequest
+    ): AddressUpdateRequest
 
     @FormUrlEncoded
     @POST("v1/checkout/sessions")

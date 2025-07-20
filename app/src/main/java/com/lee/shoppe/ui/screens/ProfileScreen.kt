@@ -2,7 +2,15 @@ package com.lee.shoppe.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,17 +36,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
+import com.lee.shoppe.ui.theme.Dark
 import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.theme.RedAccent
-import com.lee.shoppe.ui.theme.Dark
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import kotlinx.coroutines.launch
 
@@ -157,17 +167,22 @@ fun ProfileScreen(navController: NavController) {
                     navController.navigate("profile_details")
                 }
                 DividerLine()
+                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Manage Addresses") {
                     navController.navigate("address_list")
                 }
                 DividerLine()
-                ProfileListItem("Shipping Address") {
-                    navController.navigate("shipping_address")
+                Spacer(modifier = Modifier.height(10.dp))
+                ProfileListItem("Orders") {
+                    navController.navigate("orders")
                 }
                 DividerLine()
+                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Payment methods") {
                     navController.navigate("payment")
                 }
+                DividerLine()
+
                 Spacer(modifier = Modifier.height(24.dp))
                 // Shop Section
                 SectionHeader("Shop")
@@ -175,17 +190,21 @@ fun ProfileScreen(navController: NavController) {
                     showCurrencyDialog.value = true
                 }
                 DividerLine()
+                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Currency", customerData.currency.ifBlank { "$ USD" }) {
                     showCurrencyDialog.value = true
                 }
                 DividerLine()
+                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Sizes", "UK") {
                     coroutineScope.launch { snackbarHostState.showSnackbar("Sizes coming soon") }
                 }
                 DividerLine()
+                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Terms and Conditions") {
                     coroutineScope.launch { snackbarHostState.showSnackbar("Terms and Conditions coming soon") }
                 }
+                DividerLine()
                 Spacer(modifier = Modifier.height(24.dp))
                 // Account Section
                 SectionHeader("Account")
@@ -193,9 +212,11 @@ fun ProfileScreen(navController: NavController) {
                     showLanguageDialog.value = true
                 }
                 DividerLine()
+                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("About Shoppe") {
                     coroutineScope.launch { snackbarHostState.showSnackbar("About coming soon") }
                 }
+                DividerLine()
                 Spacer(modifier = Modifier.height(24.dp))
                 // Logout
                 Button(
@@ -230,7 +251,7 @@ fun ProfileScreen(navController: NavController) {
                     color = BluePrimary
                 )
                 Text(
-                    text = "Version 1.0 April, 2020",
+                    text = "Version 1.0 Jul, 2025",
                     color = Color.Gray,
                     fontSize = 13.sp
                 )
@@ -304,8 +325,8 @@ fun ProfileScreen(navController: NavController) {
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        fontWeight = FontWeight.Bold,
-        fontSize = 17.sp,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 20.sp,
         color = HeaderColor,
         modifier = Modifier.padding(vertical = 4.dp)
     )
@@ -321,25 +342,28 @@ private fun ProfileListItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
+            //.padding(vertical = 10.dp)
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = title,
-            fontSize = 16.sp,
-            color = Dark,
+            fontSize = 18.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Normal,
             modifier = Modifier.weight(1f)
         )
         if (value != null) {
             Text(
                 text = value,
-                fontSize = 15.sp,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
                 color = Color.Gray,
                 modifier = Modifier.padding(end = 8.dp)
             )
         }
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            painter = painterResource(id = R.drawable.chevron_right_24),
             contentDescription = null,
             tint = Dark
         )
@@ -353,4 +377,4 @@ private fun DividerLine() {
         thickness = 1.dp,
         modifier = Modifier.padding(start = 0.dp)
     )
-} 
+}

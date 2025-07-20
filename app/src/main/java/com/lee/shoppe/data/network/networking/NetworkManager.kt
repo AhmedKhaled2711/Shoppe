@@ -32,7 +32,7 @@ interface NetworkManager {
     suspend fun updateDraftOrder(id: Long, draftOrder: DraftOrderResponse): DraftOrderResponse
     suspend fun getProductById(id: Long): ProductResponse
     suspend fun addSingleCustomerAddress( id: Long,addressRequest: AddressRequest): AddressRequest
-    suspend fun editSingleCustomerAddress(customerId:Long,id:Long,addressRequest: AddressDefaultRequest): AddressUpdateRequest
+    suspend fun editSingleCustomerAddress(customerId:Long,id:Long,addressRequest: AddressUpdateRequest): AddressUpdateRequest
     suspend fun deleteSingleCustomerAddress(customerId:Long,id:Long)
     suspend fun createCheckoutSession(successUrl: String,cancelUrl: String,customerEmail: String,currency: String,productName: String,productDescription: String,
                                       unitAmountDecimal: Int, quantity: Int,mode: String, paymentMethodType: String
@@ -40,6 +40,7 @@ interface NetworkManager {
     suspend fun createOrder(order:  Map<String, OrderBody>): OrderBodyResponse
 
     suspend fun getSingleOrder(@Path("id") orderId: Long): OrderResponse
+    suspend fun editSingleCustomerAddressStar(customerId:Long,id:Long,addressRequest: AddressDefaultRequest): AddressUpdateRequest
 
 
 }

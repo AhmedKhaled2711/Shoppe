@@ -95,9 +95,9 @@ class RepositoryImp @Inject constructor(
     override suspend fun editSingleCustomerAddress(
         customerId: Long,
         id: Long,
-        addressRequest: AddressDefaultRequest
+        addressRequest: AddressUpdateRequest
     ): AddressUpdateRequest {
-        return networkManager.editSingleCustomerAddress(customerId,id, addressRequest)
+        return networkManager.editSingleCustomerAddress(customerId, id, addressRequest)
     }
 
     override suspend fun deleteSingleCustomerAddress(customerId: Long, id: Long) {
@@ -128,6 +128,14 @@ class RepositoryImp @Inject constructor(
         return flow {
             emit(networkManager.getSingleOrder(orderId))
         }
+    }
+
+    override suspend fun editSingleCustomerAddressStar(
+        customerId: Long,
+        id: Long,
+        addressRequest: AddressDefaultRequest
+    ): AddressUpdateRequest {
+        return networkManager.editSingleCustomerAddressStar(customerId, id, addressRequest)
     }
 
 }
