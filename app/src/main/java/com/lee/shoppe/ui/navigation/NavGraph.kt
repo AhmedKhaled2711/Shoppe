@@ -37,24 +37,24 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.lee.shoppe.data.model.BottomNavItem
 import com.lee.shoppe.data.network.caching.SharedPreferenceManager
+import com.lee.shoppe.ui.screens.AddEditAddressScreen
+import com.lee.shoppe.ui.screens.AddressListScreen
 import com.lee.shoppe.ui.screens.CartScreen
 import com.lee.shoppe.ui.screens.CategoryScreen
+import com.lee.shoppe.ui.screens.ChooseAddressScreen
 import com.lee.shoppe.ui.screens.FavoriteScreen
 import com.lee.shoppe.ui.screens.HomeScreen
 import com.lee.shoppe.ui.screens.LoginScreen
 import com.lee.shoppe.ui.screens.OnboardingScreen
+import com.lee.shoppe.ui.screens.OrdersScreen
+import com.lee.shoppe.ui.screens.OrderDetailsScreen
+import com.lee.shoppe.ui.screens.ProductDetailsScreen
+import com.lee.shoppe.ui.screens.ProductsScreen
+import com.lee.shoppe.ui.screens.ProfileDetailsScreen
 import com.lee.shoppe.ui.screens.ProfileScreen
+import com.lee.shoppe.ui.screens.ReviewScreen
 import com.lee.shoppe.ui.screens.SignupScreen
 import com.lee.shoppe.ui.screens.StartScreen
-import com.lee.shoppe.ui.screens.ProductsScreen
-import com.lee.shoppe.ui.screens.ProductDetailsScreen
-import com.lee.shoppe.ui.screens.ReviewScreen
-import com.lee.shoppe.ui.screens.ProfileDetailsScreen
-import com.lee.shoppe.ui.screens.OrdersScreen
-import com.lee.shoppe.ui.screens.PaymentScreen
-import com.lee.shoppe.ui.screens.AddressListScreen
-import com.lee.shoppe.ui.screens.AddEditAddressScreen
-import androidx.navigation.NavBackStackEntry
 
 @Composable
 fun ECommerceNavHost(navController: NavHostController) {
@@ -188,7 +188,43 @@ fun ECommerceNavHost(navController: NavHostController) {
                 CategoryScreen(navController)
             }
             composable(Screen.Cart.route) {
-                CartScreen(navController)
+                CartScreen(navController = navController, onCheckout = {
+                    navController.navigate(Screen.ChooseAddress.route)
+                })
+            }
+            composable("address_list") {
+                AddressListScreen(navController)
+            }
+//            composable("payment") {
+//                PaymentScreen(navController = navController)
+//            }
+            composable(
+                route = "add_edit_address?id={id}",
+                arguments = listOf(navArgument("id") { type = NavType.LongType })
+            ) { backStackEntry ->
+                AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
+            }
+            composable(
+                route = "add_edit_address",
+                arguments = emptyList()
+            ) { backStackEntry ->
+                AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
+            }
+            composable(
+                route = "map_picker?for={for}",
+                arguments = listOf(navArgument("for") { type = NavType.StringType; defaultValue = "address1" })
+            ) { backStackEntry ->
+                val forField = backStackEntry.arguments?.getString("for") ?: "address1"
+                MapPickerScreen(
+                    onLocationPicked = { latLng ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            if (forField == "address2") "picked_location2" else "picked_location",
+                            latLng
+                        )
+                        navController.popBackStack()
+                    },
+                    onCancel = { navController.popBackStack() }
+                )
             }
             composable(Screen.Favorite.route) {
                 FavoriteScreen(navController)
@@ -219,32 +255,21 @@ fun ECommerceNavHost(navController: NavHostController) {
             composable("orders") {
                 OrdersScreen(navController)
             }
-            composable("payment") {
-                PaymentScreen(navController)
-            }
-            composable("address_list") {
-                AddressListScreen(navController)
-            }
-            composable("add_edit_address?id={id}") { backStackEntry ->
-                AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
-            }
-            composable("add_edit_address") { backStackEntry ->
-                AddEditAddressScreen(navController, navBackStackEntry = backStackEntry)
-            }
             composable(
-                route = "map_picker?for={for}",
-                arguments = listOf(navArgument("for") { type = NavType.StringType; defaultValue = "address1" })
+                route = "order_details?addressId={addressId}",
+                arguments = listOf(navArgument("addressId") { type = NavType.LongType })
             ) { backStackEntry ->
-                val forField = backStackEntry.arguments?.getString("for") ?: "address1"
-                MapPickerScreen(
-                    onLocationPicked = { latLng ->
-                        navController.previousBackStackEntry?.savedStateHandle?.set(
-                            if (forField == "address2") "picked_location2" else "picked_location",
-                            latLng
-                        )
-                        navController.popBackStack()
-                    },
-                    onCancel = { navController.popBackStack() }
+                val addressId = backStackEntry.arguments?.getLong("addressId")
+                if (addressId != null) {
+                    OrderDetailsScreen(addressId = addressId, navController = navController)
+                }
+            }
+            composable(Screen.ChooseAddress.route) {
+                val context = LocalContext.current
+                val customerId = com.lee.shoppe.data.model.CustomerData.getInstance(context).id
+                ChooseAddressScreen(
+                    customerId = customerId,
+                    navController = navController
                 )
             }
         }

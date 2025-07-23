@@ -51,7 +51,8 @@ import kotlinx.coroutines.flow.count
 @Composable
 fun CartScreen(
     navController: NavController,
-    cartViewModel: CartViewModel = hiltViewModel()
+    cartViewModel: CartViewModel = hiltViewModel(),
+    onCheckout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val cartProductsState by cartViewModel.cartProducts.collectAsState()
@@ -174,7 +175,12 @@ fun CartScreen(
                                     }
                                 },
                                 snackbarHostState = snackbarHostState,
-                                coroutineScope = coroutineScope
+                                coroutineScope = coroutineScope,
+                                navController = navController,
+                                customerEmail = customerData.email,
+                                currency = customerData.currency,
+                                titlesList = realLineItems.map { it.title ?: "" },
+                                onCheckout = onCheckout
                             )
                         }
                     }
@@ -467,7 +473,12 @@ fun CartContent(
     onRemoveItem: (Long) -> Unit,
     onUpdateQuantity: (Long, Int) -> Unit,
     snackbarHostState: SnackbarHostState,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    navController: NavController? = null, // Add navController for navigation
+    customerEmail: String = "",
+    currency: String = "",
+    titlesList: List<String> = emptyList(),
+    onCheckout: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -506,7 +517,8 @@ fun CartContent(
         }
         // Cart summary and checkout
         CartSummaryBottom(
-            lineItems = lineItems
+            lineItems = lineItems,
+            onCheckout = onCheckout
         )
     }
 }
@@ -743,8 +755,6 @@ fun CartSummaryBottom(
             // Checkout button
             Button(
                 onClick = onCheckout,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0057FF)),
                 modifier = Modifier
                     .height(44.dp)
                     .width(140.dp)
