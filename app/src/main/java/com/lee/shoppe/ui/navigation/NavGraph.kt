@@ -35,7 +35,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+import com.lee.shoppe.ui.screens.OrdersScreen
 import com.lee.shoppe.data.model.BottomNavItem
+import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.caching.SharedPreferenceManager
 import com.lee.shoppe.ui.screens.AddEditAddressScreen
 import com.lee.shoppe.ui.screens.AddressListScreen
@@ -46,8 +50,9 @@ import com.lee.shoppe.ui.screens.FavoriteScreen
 import com.lee.shoppe.ui.screens.HomeScreen
 import com.lee.shoppe.ui.screens.LoginScreen
 import com.lee.shoppe.ui.screens.OnboardingScreen
-import com.lee.shoppe.ui.screens.OrdersScreen
 import com.lee.shoppe.ui.screens.OrderDetailsScreen
+import com.lee.shoppe.ui.screens.OrderInfoScreen
+import com.lee.shoppe.ui.screens.PaymentSheetScreen
 import com.lee.shoppe.ui.screens.ProductDetailsScreen
 import com.lee.shoppe.ui.screens.ProductsScreen
 import com.lee.shoppe.ui.screens.ProfileDetailsScreen
@@ -195,9 +200,6 @@ fun ECommerceNavHost(navController: NavHostController) {
             composable("address_list") {
                 AddressListScreen(navController)
             }
-//            composable("payment") {
-//                PaymentScreen(navController = navController)
-//            }
             composable(
                 route = "add_edit_address?id={id}",
                 arguments = listOf(navArgument("id") { type = NavType.LongType })
@@ -253,26 +255,63 @@ fun ECommerceNavHost(navController: NavHostController) {
                 ProfileDetailsScreen(navController)
             }
             composable("orders") {
-                OrdersScreen(navController)
+                OrdersScreen(
+                    userId = sharedPrefs.retrieve(SharedPreferenceManager.Key.ID, "0").toLong(),
+                    onOrderClick = { order ->
+                        navController.navigate("order_info/${order.id}")
+                    },
+                    onAddressEditClick = {
+                        navController.navigate("address_list")
+                    }
+                )
             }
             composable(
-                route = "order_details?addressId={addressId}",
-                arguments = listOf(navArgument("addressId") { type = NavType.LongType })
+                route = "order_info/{orderId}",
+                arguments = listOf(navArgument("orderId") { type = NavType.LongType })
             ) { backStackEntry ->
-                val addressId = backStackEntry.arguments?.getLong("addressId")
-                if (addressId != null) {
-                    OrderDetailsScreen(addressId = addressId, navController = navController)
-                }
+                val orderId = backStackEntry.arguments?.getLong("orderId") ?: 0L
+                OrderInfoScreen(navController = navController, orderId = orderId)
             }
             composable(Screen.ChooseAddress.route) {
                 val context = LocalContext.current
-                val customerId = com.lee.shoppe.data.model.CustomerData.getInstance(context).id
+                val customerId = CustomerData.getInstance(context).id
                 ChooseAddressScreen(
                     customerId = customerId,
                     navController = navController
                 )
             }
+            composable(
+                route = "order_details/{addressId}",
+                arguments = listOf(navArgument("addressId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val addressId = backStackEntry.arguments?.getLong("addressId") ?: 0L
+                OrderDetailsScreen(
+                    addressId = addressId,
+                    navController = navController
+                )
+            }
+            composable(
+                route = "payment_sheet?paymentUrl={paymentUrl}&discountValue={discountValue}",
+                arguments = listOf(
+                    navArgument("paymentUrl") { type = NavType.StringType },
+                    navArgument("discountValue") { type = NavType.StringType; defaultValue = "0.0" }
+                )
+            ) { backStackEntry ->
+                val encodedPaymentUrl = backStackEntry.arguments?.getString("paymentUrl") ?: ""
+                val paymentUrl = URLDecoder.decode(encodedPaymentUrl, StandardCharsets.UTF_8.toString())
+                val discountValue = backStackEntry.arguments?.getString("discountValue")?.toDoubleOrNull() ?: 0.0
+                PaymentSheetScreen(
+                    paymentUrl = paymentUrl,
+                    discountValue = discountValue,
+                    onDismiss = {
+                        navController.popBackStack()
+                    },
+                    navController = navController
+                )
+            }
+
         }
+
     }
 }
 

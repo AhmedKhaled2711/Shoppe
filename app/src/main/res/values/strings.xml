@@ -119,6 +119,19 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <string name="guest_profile2">Do you have an Account? </string>
     <string name="subTotal">Sub Total</string>
     <string name="checkout">Checkout</string>
-
+    <string name="order_details">Order Details</string>
+    <string name="back">Back</string>
+    <string name="place_order">Place Order</string>
+    <string name="coupon">Coupon</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="discount">Discount</string>
+    <string name="total">Total</string>
+    <string name="visa">Visa</string>
+    <string name="cash">Cash</string>
+    <string name="success_url">https://example.com/success</string>
+    <string name="cancel_url">https://example.com/cancel</string>
+    <string name="product_name">Your Order</string>
+    <string name="product_description">Please Write your Card Information</string>
+    <string name="close">Close</string>
 </resources>
 

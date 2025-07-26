@@ -9,4 +9,9 @@ fun isNetworkConnected(context: Context): Boolean {
     val network = connectivityManager.activeNetwork ?: return false
     val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
     return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-} 
+}
+
+object PaymentConstants {
+    const val SUCCESS_URL = "https://example.com/"
+    const val CANCEL_URL = "https://example.com/cancel"
+}

@@ -12,12 +12,10 @@ sealed class Screen(val route: String) {
     data object Favorite : Screen("favorite")
     data object Profile : Screen("profile")
     data object ProductDetails : Screen("product_details/{productId}")
-
-    // Add new routes for payment/order flow
-    data object Payment : Screen("payment")
-    data object PaymentSheet : Screen("payment_sheet?paymentUrl={paymentUrl}&titlesList={titlesList}")
-    data object OrderDetails : Screen("order_details?titlesList={titlesList}&paymentMethod={paymentMethod}")
     data object ChooseAddress : Screen("choose_address")
+    data object OrderDetails : Screen("order_details/{orderId}") {
+        fun createRoute(orderId: Long) = "order_details/$orderId"
+    }
 
 
 

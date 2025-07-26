@@ -41,6 +41,7 @@ interface NetworkManager {
 
     suspend fun getSingleOrder(@Path("id") orderId: Long): OrderResponse
     suspend fun editSingleCustomerAddressStar(customerId:Long,id:Long,addressRequest: AddressDefaultRequest): AddressUpdateRequest
+    suspend fun getCustomerOrders(@Path("id") userId: Long): OrderResponse
 
 
 }

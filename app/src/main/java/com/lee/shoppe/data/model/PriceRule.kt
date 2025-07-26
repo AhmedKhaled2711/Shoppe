@@ -49,3 +49,12 @@ data class PrerequisiteToEntitlementQuantityRatio(
     val entitled_quantity: Any,
     val prerequisite_quantity: Any
 )
+
+data class DiscountCodesResponse(
+    val price_rules: List<DiscountCode>
+)
+
+data class DiscountCode(
+    val title: String,
+    val value: String
+)

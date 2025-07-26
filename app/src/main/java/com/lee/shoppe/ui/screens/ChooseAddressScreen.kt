@@ -1,10 +1,16 @@
 package com.lee.shoppe.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.lee.shoppe.data.model.Address
+import com.lee.shoppe.ui.theme.BluePrimary
+import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.data.network.networking.NetworkState
 import androidx.navigation.NavController
@@ -31,61 +39,88 @@ fun ChooseAddressScreen(
     val error = (products as? NetworkState.Failure)?.error?.localizedMessage
     val addressList = (products as? NetworkState.Success)?.data?.customer?.addresses ?: emptyList()
 
+    // Initialize with default address if available
     var selectedAddressId by remember { mutableStateOf<Long?>(null) }
+    
+    // Set default address when data loads
+    LaunchedEffect(addressList) {
+        if (selectedAddressId == null && addressList.isNotEmpty()) {
+            val defaultAddress = addressList.firstOrNull { it.default }
+            selectedAddressId = defaultAddress?.id ?: addressList.first().id
+        }
+    }
 
     // 🔁 Fetch data once when screen is composed
     LaunchedEffect(Unit) {
         viewModel.getAllcustomer(customerId)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Choose Address") })
-        },
-        bottomBar = {
-            Button(
-                onClick = {
-                    selectedAddressId?.let { id ->
-                        navController.navigate("order_details?addressId=$id")
-                    }
-                },
-                enabled = selectedAddressId != null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text("Continue to Payment")
-            }
-        }
-    ) { padding ->
-        Box(modifier = Modifier
+    Column(
+        modifier = Modifier
             .fillMaxSize()
-            .padding(padding)) {
+            .background(Color.White)
+    ) {
+        // Header - consistent with AddressListScreen
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { navController.popBackStack() }
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Choose Address",
+                color = HeaderColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        //Spacer(modifier = Modifier.height(8.dp))
+        
+        // Content
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
             when {
                 isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BluePrimary)
+                    }
                 }
 
                 error != null -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
                             text = error,
-                            color = Color.Red,
-                            modifier = Modifier.align(Alignment.Center)
+                            color = Color.Red
                         )
                     }
                 }
 
                 else -> {
-                    LazyColumn(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
                         items(addressList) { address ->
                             AddressItem(
                                 address = address,
                                 isSelected = selectedAddressId == address.id,
                                 onSelect = {
                                     selectedAddressId = address.id
+                                    // Update default address in backend
                                     viewModel.sendeditAddressRequest(
                                         id = address.id,
                                         default = true,
@@ -99,6 +134,30 @@ fun ChooseAddressScreen(
                 }
             }
         }
+        
+        // Bottom Button
+        Button(
+            onClick = {
+                selectedAddressId?.let { id ->
+                    navController.navigate("order_details/$id")
+                }
+            },
+            enabled = selectedAddressId != null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            shape = RoundedCornerShape(12.dp), // Change radius as needed
+            colors = ButtonDefaults.buttonColors(
+                containerColor = BluePrimary
+            )
+        ) {
+            Text(
+                "Continue to Payment",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        }
     }
 }
 
@@ -108,28 +167,103 @@ fun AddressItem(
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
-    val backgroundColor = if (address.default || isSelected) Color(0xFFEEF6FF) else Color.White
-    val borderColor = if (address.default || isSelected) Color(0xFF2196F3) else Color.LightGray
+    val backgroundColor = if (isSelected) Color(0xFFEEF6FF) else Color.White
+    val borderColor = if (isSelected) BluePrimary else Color.LightGray
+    val borderWidth = if (isSelected) 2.dp else 1.dp
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelect() },
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        border = BorderStroke(1.dp, borderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(borderWidth, borderColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 2.dp
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = address.country ?: "Unknown Country",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Radio button indicator
+            Icon(
+                imageVector = if (isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+                contentDescription = if (isSelected) "Selected" else "Not selected",
+                tint = if (isSelected) BluePrimary else Color.Gray,
+                modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = address.address1)
-            Text(text = address.address2?.toString() ?: "")
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Phone: ${address.phone ?: "N/A"}")
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // Address content
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = address.name ?: "Address",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (isSelected) BluePrimary else Color.Black
+                    )
+                    
+                    // Default address badge
+                    if (address.default) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = BluePrimary.copy(alpha = 0.1f)
+                            ),
+                            modifier = Modifier.padding(0.dp)
+                        ) {
+                            Text(
+                                text = "Default",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BluePrimary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = address.address1,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+
+//                if (address.address2.isNotBlank()) {
+//                    Text(
+//                        text = address.address2.toString(),
+//                        fontSize = 14.sp,
+//                        color = Color.Gray
+//                    )
+//                }
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                Text(
+                    text = "${address.city}, ${address.country}",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                if (!address.phone.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Phone: ${address.phone}",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
         }
     }
 }

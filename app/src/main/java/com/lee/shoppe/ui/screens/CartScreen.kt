@@ -46,6 +46,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import com.airbnb.lottie.LottieComposition
 import kotlinx.coroutines.flow.count
 
 @Composable
@@ -273,7 +274,7 @@ fun CartHeader(
                 modifier = Modifier.size(44.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    painter = painterResource(id = R.drawable.delete_24),
                     contentDescription = "Delete all",
                     tint = Color(0xFFE57373),
                     modifier = Modifier.size(24.dp)
@@ -286,7 +287,7 @@ fun CartHeader(
 
 @Composable
 fun GuestUserState(
-    lottieComposition: com.airbnb.lottie.LottieComposition?,
+    lottieComposition: LottieComposition?,
     onLoginClick: () -> Unit
 ) {
     Column(
@@ -345,7 +346,7 @@ fun GuestUserState(
 }
 
 @Composable
-fun EmptyCartState(lottieComposition: com.airbnb.lottie.LottieComposition?) {
+fun EmptyCartState(lottieComposition: LottieComposition?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -382,7 +383,7 @@ fun EmptyCartState(lottieComposition: com.airbnb.lottie.LottieComposition?) {
 }
 
 @Composable
-fun NetworkErrorState(lottieComposition: com.airbnb.lottie.LottieComposition?) {
+fun NetworkErrorState(lottieComposition: LottieComposition?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -752,20 +753,25 @@ fun CartSummaryBottom(
                     color = Color.Black
                 )
             }
-            // Checkout button
+            // Checkout button with rounded corners
             Button(
                 onClick = onCheckout,
                 modifier = Modifier
                     .height(44.dp)
-                    .width(140.dp)
+                    .width(140.dp),
+                shape = RoundedCornerShape(12.dp), // Change radius as needed
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BluePrimary
+                )
             ) {
                 Text(
                     text = "Checkout",
-                    color = Color.White,
+                    color = Color(0xFFF3F3F3),
                     fontWeight = FontWeight.Medium,
                     fontSize = 18.sp
                 )
             }
+
         }
     }
 } 

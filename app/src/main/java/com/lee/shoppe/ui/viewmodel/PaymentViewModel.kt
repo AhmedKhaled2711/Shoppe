@@ -36,8 +36,10 @@ class PaymentViewModel @Inject constructor(
                 val response = repo.createCheckoutSession(
                     successUrl, cancelUrl, customerEmail, currency, productName, productDescription, unitAmountDecimal, quantity, mode, paymentMethodType
                 )
+                println("✅ Payment Success: $response")
                 _productPayment.value = NetworkState.Success(response)
             } catch (e: Exception) {
+                println("❌ Payment Error: ${e.message}")
                 _productPayment.value = NetworkState.Failure(e)
             }
         }

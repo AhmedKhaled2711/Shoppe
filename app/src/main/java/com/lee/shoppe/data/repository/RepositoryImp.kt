@@ -138,4 +138,10 @@ class RepositoryImp @Inject constructor(
         return networkManager.editSingleCustomerAddressStar(customerId, id, addressRequest)
     }
 
+    override suspend fun getCustomerOrders(userId: Long): Flow<OrderResponse> {
+        return flow {
+            emit(networkManager.getCustomerOrders(userId))
+        }
+    }
+
 }

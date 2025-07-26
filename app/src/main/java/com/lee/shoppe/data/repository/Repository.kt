@@ -46,4 +46,6 @@ interface Repository {
         id: Long,
         addressRequest: AddressDefaultRequest
     ): AddressUpdateRequest
+    suspend fun getCustomerOrders(@Path("id") userId: Long): Flow<OrderResponse>
+
 }

@@ -22,6 +22,10 @@ class NetworkManagerImp private constructor(): NetworkManager {
         RetrofitHelper.retrofitInstance.create(NetworkService::class.java)
     }
 
+    private val networkServicePayment:NetworkService by lazy {
+        RetrofitHelperPayment.retrofitInstance.create(NetworkService::class.java)
+    }
+
     companion object{
         private var instance: NetworkManagerImp?=null
         fun getInstance(): NetworkManagerImp {
@@ -104,6 +108,10 @@ class NetworkManagerImp private constructor(): NetworkManager {
         return networkService.editSingleCustomerAddressStar(customerId, id, addressRequest)
     }
 
+    override suspend fun getCustomerOrders(userId: Long): OrderResponse {
+        return networkService.getCustomerOrders(userId)
+    }
+
     override suspend fun deleteSingleCustomerAddress(customerId: Long, id: Long) {
         return networkService.deleteSingleCustomerAddress(customerId,id)
     }
@@ -120,7 +128,7 @@ class NetworkManagerImp private constructor(): NetworkManager {
         mode: String,
         paymentMethodType: String
     ): CheckoutSessionResponse {
-        return   networkService.createCheckoutSession(successUrl,cancelUrl,customerEmail,currency,productName,productDescription,unitAmountDecimal,quantity,mode,paymentMethodType)
+        return   networkServicePayment.createCheckoutSession(successUrl,cancelUrl,customerEmail,currency,productName,productDescription,unitAmountDecimal,quantity,mode,paymentMethodType)
 
     }
 
