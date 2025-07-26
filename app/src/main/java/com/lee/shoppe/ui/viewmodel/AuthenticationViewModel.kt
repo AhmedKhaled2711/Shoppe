@@ -10,6 +10,7 @@ import com.lee.shoppe.data.model.CustomerRequest
 import com.lee.shoppe.data.model.CustomerResponse
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.model.UpdateCustomerRequest
+import com.lee.shoppe.data.network.caching.SharedPreferenceManager
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.data.repository.Repository
 import kotlinx.coroutines.Dispatchers
@@ -84,18 +85,46 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    fun saveCustomerData(context: Context, data: CustomerResponse.Customer){
+    fun saveCustomerData(context: Context, data: CustomerResponse.Customer) {
         val customer = CustomerData.getInstance(context)
+        
+        // Save guest cart and favorites if they exist and we're in guest mode
+        val guestCartId = if (customer.isGuestWithPreservedData && customer.cartListId > 0) customer.cartListId else 0L
+        val guestFavId = if (customer.isGuestWithPreservedData && customer.favListId > 0) customer.favListId else 0L
+        
+        // Update customer data
         customer.isLogged = true
         customer.id = data.id
         customer.name = data.first_name
         customer.email = data.email
-        customer.currency = data.currency
-        customer.favListId = data.note
-        customer.cartListId = data.multipass_identifier
+        
+        // Preserve existing currency if we have one, otherwise use server value
+        val currentCurrency = if (customer.currency.isNotEmpty()) customer.currency else data.currency
+        customer.currency = currentCurrency
+        
+        // Handle favorites list ID
+        val serverFavId = data.note ?: 0L
+        customer.favListId = if (serverFavId > 0) serverFavId else guestFavId
+        
+        // Handle cart list ID
+        val serverCartId = data.multipass_identifier ?: 0L
+        customer.cartListId = if (serverCartId > 0) serverCartId else guestCartId
+        
+        // Clear guest flag after successful login
+        customer.isGuestWithPreservedData = false
+        
+        // Log the state for debugging
+        Log.d("Login", "User logged in. Cart ID: ${customer.cartListId}, Favorites ID: ${customer.favListId}")
+        
         // Save login state in SharedPreferenceManager
-        val sharedPrefs = com.lee.shoppe.data.network.caching.SharedPreferenceManager(context)
-        sharedPrefs.save(com.lee.shoppe.data.network.caching.SharedPreferenceManager.Key.IS_LOGGED_IN, "true")
+        val sharedPrefs = SharedPreferenceManager(context)
+        sharedPrefs.save(SharedPreferenceManager.Key.IS_LOGGED_IN, "true")
+        
+        // Clear guest data from shared prefs since we've migrated it to the user account
+        if (guestCartId > 0 || guestFavId > 0) {
+            sharedPrefs.save(SharedPreferenceManager.Key.GUEST_CART_ID, "0")
+            sharedPrefs.save(SharedPreferenceManager.Key.GUEST_FAV_ID, "0")
+        }
     }
 
     fun onFirstNameChange(value: String) {

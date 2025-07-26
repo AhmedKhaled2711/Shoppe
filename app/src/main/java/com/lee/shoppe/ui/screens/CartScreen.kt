@@ -82,14 +82,21 @@ fun CartScreen(
 
     // Load cart products when screen is first composed
     LaunchedEffect(Unit) {
-        if (customerData.isLogged && customerData.cartListId > 0) {
+        val shouldLoadCart = (customerData.isLogged || customerData.isGuestWithPreservedData) && 
+                           customerData.cartListId > 0
+        
+        if (shouldLoadCart) {
+            Log.d("CartScreen", "Loading cart with ID: ${customerData.cartListId} (isGuestWithPreservedData: ${customerData.isGuestWithPreservedData})")
             cartViewModel.getCartProducts(customerData.cartListId)
         } else if (customerData.isLogged) {
             // Create cart list if user is logged in but doesn't have a cart list
+            Log.d("CartScreen", "Creating new cart list for logged in user")
             cartViewModel.checkAndCreateCartListIfNeeded { newListId ->
                 customerData.cartListId = newListId
                 cartViewModel.getCartProducts(newListId)
             }
+        } else {
+            Log.d("CartScreen", "No cart to load - not logged in and no guest cart")
         }
     }
 
@@ -265,7 +272,7 @@ fun CartHeader(
                         text = cartItemCount.toString(),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color.Black
+                        color = HeaderColor
                     )
                 }
             }
@@ -596,7 +603,11 @@ fun CartItemCard(
             ) {
                 // Product title at the top, aligned with image
                 Text(
-                    text = item.title?.substringAfter("|")?.trim() ?: "Unknown Product",
+                    text = item.title
+                        ?.split("|")
+                        ?.getOrNull(1)
+                        ?.trim()
+                        ?: "Unknown Product",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     color = Color.Black,
@@ -618,7 +629,7 @@ fun CartItemCard(
 
                 Text(
                     text = "${item.price ?: "0.00"} $currencySymbol",
-                    color = Color(0xFF202020),
+                    color = BluePrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -848,20 +859,20 @@ fun DeleteCartDialog(
                 Box(
                     modifier = Modifier
                         .offset(y = (-1).dp)
-                        .size(64.dp)
+                        .size(84.dp)
                         .background(Color.White, shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .background(Color(0xFFFFCDD2), shape = CircleShape),
+                            .size(55.dp)
+                            .background(Color(0xFFFFEBEB), shape = CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Error,
                             contentDescription = null,
-                            tint = Color(0xFFE57373),
+                            tint = Color(0xFFF1AEAE),
                             modifier = Modifier.size(32.dp)
                         )
                     }

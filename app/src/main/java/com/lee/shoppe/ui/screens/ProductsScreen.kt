@@ -47,6 +47,9 @@ import kotlin.random.Random
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import com.lee.shoppe.ui.theme.BluePrimary
 import okhttp3.internal.wait
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -199,13 +202,13 @@ fun ProductsScreen(
                 fontSize = 22.sp,
                 modifier = Modifier.weight(1f)
             )
-            IconButton(onClick = { showFilterDialog = true }) {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "Filter",
-                    tint = Color.Black
-                )
-            }
+//            IconButton(onClick = { showFilterDialog = true }) {
+//                Icon(
+//                    imageVector = Icons.Default.FilterList,
+//                    contentDescription = "Filter",
+//                    tint = Color.Black
+//                )
+//            }
         }
 
             // Search Bar
@@ -402,7 +405,7 @@ fun FilterDialog(
 ) {
     var fromPrice by remember { mutableStateOf("") }
     var toPrice by remember { mutableStateOf("") }
-    val primaryColor = Color(0xFF0057FF)
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -411,7 +414,6 @@ fun FilterDialog(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-
             Column(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
@@ -419,45 +421,61 @@ fun FilterDialog(
                     text = "Filter by Price",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = primaryColor
+                    color = BluePrimary
                 )
+
                 Spacer(modifier = Modifier.height(20.dp))
+
                 OutlinedTextField(
                     value = fromPrice,
                     onValueChange = { fromPrice = it },
                     label = { Text("From Price") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BluePrimary,
+                        unfocusedBorderColor = Color.Gray,
+                        focusedLabelColor = BluePrimary,
+                        cursorColor = BluePrimary
+                    )
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = toPrice,
                     onValueChange = { toPrice = it },
                     label = { Text("To Price") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BluePrimary,
+                        unfocusedBorderColor = Color.Gray,
+                        focusedLabelColor = BluePrimary,
+                        cursorColor = BluePrimary
+                    )
                 )
+
                 Spacer(modifier = Modifier.height(24.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        border = BorderStroke(1.dp, primaryColor),
+                        border = BorderStroke(1.dp, BluePrimary),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Cancel", color = primaryColor, fontWeight = FontWeight.Bold)
+                        Text("Cancel", color = BluePrimary, fontWeight = FontWeight.Bold)
                     }
+
                     Spacer(modifier = Modifier.width(12.dp))
+
                     Button(
                         onClick = {
                             val from = fromPrice.toFloatOrNull()
@@ -465,7 +483,7 @@ fun FilterDialog(
                             onFilterApply(from, to)
                         },
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
                     ) {
                         Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
                     }
@@ -474,6 +492,7 @@ fun FilterDialog(
         }
     }
 }
+
 
 @Composable
 fun ProductCard(
@@ -533,14 +552,26 @@ fun ProductCard(
             ) {
                 // Title
                 product.title?.let {
+                    val titleParts = it.split("|")
+                    val rawTitle = titleParts.getOrNull(1)?.trim() ?: ""
+                    val wordList = rawTitle.split(" ")
+
+                    val displayTitle = if (wordList.size > 3) {
+                        wordList.take(3).joinToString(" ") + "..."
+                    } else {
+                        rawTitle
+                    }
+
                     Text(
-                        text = it,
+                        text = displayTitle,
                         color = Color.Black,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2
                     )
                 }
+
+
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -597,35 +628,11 @@ fun ProductCard(
                 ) {
                     Text(
                         text = "$displayPrice $currencySymbol",
-                        color = Color.Red,
+                        color = BluePrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-                /**
-                 * //Old price and discount (if available)
-                 *                 if (product.variants?.get(0)?.price != null && product.variants. != null) {
-                 *                     Row(
-                 *                         verticalAlignment = Alignment.CenterVertically
-                 *                     ) {
-                 *                         Text(
-                 *                             text = "$${product.oldPrice}",
-                 *                             color = Color.Gray,
-                 *                             fontSize = 14.sp,
-                 *                             modifier = Modifier.padding(end = 8.dp)
-                 *                         )
-                 *                         Text(
-                 *                             text = "${product.discountPercentage}% off",
-                 *                             color = Color.Red,
-                 *                             fontSize = 16.sp,
-                 *                             fontWeight = FontWeight.Bold
-                 *                         )
-                 *                     }
-                 *                 }
-                 *
-                 */
-
             }
         }
     }

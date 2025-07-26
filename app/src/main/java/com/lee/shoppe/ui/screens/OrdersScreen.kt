@@ -1,10 +1,12 @@
 package com.lee.shoppe.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.fashionshop.Model.Order
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.theme.BlueLight
@@ -25,6 +28,7 @@ import com.lee.shoppe.ui.viewmodel.OrdersViewModel
 
 @Composable
 fun OrdersScreen(
+    navController: NavController,
     viewModel: OrdersViewModel =  hiltViewModel(),
     userId: Long,
     onOrderClick: (Order) -> Unit,
@@ -43,45 +47,33 @@ fun OrdersScreen(
             .background(Color.White)
             .padding(16.dp)
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
 
-        // Address header
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "Location Icon",
-                tint = BluePrimary,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(BlueLight)
-                    .padding(12.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text("Shipping Address", color = HeaderColor, fontWeight = FontWeight.Bold)
-                Text("123 Main St, City, Country", fontSize = 14.sp, color = Color.Gray)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(
-            onClick = onAddressEditClick,
-            colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
-            modifier = Modifier.align(Alignment.End)
+        // Header - consistent with other screens
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 0.dp, vertical = 0.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Edit Address", color = Color.White)
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { navController.popBackStack() }
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "My Orders",
+                color = HeaderColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                modifier = Modifier.weight(1f)
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "My Orders",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = HeaderColor
-        )
-        Spacer(modifier = Modifier.height(12.dp))
 
         when (ordersState) {
             is NetworkState.Loading -> {

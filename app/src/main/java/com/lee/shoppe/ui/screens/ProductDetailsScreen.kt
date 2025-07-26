@@ -44,6 +44,7 @@ import com.lee.shoppe.data.model.ProductResponse
 import com.lee.shoppe.data.model.ProductDetails
 import com.lee.shoppe.data.model.Reviews
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import com.lee.shoppe.ui.viewmodel.ProductInfoViewModel
 import kotlinx.coroutines.flow.first
@@ -376,7 +377,7 @@ fun ProductDetailsScreen(
 
                                     Text(
                                         text = "$price $currencySymbol",
-                                        color = Color.Red,
+                                        color = BluePrimary,
                                         fontSize = 28.sp,
                                         fontWeight = FontWeight.Bold
                                     )

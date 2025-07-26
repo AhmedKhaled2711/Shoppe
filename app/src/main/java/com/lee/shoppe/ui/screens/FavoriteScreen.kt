@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -38,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,6 +69,8 @@ import com.lee.shoppe.data.model.Product
 import com.lee.shoppe.data.model.ProductImage
 import com.lee.shoppe.data.model.Variant
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.theme.BlueLight
+import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import kotlin.random.Random
@@ -76,6 +80,7 @@ import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.rememberCoroutineScope
+import com.lee.shoppe.ui.theme.BluePrimary
 
 @Composable
 fun FavoriteScreen(
@@ -102,13 +107,17 @@ fun FavoriteScreen(
     // Load favorite products when component mounts
     LaunchedEffect(Unit) {
         if (isNetworkConnected) {
-            if (customerData.isLogged) {
-                if (customerData.favListId > 0) {
-                    favViewModel.getFavProducts(customerData.favListId)
-                } else {
-                    // Handle case where favListId is not set
-                    android.util.Log.w("FavoriteScreen", "favListId is 0 or not set")
-                }
+            val shouldLoadFavorites = (customerData.isLogged || customerData.isGuestWithPreservedData) && 
+                                   customerData.favListId > 0
+            
+            if (shouldLoadFavorites) {
+                Log.d("FavoriteScreen", "Loading favorites with ID: ${customerData.favListId} (isGuestWithPreservedData: ${customerData.isGuestWithPreservedData})")
+                favViewModel.getFavProducts(customerData.favListId)
+            } else if (customerData.isLogged) {
+                // Handle case where user is logged in but doesn't have a favorites list
+                Log.d("FavoriteScreen", "User is logged in but has no favorites list")
+            } else {
+                Log.d("FavoriteScreen", "No favorites to load - not logged in and no guest favorites")
             }
         }
     }
@@ -184,35 +193,19 @@ fun FavoriteScreen(
         }
     }
 
+    // Calculate favorite item count
+    val favoriteItemCount = favoriteProducts.size
+
     Box {
           Column(modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
           ) {
-            // Custom Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.Black
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "My Favorites",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Professional Header matching CartScreen style
+            FavoriteHeader(
+                favoriteItemCount = favoriteItemCount,
+                onBackClick = { navController.navigateUp() }
+            )
             //Spacer(modifier = Modifier.height(8.dp))
             when {
                 // Network not connected
@@ -491,6 +484,55 @@ fun FavoriteScreen(
 }
 
 @Composable
+fun FavoriteHeader(
+    favoriteItemCount: Int,
+    onBackClick: () -> Unit
+) {
+    Surface(
+        shadowElevation = 4.dp,
+        color = Color.White,
+        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Title and Count
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "My Favorites",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = HeaderColor
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(BlueLight, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = favoriteItemCount.toString(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = HeaderColor
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun FavoriteProductCard(
     product: Product,
     onFavoriteClick: () -> Unit,
@@ -499,22 +541,21 @@ fun FavoriteProductCard(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(190.dp)
+            .height(320.dp)
             .clickable { onCardClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
-        )
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(5.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column {
-            // Product Image
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Image with favorite button
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(200.dp)
             ) {
                 AsyncImage(
                     model = product.image?.src,
@@ -524,68 +565,97 @@ fun FavoriteProductCard(
                     error = painterResource(id = R.drawable.broken_image)
                 )
                 
-                // Favorite Button
+                // Favorite button overlay
                 IconButton(
                     onClick = { onFavoriteClick() },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .size(60.dp)
+                        .padding(8.dp)
+                        .size(32.dp)
                 ) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = if (isFavorite) Color(0xFF0057FF) else Color.Black,
-                        modifier = Modifier.size(28.dp)
+                        contentDescription = "Toggle favorite",
+                        tint = if (isFavorite) Color(0xFF0057FF) else Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
             
-            // Product Details
+            // Product details
             Column(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Title
-                Text(
-                    text = product.title ?: "Product",
-                    color = Color.Black,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Rating
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val randomRating = remember { Random.nextFloat() * 5 }
-                    repeat(5) { index ->
-                        Icon(
-                            imageVector = if (index < randomRating.toInt()) Icons.Default.Star else Icons.Default.StarOutline,
-                            contentDescription = null,
-                            tint = if (index < randomRating.toInt()) Color(0xFFFFD700) else Color(0xFFE0E0E0),
-                            modifier = Modifier.size(12.dp)
+                Column {
+                    // Product title
+                    Text(
+                        text = product.title
+                            ?.split("|")
+                            ?.getOrNull(1)
+                            ?.trim()
+                            ?.let { title ->
+                                val words = title.split(" ")
+                                if (words.size > 3) {
+                                    words.take(3).joinToString(" ") + "..."
+                                } else {
+                                    title
+                                }
+                            } ?: "Unknown Product",
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Rating stars
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val randomRating = remember { Random.nextFloat() * 5 }
+                        repeat(5) { index ->
+                            Icon(
+                                imageVector = if (index < randomRating.toInt()) Icons.Default.Star else Icons.Default.StarOutline,
+                                contentDescription = null,
+                                tint = if (index < randomRating.toInt()) Color(0xFFFFD700) else Color(0xFFE0E0E0),
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "(${String.format("%.1f", randomRating)})",
+                            color = Color.Gray,
+                            fontSize = 10.sp
                         )
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "(${String.format("%.1f", randomRating)})",
-                        color = Color.Gray,
-                        fontSize = 10.sp
-                    )
                 }
                 
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Price
+                // Price at bottom
+                val price = product.variants?.firstOrNull()?.price ?: "0.0"
+                val context = LocalContext.current
+                val customerData = CustomerData.getInstance(context)
+                val currencySymbol = when (val currency = customerData.currency) {
+                    "USD" -> "$"
+                    "EGY" -> "EGP"
+                    "EUR" -> "€"
+                    "GBP" -> "£"
+                    else -> currency
+                }
+
                 Text(
-                    text = product.variants?.get(0)?.price ?: "0.0",
-                    color = Color.Red,
-                    fontSize = 16.sp,
+                    text = "$price $currencySymbol",
+                    color = BluePrimary,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
+
             }
         }
     }

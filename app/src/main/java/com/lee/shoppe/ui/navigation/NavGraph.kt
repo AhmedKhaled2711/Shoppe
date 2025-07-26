@@ -41,6 +41,7 @@ import com.lee.shoppe.ui.screens.OrdersScreen
 import com.lee.shoppe.data.model.BottomNavItem
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.caching.SharedPreferenceManager
+import com.lee.shoppe.ui.screens.AboutScreen
 import com.lee.shoppe.ui.screens.AddEditAddressScreen
 import com.lee.shoppe.ui.screens.AddressListScreen
 import com.lee.shoppe.ui.screens.CartScreen
@@ -58,6 +59,7 @@ import com.lee.shoppe.ui.screens.ProductsScreen
 import com.lee.shoppe.ui.screens.ProfileDetailsScreen
 import com.lee.shoppe.ui.screens.ProfileScreen
 import com.lee.shoppe.ui.screens.ReviewScreen
+import com.lee.shoppe.ui.screens.TermsAndConditionsScreen
 import com.lee.shoppe.ui.screens.SignupScreen
 import com.lee.shoppe.ui.screens.StartScreen
 
@@ -234,6 +236,12 @@ fun ECommerceNavHost(navController: NavHostController) {
             composable(Screen.Profile.route) {
                 ProfileScreen(navController)
             }
+            composable("about") {
+                AboutScreen(navController)
+            }
+            composable("terms_and_conditions") {
+                TermsAndConditionsScreen(navController)
+            }
             composable(
                 route = "products/{brandTitle}",
                 arguments = listOf(navArgument("brandTitle") { type = NavType.StringType })
@@ -256,6 +264,7 @@ fun ECommerceNavHost(navController: NavHostController) {
             }
             composable("orders") {
                 OrdersScreen(
+                    navController = navController,
                     userId = sharedPrefs.retrieve(SharedPreferenceManager.Key.ID, "0").toLong(),
                     onOrderClick = { order ->
                         navController.navigate("order_info/${order.id}")

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.icons.Icons
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,7 +51,9 @@ import com.example.fashionshop.Model.AddressOrder
 import com.example.fashionshop.Model.LineItemBody
 import com.example.fashionshop.Model.Order
 import com.example.fashionshop.Model.OrderResponse
+import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.viewmodel.OrderInfoViewModel
@@ -76,7 +80,7 @@ fun OrderInfoScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -140,9 +144,7 @@ private fun OrderContent(order: Order) {
             // Order Items Header Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = BluePrimary.copy(alpha = 0.1f)
-                ),
+                colors = CardDefaults.cardColors(containerColor = BlueLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -158,15 +160,34 @@ private fun OrderContent(order: Order) {
                         tint = BluePrimary,
                         modifier = Modifier.size(24.dp)
                     )
+
                     Spacer(modifier = Modifier.width(12.dp))
+
                     Text(
                         text = "Order Items",
                         color = BluePrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
+
+                    Spacer(modifier = Modifier.weight(1f)) // Pushes the Box to the end
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(BluePrimary.copy(alpha = 0.1f), shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = order.line_items?.size.toString(),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = HeaderColor
+                        )
+                    }
                 }
             }
+
         }
         
         items(order.line_items ?: emptyList()) { item ->
@@ -234,6 +255,15 @@ private fun OrderDetailsSection(order: Order) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                val context = LocalContext.current
+                val customerData = CustomerData.getInstance(context)
+                val currencySymbol = when (val currency = customerData.currency) {
+                    "USD" -> "$"
+                    "EGY" -> "EGP"
+                    "EUR" -> "€"
+                    "GBP" -> "£"
+                    else -> currency
+                }
                 Text(
                     text = "Total Amount",
                     color = HeaderColor,
@@ -249,9 +279,10 @@ private fun OrderDetailsSection(order: Order) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = order.currency?.value ?: "USD",
-                        color = Color.Gray,
-                        fontSize = 14.sp
+                        text = currencySymbol,
+                        color = BluePrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -300,10 +331,10 @@ private fun formatAddress(address: AddressOrder?): String {
     return listOfNotNull(
         address.address1,
         address.address2,
-        address.city,
-        address.province,
-        address.zip,
-        address.country
+        //address.city,
+        //address.province,
+        //address.zip,
+        //address.country
     ).joinToString("\n")
 }
 
@@ -364,13 +395,21 @@ private fun OrderItemRow(item: LineItemBody) {
                     fontWeight = FontWeight.Medium
                 )
             }
-
+            val context = LocalContext.current
+            val customerData = CustomerData.getInstance(context)
+            val currencySymbol = when (val currency = customerData.currency) {
+                "USD" -> "$"
+                "EGY" -> "EGP"
+                "EUR" -> "€"
+                "GBP" -> "£"
+                else -> currency
+            }
             // Price
             Column(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = "$${item.price ?: "0.00"}",
+                    text = "${item.price ?: "0.00"} $currencySymbol",
                     color = BluePrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp

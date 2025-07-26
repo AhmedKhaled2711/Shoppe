@@ -2,6 +2,7 @@ package com.lee.shoppe.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +23,8 @@ import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -163,10 +167,10 @@ fun ProfileScreen(navController: NavController) {
             if (customerData.isLogged) {
                 // Personal Section
                 SectionHeader("Personal")
-                ProfileListItem("Profile") {
-                    navController.navigate("profile_details")
-                }
-                DividerLine()
+//                ProfileListItem("Profile") {
+//                    navController.navigate("profile_details")
+//                }
+//                DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Manage Addresses") {
                     navController.navigate("address_list")
@@ -177,32 +181,32 @@ fun ProfileScreen(navController: NavController) {
                     navController.navigate("orders")
                 }
                 DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("Payment methods") {
-                    navController.navigate("payment")
-                }
-                DividerLine()
+//                Spacer(modifier = Modifier.height(10.dp))
+//                ProfileListItem("Payment methods") {
+//                    navController.navigate("payment")
+//                }
+//                DividerLine()
 
                 Spacer(modifier = Modifier.height(24.dp))
                 // Shop Section
                 SectionHeader("Shop")
-                ProfileListItem("Country", customerData.currency.ifBlank { "USD" }) {
-                    showCurrencyDialog.value = true
-                }
-                DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
+//                ProfileListItem("Country", "EGY") {
+//                    showCurrencyDialog.value = true
+//                }
+//                DividerLine()
+//                Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Currency", customerData.currency.ifBlank { "$ USD" }) {
                     showCurrencyDialog.value = true
                 }
                 DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("Sizes", "UK") {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Sizes coming soon") }
-                }
-                DividerLine()
+//                Spacer(modifier = Modifier.height(10.dp))
+//                ProfileListItem("Sizes", "UK") {
+//                    coroutineScope.launch { snackbarHostState.showSnackbar("Sizes coming soon") }
+//                }
+//                DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Terms and Conditions") {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Terms and Conditions coming soon") }
+                    navController.navigate("terms_and_conditions")
                 }
                 DividerLine()
                 Spacer(modifier = Modifier.height(24.dp))
@@ -214,7 +218,7 @@ fun ProfileScreen(navController: NavController) {
                 DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("About Shoppe") {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("About coming soon") }
+                    navController.navigate("about")
                 }
                 DividerLine()
                 Spacer(modifier = Modifier.height(24.dp))
@@ -261,24 +265,21 @@ fun ProfileScreen(navController: NavController) {
         SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
 
-    // Logout Dialog
-    if (showLogoutDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog.value = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
-            confirmButton = {
-                Button(onClick = {
-                    customerData.logOut()
-                    showLogoutDialog.value = false
-                    navController.navigate("login")
-                }) { Text("Logout") }
-            },
-            dismissButton = {
-                Button(onClick = { showLogoutDialog.value = false }) { Text("Cancel") }
+    // Professional Logout Dialog using DeleteCartDialog
+    DeleteCartDialog(
+        show = showLogoutDialog.value,
+        title = "Logout Confirmation",
+        subtitle = "Hello ${customerData.name.ifBlank { "User" }}! Are you sure you want to logout from your account?",
+        confirmText = "Logout",
+        onCancel = { showLogoutDialog.value = false },
+        onConfirm = {
+            customerData.logOut()
+            showLogoutDialog.value = false
+            navController.navigate("login") {
+                popUpTo(0) { inclusive = true }
             }
-        )
-    }
+        }
+    )
     // Delete Account Dialog
     if (showDeleteDialog.value) {
         AlertDialog(

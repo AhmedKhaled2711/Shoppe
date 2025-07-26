@@ -1,7 +1,6 @@
 package com.lee.shoppe.data.network.caching
 
 import android.content.Context
-import android.content.SharedPreferences
 
 class SharedPreferenceManager(private val context: Context) {
     private val FILE_NAME = "UserInfo"
@@ -17,7 +16,13 @@ class SharedPreferenceManager(private val context: Context) {
         CartListID,
         Language,
         LanguageCode,
-        ONBOARDING_SHOWN
+        ONBOARDING_SHOWN,
+        IS_GUEST_WITH_PRESERVED_DATA,
+        GUEST_CART_ID,
+        GUEST_FAV_ID,
+        GUEST_CURRENCY,
+        GUEST_LANGUAGE,
+        GUEST_LANGUAGE_CODE
     }
 
     fun save(key: Key, value: String) {
