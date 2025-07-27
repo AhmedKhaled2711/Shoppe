@@ -13,11 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -41,6 +42,8 @@ import androidx.navigation.NavController
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.utils.PaymentConstants
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.ui.viewmodel.CartViewModel
@@ -65,6 +68,8 @@ fun PaymentSheetScreen(
     val customerData = remember { CustomerData.getInstance(context) }
 
     var isLoading by remember { mutableStateOf(true) }
+    val loadingMessage = "Processing Payment"
+    val secondaryMessage = "Please wait while we connect to the payment gateway..."
 
     val cartState by cartViewModel.cartProducts.collectAsState()
     val addressState by addressViewModel.products.collectAsState()
@@ -130,27 +135,13 @@ fun PaymentSheetScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { androidx.compose.material3.Text("Payment") },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            Log.d("PaymentSheetScreen", "Close button clicked")
-                            onDismiss()
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.Close, 
-                            contentDescription = stringResource(R.string.close),
-                            tint = androidx.compose.ui.graphics.Color.White
-                        )
-                    }
+            ScreenHeader(
+                title = "Payment",
+                onBackClick = {
+                    Log.d("PaymentSheetScreen", "Back button clicked")
+                    onDismiss()
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Black,
-                    titleContentColor = androidx.compose.ui.graphics.Color.White,
-                    navigationIconContentColor = androidx.compose.ui.graphics.Color.White
-                )
+                showBackButton = true
             )
         },
         snackbarHost = {
@@ -161,8 +152,17 @@ fun PaymentSheetScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
         ) {
+            if (isLoading) {
+                LoadingWithMessages(
+                    modifier = Modifier.fillMaxSize(),
+                    mainMessage = loadingMessage,
+                    secondaryMessage = secondaryMessage,
+                    loadingIndicatorColor = MaterialTheme.colorScheme.primary,
+                    spacing = 16.dp,
+                    messageSpacing = 8.dp
+                )
+            }
 
             AndroidView(
                 factory = { context ->

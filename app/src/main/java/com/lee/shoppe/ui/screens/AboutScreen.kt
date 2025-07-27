@@ -290,7 +290,7 @@ private fun ContactSection() {
             ContactItem(
                 icon = Icons.Default.Place,
                 label = "Address",
-                value = "123 Shopping Street, Commerce City, CC 12345"
+                value = "13 Shopping Street, Sheikh Zayed City, Giza Governorate"
             )
         }
     }
@@ -340,7 +340,9 @@ private fun DeveloperSection() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = BlueLight.copy(alpha = 0.3f)
+            containerColor = BlueLight
+            //containerColor = BlueLight.copy(alpha = 0.3f)
+
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
@@ -458,7 +460,7 @@ private fun VersionSection() {
                     fontSize = 14.sp
                 )
                 Text(
-                    text = "2024.01.26",
+                    text = "2025.07.30",
                     color = Color.Black,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium

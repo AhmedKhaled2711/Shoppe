@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FilterList
@@ -19,6 +18,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
+import com.lee.shoppe.ui.components.ScreenHeader
+import com.lee.shoppe.ui.components.ScreenHeader
 import androidx.compose.runtime.*
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
@@ -179,37 +180,12 @@ fun ProductsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Custom Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.navigateUp() }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.Black
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = brandTitle?.let { "Products for $it" } ?: "Products",
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                modifier = Modifier.weight(1f)
-            )
-//            IconButton(onClick = { showFilterDialog = true }) {
-//                Icon(
-//                    imageVector = Icons.Default.FilterList,
-//                    contentDescription = "Filter",
-//                    tint = Color.Black
-//                )
-//            }
-        }
+        // Header
+        ScreenHeader(
+            title = brandTitle?.let { "Products for $it" } ?: "Products",
+            onBackClick = { navController.navigateUp() },
+            showBackButton = true
+        )
 
             // Search Bar
             SearchBar(
@@ -579,8 +555,9 @@ fun ProductCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val randomRatings = remember { FloatArray(10) { Random.nextFloat() * 5 } }
-                    val randomRating = remember { randomRatings.random() }
+                    // Ensure rating is between 3.0 and 5.0
+                    val randomRating = remember { Random.nextDouble(3.0, 5.0).toFloat() }
+
                     repeat(5) { index ->
                         val fullStarThreshold = index + 1
                         Icon(
@@ -590,7 +567,9 @@ fun ProductCard(
                             modifier = Modifier.size(16.dp)
                         )
                     }
+
                     Spacer(modifier = Modifier.width(4.dp))
+
                     Text(
                         text = "(${String.format("%.1f", randomRating)})",
                         color = Color.Gray,

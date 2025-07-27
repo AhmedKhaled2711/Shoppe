@@ -75,6 +75,7 @@ import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.ui.viewmodel.CartViewModel
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.viewmodel.OrderDetailsViewModel
@@ -200,30 +201,12 @@ fun OrderDetailsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header - consistent with ChooseAddressScreen
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { navController.popBackStack() }
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = stringResource(R.string.order_details),
-                color = HeaderColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        // Header
+        ScreenHeader(
+            title = stringResource(R.string.order_details),
+            onBackClick = { navController.popBackStack() },
+            showBackButton = true
+        )
         
         // Content
         Box(
@@ -592,11 +575,11 @@ private fun OrderSummarySection(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(stringResource(R.string.subtotal), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.subtotal), fontSize = 20.sp, fontWeight = FontWeight.Bold )
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(String.format("%.2f", subtotal), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(String.format("%.2f", subtotal), fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
             Spacer(modifier = Modifier.width(4.dp))
-            Text(currency, fontSize = 14.sp)
+            Text(currency, fontSize = 18.sp , fontWeight = FontWeight.Bold , color = BluePrimary)
         }
     }
     Spacer(modifier = Modifier.height(8.dp))
@@ -607,7 +590,7 @@ private fun OrderSummarySection(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(stringResource(R.string.discount), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text("${discountPercent}%", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("${discountPercent}%", fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
     }
     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -618,9 +601,9 @@ private fun OrderSummarySection(
     ) {
         Text(stringResource(R.string.total), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(String.format("%.2f", total), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(String.format("%.2f", total), fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
             Spacer(modifier = Modifier.width(4.dp))
-            Text(currency, fontSize = 14.sp)
+            Text(currency, fontSize = 18.sp ,fontWeight = FontWeight.Bold, color = BluePrimary)
         }
     }
 }

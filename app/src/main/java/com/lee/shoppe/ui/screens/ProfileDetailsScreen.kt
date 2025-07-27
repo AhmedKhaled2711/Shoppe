@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
@@ -28,29 +29,42 @@ fun ProfileDetailsScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-        Icon(
-            imageVector = Icons.Filled.PersonOutline,
-            contentDescription = "User Avatar",
-            tint = BluePrimary,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(40.dp))
-                .background(BlueLight, RoundedCornerShape(40.dp))
-                .padding(12.dp)
+        // Header
+        ScreenHeader(
+            title = "Profile Details",
+            onBackClick = { navController.navigateUp() },
+            showBackButton = true
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Name: Your Name", fontSize = 20.sp, color = HeaderColor)
-        Text("Email: your.email@example.com", fontSize = 16.sp, color = Color.Gray)
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = { /* TODO: Edit profile */ },
-            colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
+        
+        // Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Edit Profile", color = Color.White)
+            Spacer(modifier = Modifier.height(16.dp))
+            Icon(
+                imageVector = Icons.Filled.PersonOutline,
+                contentDescription = "User Avatar",
+                tint = BluePrimary,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(40.dp))
+                    .background(BlueLight, RoundedCornerShape(40.dp))
+                    .padding(12.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Name: Your Name", fontSize = 20.sp, color = HeaderColor)
+            Text("Email: your.email@example.com", fontSize = 16.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = { /* TODO: Edit profile */ },
+                colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
+            ) {
+                Text("Edit Profile", color = Color.White)
+            }
         }
     }
 } 

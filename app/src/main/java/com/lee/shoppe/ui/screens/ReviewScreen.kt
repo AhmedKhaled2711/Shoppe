@@ -5,8 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.*
@@ -24,11 +24,10 @@ import com.lee.shoppe.data.model.Review
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.viewmodel.ProductInfoViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.lee.shoppe.ui.components.ScreenHeader
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.semantics.Role.Companion.Image
 
 @Composable
 fun ReviewScreen(
@@ -46,28 +45,14 @@ fun ReviewScreen(
             .fillMaxSize()
             .background(Color.White)
         ) {
-            // Custom Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    if (onBack != null) {
-                        onBack()
-                    }
-                }) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Reviews",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Header
+            ScreenHeader(
+                title = "Reviews",
+                onBackClick = { onBack?.invoke() },
+                showBackButton = onBack != null
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Content
             when (reviewState) {

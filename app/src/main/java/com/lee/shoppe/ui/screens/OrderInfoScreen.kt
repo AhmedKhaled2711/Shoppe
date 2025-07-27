@@ -1,5 +1,6 @@
 package com.lee.shoppe.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
@@ -53,6 +53,7 @@ import com.example.fashionshop.Model.Order
 import com.example.fashionshop.Model.OrderResponse
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
@@ -75,31 +76,13 @@ fun OrderInfoScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header - consistent with other screens
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { navController.popBackStack() }
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "Order Details",
-                color = HeaderColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        
+        // Header
+        ScreenHeader(
+            title = "Order Details",
+            onBackClick = { navController.popBackStack() },
+            showBackButton = true
+        )
+
         // Content
         Box(
             modifier = Modifier
@@ -111,6 +94,7 @@ fun OrderInfoScreen(
                 is NetworkState.Success -> {
                     val response = (orderState as NetworkState.Success<OrderResponse>).data
                     if (response.order != null) {
+                        //Log.d("Order" , response.order.toString() )
                         OrderContent(order = response.order)
                     } else {
                         ErrorView(

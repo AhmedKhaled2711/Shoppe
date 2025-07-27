@@ -13,13 +13,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.*
+import com.lee.shoppe.ui.components.ScreenHeader
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -196,32 +196,15 @@ fun ProductDetailsScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(bottom = 80.dp) // Padding for bottom bar
+            .padding(bottom = 50.dp) // Padding for bottom bar
         ) {
-            // Custom Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.Black
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Product Details",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            //Spacer(modifier = Modifier.height(8.dp))
+            // Header
+            ScreenHeader(
+                title = "Product Details",
+                onBackClick = { navController.navigateUp() },
+                showBackButton = true
+            )
+            Spacer(modifier = Modifier.height(4.dp))
             // Main content (no Box)
             when (productState) {
                 is NetworkState.Loading -> {

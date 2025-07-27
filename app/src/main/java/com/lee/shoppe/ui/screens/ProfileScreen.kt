@@ -281,23 +281,20 @@ fun ProfileScreen(navController: NavController) {
         }
     )
     // Delete Account Dialog
-    if (showDeleteDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog.value = false },
-            title = { Text("Delete Account") },
-            text = { Text("Are you sure you want to delete your account? This action cannot be undone.") },
-            confirmButton = {
-                Button(onClick = {
-                    // TODO: Implement delete logic
-                    showDeleteDialog.value = false
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Account deletion coming soon") }
-                }, colors = ButtonDefaults.buttonColors(containerColor = RedAccent)) { Text("Delete", color = Color.White) }
-            },
-            dismissButton = {
-                Button(onClick = { showDeleteDialog.value = false }) { Text("Cancel") }
+    DeleteCartDialog(
+        show = showDeleteDialog.value,
+        title = "Delete Account",
+        subtitle = "Are you sure you want to delete your account? This action cannot be undone.",
+        confirmText = "Delete",
+        onCancel = { showDeleteDialog.value = false },
+        onConfirm = {
+            // TODO: Implement delete logic
+            showDeleteDialog.value = false
+            coroutineScope.launch { 
+                snackbarHostState.showSnackbar("Account deletion coming soon") 
             }
-        )
-    }
+        }
+    )
     // Language Dialog (static)
     if (showLanguageDialog.value) {
         AlertDialog(

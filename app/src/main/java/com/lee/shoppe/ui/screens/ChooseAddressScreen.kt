@@ -8,10 +8,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.*
+import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.ScreenHeader
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +28,6 @@ import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.data.network.networking.NetworkState
 import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChooseAddressScreen(
     customerId: Long,
@@ -60,30 +60,12 @@ fun ChooseAddressScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header - consistent with AddressListScreen
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { navController.popBackStack() }
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "Choose Address",
-                color = HeaderColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        // Header
+        ScreenHeader(
+            title = "Choose Address",
+            onBackClick = { navController.popBackStack() },
+            showBackButton = true
+        )
         //Spacer(modifier = Modifier.height(8.dp))
         
         // Content
@@ -94,9 +76,14 @@ fun ChooseAddressScreen(
         ) {
             when {
                 isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = BluePrimary)
-                    }
+                    LoadingWithMessages(
+                        modifier = Modifier.fillMaxSize(),
+                        mainMessage = "Loading Addresses",
+                        secondaryMessage = "Please wait while we fetch your saved addresses...",
+                        loadingIndicatorColor = BluePrimary,
+                        spacing = 16.dp,
+                        messageSpacing = 8.dp
+                    )
                 }
 
                 error != null -> {

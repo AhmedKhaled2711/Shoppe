@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
+import com.lee.shoppe.ui.components.ScreenHeader
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.fashionshop.Model.Order
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
@@ -45,41 +46,27 @@ fun OrdersScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(16.dp)
     ) {
 
-        // Header - consistent with other screens
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 0.dp, vertical = 0.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { navController.popBackStack() }
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "My Orders",
-                color = HeaderColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        // Header
+        ScreenHeader(
+            title = "My Orders",
+            onBackClick = { navController.popBackStack() },
+            showBackButton = true
+        )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         when (ordersState) {
             is NetworkState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BluePrimary)
-                }
+                LoadingWithMessages(
+                    modifier = Modifier.fillMaxSize(),
+                    mainMessage = "Loading Your Orders",
+                    secondaryMessage = "Please wait while we fetch your order history...",
+                    loadingIndicatorColor = BluePrimary,
+                    spacing = 16.dp,
+                    messageSpacing = 8.dp
+                )
             }
 
             is NetworkState.Success -> {
@@ -123,14 +110,14 @@ fun OrderCard(order: Order, onClick: () -> Unit) {
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F7F7)),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp , end = 16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Order #${order.order_number}", fontWeight = FontWeight.Bold, color = BluePrimary)
+            Text("Order #${order.number}", fontWeight = FontWeight.Bold, color = BluePrimary)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Date: ${order.created_at}", fontSize = 14.sp, color = Color.Gray)
+            Text("Date: ${order.created_at?.substringBefore("T")}", fontSize = 14.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Status: ${order.financial_status}", fontSize = 14.sp, color = Color.Gray)
+            Text("Payment Method: ${order.referring_site}", fontSize = 14.sp, color = Color.Gray)
         }
     }
 }

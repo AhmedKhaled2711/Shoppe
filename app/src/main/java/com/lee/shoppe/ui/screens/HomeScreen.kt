@@ -55,10 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
+
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
@@ -70,6 +67,7 @@ import com.lee.shoppe.data.model.SmartCollection
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 import com.lee.shoppe.ui.utils.isNetworkConnected
+import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.input.TextFieldValue
@@ -150,42 +148,21 @@ fun HomeScreen(
         ) { _ ->
             Box(modifier = Modifier.fillMaxSize()) {
                 if (isLoading) {
-                    CircularProgressIndicator(
-                        color = Color(0xFF2196F3), // Replace with your desired color
-                        modifier = Modifier.align(Alignment.Center)
+                    LoadingWithMessages(
+                        modifier = Modifier.fillMaxSize(),
+                        mainMessage = stringResource(R.string.loading_main_message),
+                        secondaryMessage = stringResource(R.string.loading_secondary_message),
+                        loadingIndicatorColor = Color(0xFF2196F3)
                     )
-                }
-                else if (showEmpty) {
-                    // Empty View with Lottie
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.boy))
-                        LottieAnimation(
-                            composition = composition,
-                            iterations = LottieConstants.IterateForever,
-                            modifier = Modifier.size(200.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.network_message_main),
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text(
-                            text = stringResource(R.string.network_message_first),
-                            color = Color(0xFF444444),
-                            fontSize = 18.sp
-                        )
-                        Text(
-                            text = stringResource(R.string.network_message_second),
-                            color = Color(0xFF444444),
-                            fontSize = 18.sp
-                        )
-                    }
+                } else if (showEmpty) {
+                    LoadingWithMessages(
+                        modifier = Modifier.fillMaxSize(),
+                        mainMessage = stringResource(R.string.network_message_main),
+                        secondaryMessage = "${stringResource(R.string.network_message_first)}\n${stringResource(R.string.network_message_second)}",
+                        loadingIndicatorColor = Color(0xFF2196F3),
+                        spacing = 8.dp,
+                        messageSpacing = 4.dp
+                    )
                 }
                 else {
                     Column(

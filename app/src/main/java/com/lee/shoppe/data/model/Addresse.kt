@@ -4,7 +4,7 @@ import java.io.Serializable
 
 data class Address(
     val address1: String,
-    val address2: Any,
+    val address2: String,
     val city: String,
     val company: Any,
     val country: String,

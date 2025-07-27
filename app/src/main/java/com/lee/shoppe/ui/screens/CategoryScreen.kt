@@ -49,6 +49,7 @@ import com.lee.shoppe.ui.theme.BlueLight
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import com.lee.shoppe.ui.theme.BluePrimary
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -365,8 +366,8 @@ fun CategoryToggleRow(
             Button(
                 onClick = { onCategorySelected(if (category == "All") " " else category) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSelected) Color.Black else Color.White,
-                    contentColor = if (isSelected) Color.White else Color.Black
+                    containerColor = if (isSelected) BluePrimary else Color.White,
+                    contentColor = if (isSelected) BlueLight else Color.Black
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.height(38.dp)

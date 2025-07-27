@@ -30,6 +30,7 @@ import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.theme.*
 import com.lee.shoppe.ui.viewmodel.CartViewModel
 import coil.compose.AsyncImage
@@ -262,30 +263,35 @@ fun CartHeader(
                     color = HeaderColor
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(BlueLight, shape = CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = cartItemCount.toString(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = HeaderColor
-                    )
+                if (cartItemCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(BlueLight, shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = cartItemCount.toString(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = HeaderColor
+                        )
+                    }
                 }
             }
-            IconButton(
-                onClick = onDeleteAllClick,
-                modifier = Modifier.size(44.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.delete_24),
-                    contentDescription = "Delete all",
-                    tint = Color(0xFFE57373),
-                    modifier = Modifier.size(24.dp)
-                )
+            // Show delete icon only when cart is not empty
+            if (cartItemCount > 0) {
+                IconButton(
+                    onClick = onDeleteAllClick,
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.delete_24),
+                        contentDescription = "Delete all",
+                        tint = Color(0xFFE57373),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -438,26 +444,14 @@ fun NetworkErrorState(lottieComposition: LottieComposition?) {
 
 @Composable
 fun LoadingState() {
-    Box(
+    LoadingWithMessages(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                color = BluePrimary,
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Loading cart...",
-                color = Dark,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
+        mainMessage = "Loading Your Cart",
+        secondaryMessage = "Please wait while we fetch your items...",
+        loadingIndicatorColor = BluePrimary,
+        spacing = 16.dp,
+        messageSpacing = 8.dp
+    )
 }
 
 @Composable

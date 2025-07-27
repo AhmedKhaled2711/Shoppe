@@ -1,16 +1,18 @@
 package com.lee.shoppe.ui.screens
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.location.Geocoder
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,13 +41,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.lee.shoppe.data.model.Address
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.AddressViewModel
-import android.location.Geocoder
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,11 +56,11 @@ import java.util.Locale
 fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewModel = hiltViewModel(), navBackStackEntry: NavBackStackEntry? = null) {
     val context = LocalContext.current
     val customerId = CustomerData.getInstance(context).id
-    val actionState = viewModel.actionState.collectAsState()
+    val navBackStackEntry = navController.currentBackStackEntry
     val isEdit = navBackStackEntry?.arguments?.containsKey("id") == true
-    val addressId = navBackStackEntry?.arguments?.getString("id")?.toLongOrNull()
+    val addressId = navBackStackEntry?.arguments?.getLong("id", -1L).takeIf { it != -1L }
 
-    // For simplicity, not prefetching address for edit (would require more logic)
+    // State for form fields with better null handling
     val address1 = rememberSaveable { mutableStateOf("") }
     val address2 = rememberSaveable { mutableStateOf("") }
     val city = rememberSaveable { mutableStateOf("") }
@@ -65,42 +69,85 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
     val name = rememberSaveable { mutableStateOf("") }
     val phone = rememberSaveable { mutableStateOf("") }
     val isDefault = rememberSaveable { mutableStateOf(false) }
-    val addressesState = viewModel.addresses.collectAsState()
-
-    // Fetch addresses if needed (for edit mode)
-    LaunchedEffect(isEdit, addressId, addressesState.value) {
-        if (isEdit && addressId != null) {
-            val addresses = (addressesState.value as? NetworkState.Success<List<Address>>)?.data
-            if (addresses == null) {
-                // Fetch addresses if not loaded
-                viewModel.fetchAddresses(customerId)
+    
+    // Collect single address state
+    val addressState by viewModel.singleAddress.collectAsState()
+    
+    // Track loading state
+    val isLoading = remember { mutableStateOf(true) }
+    
+    // Handle navigation after save
+    val actionState by viewModel.actionState.collectAsState()
+    LaunchedEffect(actionState) {
+        when (actionState) {
+            is NetworkState.Success -> {
+                // Navigate back to AddressListScreen when save is successful
+                navController.popBackStack()
             }
-        }
-    }
-    // Prefill fields if editing
-    LaunchedEffect(isEdit, addressId, addressesState.value) {
-        if (isEdit && addressId != null) {
-            val addresses = (addressesState.value as? NetworkState.Success<List<Address>>)?.data
-            val address = addresses?.find { it.id == addressId }
-            if (address != null) {
-                address1.value = address.address1
-                address2.value = address.address2?.toString() ?: ""
-                city.value = address.city
-                zip.value = address.zip
-                country.value = address.country
-                name.value = address.name
-                phone.value = address.phone
-                isDefault.value = address.default
+            is NetworkState.Failure -> {
+                // Handle error if needed
+                Log.e("AddEditAddressScreen", "Error saving address")
             }
+            else -> {}
         }
     }
 
+    // Load address data when in edit mode
+    LaunchedEffect(isEdit, addressId) {
+        Log.d("AddEditAddressScreen", "LaunchedEffect triggered. isEdit: $isEdit, addressId: $addressId")
+        if (isEdit && addressId != null) {
+            Log.d("AddEditAddressScreen", "Fetching address with ID: $addressId")
+            isLoading.value = true
+            viewModel.fetchAddress(customerId, addressId)
+        } else {
+            Log.d("AddEditAddressScreen", "Not in edit mode or no address ID")
+            isLoading.value = false
+        }
+    }
+
+    // Handle address data when it's loaded
+    LaunchedEffect(addressState) {
+        Log.d("AddEditAddressScreen", "addressState changed: $addressState")
+        if (isEdit && addressId != null) {
+            when (val state = addressState) {
+                is NetworkState.Success -> {
+                    val address = state.data
+                    Log.d("AddEditAddressScreen", "Address loaded successfully: $address")
+                    address1.value = address.address1 ?: ""
+                    address2.value = address.address2 ?: ""
+                    city.value = address.city ?: ""
+                    zip.value = address.zip ?: ""
+                    country.value = address.country ?: ""
+                    name.value = address.name ?: ""
+                    phone.value = address.phone ?: ""
+                    isDefault.value = address.default ?: false
+                    isLoading.value = false
+                }
+                is NetworkState.Loading -> {
+                    Log.d("AddEditAddressScreen", "Loading address...")
+                    isLoading.value = true
+                }
+                is NetworkState.Failure -> {
+                    Log.e("AddEditAddressScreen", "Error loading address", state.error)
+                    // Handle error
+                    isLoading.value = false
+                    // You might want to show an error message to the user here
+                }
+                is NetworkState.Idle -> {
+                    Log.d("AddEditAddressScreen", "Address state is Idle")
+                }
+                else -> {
+                    Log.d("AddEditAddressScreen", "Unexpected state: $state")
+                }
+            }
+        }
+    }
 
     // Remove Place Picker launcher for address1 and address2
 
-    val navBackStackEntry = navController.currentBackStackEntryAsState().value
-    val pickedLocation = navBackStackEntry?.savedStateHandle?.get<LatLng>("picked_location")
-    val pickedLocation2 = navBackStackEntry?.savedStateHandle?.get<LatLng>("picked_location2")
+    val navBackStackEntryMapVar = navController.currentBackStackEntryAsState().value
+    val pickedLocation = navBackStackEntryMapVar?.savedStateHandle?.get<LatLng>("picked_location")
+    val pickedLocation2 = navBackStackEntryMapVar?.savedStateHandle?.get<LatLng>("picked_location2")
     LaunchedEffect(pickedLocation) {
         pickedLocation?.let {
             val geocoder = Geocoder(context, Locale.getDefault())
@@ -140,7 +187,7 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
         }
     }
 
-    val isEditAddressLoading = isEdit && addressId != null && ((addressesState.value as? NetworkState.Success<List<Address>>)?.data?.find { it.id == addressId } == null)
+    //val isEditAddressLoading = isEdit && addressId != null && ((addressesState.value as? NetworkState.Success<List<Address>>)?.data?.find { it.id == addressId } == null)
 
     val customSelectionColors = TextSelectionColors(
         handleColor = BluePrimary,
@@ -153,34 +200,20 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Header (unchanged)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.Black,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable { navController.popBackStack() }
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = if (isEdit) "Edit Address" else "Add Address",
-                    color = Color.Black,
-                    fontSize = 22.sp,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Header
+            ScreenHeader(
+                title = if (isEdit) "Edit Address" else "Add Address",
+                onBackClick = { navController.popBackStack() }
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            if (isEditAddressLoading) {
+            if (isLoading.value) {
                 // Show loading indicator while waiting for address data
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     CircularProgressIndicator(color = BluePrimary)
                 }
             } else {
@@ -188,7 +221,8 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = 24.dp)
+                        .weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     OutlinedTextField(
@@ -323,21 +357,6 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
                         Text(if (isEdit) "Save Changes" else "Save Address", color = Color.White, fontSize = 16.sp)
-                    }
-                    when (val state = actionState.value) {
-                        is NetworkState.Loading -> {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            CircularProgressIndicator(color = BluePrimary)
-                        }
-                        is NetworkState.Failure -> {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Failed: ${state.error.message}", color = Color.Red)
-                        }
-                        is NetworkState.Success -> {
-                            // On success, navigate back
-                            LaunchedEffect(Unit) { navController.popBackStack() }
-                        }
-                        else -> {}
                     }
                 }
             }

@@ -33,6 +33,9 @@ class AddressViewModel @Inject constructor(
     private val _actionState = MutableStateFlow<NetworkState<Unit>>(NetworkState.Idle)
     val actionState: StateFlow<NetworkState<Unit>> = _actionState.asStateFlow()
 
+    private val _singleAddress = MutableStateFlow<NetworkState<Address>>(NetworkState.Idle)
+    val singleAddress: StateFlow<NetworkState<Address>> = _singleAddress.asStateFlow()
+
     fun fetchAddresses(customerId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _addresses.value = NetworkState.Loading
@@ -41,6 +44,23 @@ class AddressViewModel @Inject constructor(
                 _addresses.value = NetworkState.Success(oneCustomer.customer.addresses)
             } catch (e: Exception) {
                 _addresses.value = NetworkState.Failure(e)
+            }
+        }
+    }
+
+    fun fetchAddress(customerId: Long, addressId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _singleAddress.value = NetworkState.Loading
+            try {
+                val oneCustomer = repository.getCustomers(customerId)
+                val address = oneCustomer.customer.addresses.find { it.id == addressId }
+                if (address != null) {
+                    _singleAddress.value = NetworkState.Success(address)
+                } else {
+                    _singleAddress.value = NetworkState.Failure(NoSuchElementException("Address not found"))
+                }
+            } catch (e: Exception) {
+                _singleAddress.value = NetworkState.Failure(e)
             }
         }
     }
@@ -64,23 +84,23 @@ class AddressViewModel @Inject constructor(
             try {
                 val updateRequest = AddressUpdateRequest(
                     customer_address = CustomerAddress(
-                        address1 = address.address1,
-                        address2 = address.address2.toString(),
-                        city = address.city,
-                        company = address.company.toString(),
-                        country = address.country,
-                        country_code = address.country_code,
-                        country_name = address.country_name,
+                        address1 = address.address1 ?: "",
+                        address2 = address.address2 ?: "",
+                        city = address.city ?: "",
+                        company = address.company?.toString() ?: "",
+                        country = address.country ?: "",
+                        country_code = address.country_code ?: "",
+                        country_name = address.country_name ?: "",
                         customer_id = address.customer_id,
-                        default = address.default,
-                        first_name = address.first_name,
+                        default = address.default ?: false,
+                        first_name = address.first_name ?: "",
                         id = address.id,
-                        last_name = address.last_name,
-                        name = address.name,
-                        phone = address.phone,
-                        province = address.province.toString(),
-                        province_code = address.province_code,
-                        zip = address.zip
+                        last_name = address.last_name ?: "",
+                        name = address.name ?: "",
+                        phone = address.phone ?: "",
+                        province = address.province?.toString() ?: "",
+                        province_code = address.province_code ?: "",
+                        zip = address.zip ?: ""
                     )
                 )
                 repository.editSingleCustomerAddress(customerId, addressId, updateRequest)
