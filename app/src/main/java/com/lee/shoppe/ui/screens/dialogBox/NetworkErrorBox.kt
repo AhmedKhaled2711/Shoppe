@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
 import androidx.compose.material3.*
 import androidx.compose.ui.tooling.preview.Preview
+import com.airbnb.lottie.LottieComposition
 import com.lee.shoppe.R
+import com.lee.shoppe.ui.theme.Dark
 
 @Composable
 fun NetworkErrorBox(show: Boolean) {
@@ -73,19 +75,44 @@ fun NetworkErrorBox(show: Boolean) {
     }
 }
 
-
-@Preview(showBackground = true)
 @Composable
-fun NetworkErrorBoxPreview() {
-    // You can replace these strings with hardcoded ones just for the preview.
-    CompositionLocalProvider(
-        LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+fun EmptyState(
+    lottieComposition: LottieComposition?,
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        MaterialTheme {
-            Box(modifier = Modifier.fillMaxSize()) {
-                NetworkErrorBox(show = true)
-            }
+        if (lottieComposition != null) {
+            LottieAnimation(
+                composition = lottieComposition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(200.dp)
+            )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = title,
+            color = Dark,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = message,
+            color = Color.Gray,
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center
+        )
     }
 }
-

@@ -19,9 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.fashionshop.Model.Order
+import com.lee.shoppe.R
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.screens.dialogBox.EmptyState
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
@@ -36,6 +40,7 @@ fun OrdersScreen(
     onAddressEditClick: () -> Unit
 ) {
     val ordersState by viewModel.orders.collectAsState()
+    val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.order_empty))
 
     // Trigger data fetch on first composition
     LaunchedEffect(Unit) {
@@ -76,6 +81,11 @@ fun OrdersScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("No orders found.", color = Color.Gray)
                     }
+                    EmptyState(
+                        lottieComposition,
+                        "No Orders Yet",
+                        "You haven’t placed any orders. Start shopping and track them here!"
+                    )
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),

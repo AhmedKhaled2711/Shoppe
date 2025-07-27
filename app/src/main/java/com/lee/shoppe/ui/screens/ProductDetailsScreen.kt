@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,6 +46,7 @@ import com.lee.shoppe.data.model.ProductDetails
 import com.lee.shoppe.data.model.Reviews
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.theme.BluePrimary
+import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import com.lee.shoppe.ui.viewmodel.ProductInfoViewModel
 import kotlinx.coroutines.flow.first
@@ -208,12 +210,14 @@ fun ProductDetailsScreen(
             // Main content (no Box)
             when (productState) {
                 is NetworkState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    LoadingWithMessages(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        mainMessage = stringResource(R.string.loading_product_details),
+                        secondaryMessage = stringResource(R.string.please_wait),
+                        loadingIndicatorColor = BluePrimary
+                    )
                 }
                 is NetworkState.Success -> {
                     val product = (productState as NetworkState.Success<ProductResponse>).data.product

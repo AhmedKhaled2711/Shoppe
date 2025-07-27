@@ -1,4 +1,8 @@
 <resources>
+    <!-- Order Success Messages -->
+    <string name="order_placed_successfully">Order Placed Successfully!</string>
+    <string name="thank_you_for_purchase">Thank you for your purchase!</string>
+    <string name="processing">Processing...</string>
     <string name="app_name">Shoppe</string>
 
     //SignUp Strings
@@ -149,5 +153,10 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <string name="your_favorites_will_appear_here">Your favorite items will appear here</string>
     <string name="too_many_requests_error">You\'re making requests too quickly. Please wait a moment and try again.</string>
     <string name="unknown_error">An unknown error occurred</string>
+    
+    <!-- Loading Messages -->
+    <string name="loading_products">Loading Products</string>
+    <string name="loading_product_details">Loading Product Details</string>
+    <string name="please_wait">Please wait while we load the content</string>
 </resources>
 

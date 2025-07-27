@@ -59,7 +59,7 @@ fun CartScreen(
     val context = LocalContext.current
     val cartProductsState by cartViewModel.cartProducts.collectAsState()
     val customerData = CustomerData.getInstance(context)
-    val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.box))
+    val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.cart_empty))
     val guestLottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.l))
     val networkLottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.boy))
     val snackbarHostState = remember { SnackbarHostState() }

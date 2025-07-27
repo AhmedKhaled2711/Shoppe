@@ -43,10 +43,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.ScreenHeader
+import com.lee.shoppe.ui.screens.dialogBox.EmptyState
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.BlueSecondary
@@ -68,6 +71,7 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
 
     // Error message state
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.address_empty))
 
     LaunchedEffect(customerId) {
         viewModel.fetchAddresses(customerId)
@@ -102,9 +106,10 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
                 // Sort addresses to show default address first
                 val addresses = state.data.sortedByDescending { it.default ?: false }
                 if (addresses.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No addresses found.", color = BlueSecondary)
-                    }
+//                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+//                        Text("No addresses found.", color = BlueSecondary)
+//                    }
+                    EmptyState(lottieComposition , "No Addresses Yet" , "You haven't added any addresses. Start by adding one now to speed up checkout!" )
                 } else {
                     Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                         addresses.forEachIndexed { idx, address ->

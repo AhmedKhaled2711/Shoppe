@@ -31,10 +31,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
+import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.ProductResponse
@@ -43,6 +40,10 @@ import com.lee.shoppe.ui.viewmodel.CategoryViewModel
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.airbnb.lottie.LottieComposition
 import androidx.compose.material.icons.filled.ArrowBack
 import com.lee.shoppe.ui.theme.BlueLight
@@ -128,14 +129,14 @@ fun CategoryScreen(
                 Box(modifier = Modifier.weight(1f)) {
                     when (productsState) {
                         is NetworkState.Loading -> {
-                            Box(
-                                Modifier
+                            LoadingWithMessages(
+                                modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color.White.copy(alpha = 0.7f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                            }
+                                    .background(Color.White),
+                                mainMessage = stringResource(R.string.loading_products),
+                                secondaryMessage = stringResource(R.string.please_wait),
+                                loadingIndicatorColor = BluePrimary
+                            )
                         }
                         is NetworkState.Success -> {
                             val products = (productsState as NetworkState.Success<ProductResponse>).data.products ?: emptyList()

@@ -1,8 +1,10 @@
 package com.lee.shoppe.ui.screens
 
 import android.util.Log
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material3.Button
@@ -29,23 +32,20 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,13 +54,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import com.example.fashionshop.Model.AddressBody
 import com.example.fashionshop.Model.CustomerBody
 import com.example.fashionshop.Model.DefaultAddressBody
@@ -72,19 +70,18 @@ import com.lee.shoppe.data.model.CheckoutSessionResponse
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
-import com.lee.shoppe.ui.theme.BluePrimary
-import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
-import com.lee.shoppe.ui.viewmodel.CartViewModel
 import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
+import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
+import com.lee.shoppe.ui.viewmodel.CartViewModel
 import com.lee.shoppe.ui.viewmodel.OrderDetailsViewModel
 import com.lee.shoppe.ui.viewmodel.PaymentViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderDetailsScreen(
     addressId: Long,
@@ -95,11 +92,21 @@ fun OrderDetailsScreen(
     paymentViewModel: PaymentViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val customerData = remember { CustomerData.getInstance(context) }
     val cartState by cartViewModel.cartProducts.collectAsState()
     val addressState by addressViewModel.products.collectAsState()
     val discountCodesState by orderDetailsViewModel.productCode.collectAsState()
     val paymentState by paymentViewModel.productPayment.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Animation state
+    var showSuccessAnimation by remember { mutableStateOf(false) }
+    val animationProgress by animateFloatAsState(
+        targetValue = if (showSuccessAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 1000),
+        label = "successAnimation"
+    )
 
     // State variables
     var couponText by remember { mutableStateOf("") }
@@ -145,6 +152,7 @@ fun OrderDetailsScreen(
         }
     }
 
+
     // Payment method dialog
     if (showPaymentDialog) {
         PaymentMethodBottomSheet(
@@ -167,7 +175,7 @@ fun OrderDetailsScreen(
                         paymentMethodType = "card"
                     )
                 } else if (method == "Cash") {
-                    // Handle cash payment
+                    showSuccessAnimation = true
                     placeOrder(
                         orderDetailsViewModel = orderDetailsViewModel,
                         cartViewModel = cartViewModel,
@@ -178,15 +186,19 @@ fun OrderDetailsScreen(
                         paymentMethod = method,
                         currency = currency,
                         onSuccess = {
-                            // If this is not on main thread:
-                            CoroutineScope(Dispatchers.Main).launch {
+                            // Navigate to home after 3 seconds
+                            coroutineScope.launch {
+                                delay(3000)
                                 navController.navigate("home") {
-                                    popUpTo(0)
+                                    popUpTo("home") { inclusive = true }
                                 }
                             }
                         },
                         onError = { errorMsg ->
-                            // Show Snackbar or error dialog
+                            showSuccessAnimation = false
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Error: $errorMsg")
+                            }
                         }
                     )
                 }
@@ -194,7 +206,53 @@ fun OrderDetailsScreen(
         )
     }
 
-    // PaymentSheetScreen is now handled by navigation
+    // Success animation overlay
+    if (showSuccessAnimation) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White.copy(alpha = 0.95f))
+                .clickable { /* Prevent clicks on overlay */ },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                if (showSuccessAnimation) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Success",
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier
+                            .size(120.dp)
+                            .padding(16.dp)
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        color = BluePrimary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = stringResource(R.string.order_placed_successfully),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color(0xFF26A69A),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.thank_you_for_purchase),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -207,7 +265,7 @@ fun OrderDetailsScreen(
             onBackClick = { navController.popBackStack() },
             showBackButton = true
         )
-        
+
         // Content
         Box(
             modifier = Modifier
@@ -380,18 +438,21 @@ fun OrderDetailsScreen(
                 }
             }
         }
-        
+
         // Bottom Button
         Button(
-            onClick = { showPaymentDialog = true },
+            onClick = {
+                showPaymentDialog = true
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
+            enabled = !showSuccessAnimation
         ) {
             Text(
-                stringResource(R.string.place_order),
+                if (showSuccessAnimation) "Processing..." else stringResource(R.string.place_order),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
