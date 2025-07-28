@@ -1,5 +1,6 @@
 package com.lee.shoppe.data.network.networking
 
+import android.content.Context
 import com.example.fashionshop.Model.OrderBody
 import com.example.fashionshop.Model.OrderBodyResponse
 import com.example.fashionshop.Model.OrderResponse
@@ -15,81 +16,134 @@ import com.lee.shoppe.data.model.OneCustomer
 import com.lee.shoppe.data.model.PriceRule
 import com.lee.shoppe.data.model.ProductResponse
 import com.lee.shoppe.data.model.UpdateCustomerRequest
+import com.lee.shoppe.util.NetworkUtil
+import kotlinx.coroutines.TimeoutCancellationException
+import retrofit2.HttpException
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class NetworkManagerImp private constructor(): NetworkManager {
+@Singleton
+class NetworkManagerImp @Inject constructor(
+    private val context: Context,
+    private val retrofitHelper: RetrofitHelper,
+    private val retrofitHelperPayment: RetrofitHelperPayment
+) : NetworkManager {
 
-    private val networkService : NetworkService by lazy {
-        RetrofitHelper.retrofitInstance.create(NetworkService::class.java)
+    private val networkService: NetworkService by lazy {
+        retrofitHelper.retrofitInstance.create(NetworkService::class.java)
     }
 
-    private val networkServicePayment:NetworkService by lazy {
-        RetrofitHelperPayment.retrofitInstance.create(NetworkService::class.java)
+    private val networkServicePayment: NetworkService by lazy {
+        retrofitHelperPayment.retrofitInstance.create(NetworkService::class.java)
     }
 
-    companion object{
-        private var instance: NetworkManagerImp?=null
-        fun getInstance(): NetworkManagerImp {
-            return instance ?: synchronized(this){
-                val temp= NetworkManagerImp()
-                instance =temp
-                temp
+    private suspend fun <T> safeApiCall(apiCall: suspend () -> T): T {
+        return try {
+            if (!NetworkUtil.isNetworkAvailable(context)) {
+                throw IOException("No internet connection")
+            }
+            apiCall()
+        } catch (e: Exception) {
+            throw when (e) {
+                is HttpException -> {
+                    val errorMessage = when (e.code()) {
+                        401 -> "Authentication failed"
+                        403 -> "Access denied"
+                        404 -> "Resource not found"
+                        429 -> "Too many requests. Please try again later."
+                        in 500..599 -> "Server error. Please try again later."
+                        else -> "Network error occurred: ${e.message()}"
+                    }
+                    IOException(errorMessage, e)
+                }
+                is SocketTimeoutException -> IOException("Connection timeout. Please check your internet connection.", e)
+                is UnknownHostException -> IOException("Unable to connect to the server. Please check your internet connection.", e)
+                is TimeoutCancellationException -> IOException("Request timed out. Please try again.", e)
+                is IOException -> e
+                else -> IOException("An unexpected error occurred: ${e.message}", e)
             }
         }
     }
 
     override suspend fun getCustomers(id: Long): OneCustomer {
-        val response= networkService.getSingleCustomer(id)
-        return response
+        return safeApiCall {
+            networkService.getSingleCustomer(id)
+        }
     }
 
     override suspend fun createCustomer(customer: CustomerRequest): CustomerResponse {
-        return networkService.createCustomer(customer)
+        return safeApiCall {
+            networkService.createCustomer(customer)
+        }
     }
 
     override suspend fun createDraftOrders(draftOrder: DraftOrderResponse): DraftOrderResponse {
-        return networkService.createDraftOrders(draftOrder)
+        return safeApiCall {
+            networkService.createDraftOrders(draftOrder)
+        }
     }
 
     override suspend fun updateCustomer(
         id: Long,
         customer: UpdateCustomerRequest
     ): CustomerResponse {
-        return networkService.updateCustomer(id, customer)
+        return safeApiCall {
+            networkService.updateCustomer(id, customer)
+        }
     }
 
     override suspend fun getCustomerByEmail(email: String): CustomerResponse {
-        return networkService.getCustomerByEmail(email)
+        return safeApiCall {
+            networkService.getCustomerByEmail(email)
+        }
     }
 
     override suspend fun getDiscountCodes(): PriceRule {
-        return networkService.getDiscountCodes()
+        return safeApiCall {
+            networkService.getDiscountCodes()
+        }
     }
 
     override suspend fun getBrands(): BrandResponse {
-        return networkService.getBrands()
+        return safeApiCall {
+            networkService.getBrands()
+        }
     }
 
     override suspend fun getBrandProducts(vendor: String): ProductResponse {
-        return  networkService.getBrandProducts(vendor)
+        return safeApiCall {
+            networkService.getBrandProducts(vendor)
+        }
     }
 
     override suspend fun getDraftOrder(id: Long): DraftOrderResponse {
-        return networkService.getDraftOrder(id)
+        return safeApiCall {
+            networkService.getDraftOrder(id)
+        }
     }
 
     override suspend fun updateDraftOrder(id: Long, draftOrder: DraftOrderResponse): DraftOrderResponse {
-        return networkService.updateDraftOrder(id, draftOrder)
+        return safeApiCall {
+            networkService.updateDraftOrder(id, draftOrder)
+        }
     }
 
     override suspend fun getProductById(id: Long): ProductResponse {
-        return networkService.getProductById(id)
+        return safeApiCall {
+            networkService.getProductById(id)
+        }
     }
 
     override suspend fun addSingleCustomerAddress(
         id: Long,
         addressRequest: AddressRequest
     ): AddressRequest {
-        return networkService.addSingleCustomerAddress(id,addressRequest)
+        return safeApiCall {
+            networkService.addSingleCustomerAddress(id, addressRequest)
+        }
     }
 
     override suspend fun editSingleCustomerAddress(
@@ -97,7 +151,9 @@ class NetworkManagerImp private constructor(): NetworkManager {
         id: Long,
         addressRequest: AddressUpdateRequest
     ): AddressUpdateRequest {
-        return networkService.editSingleCustomerAddress(customerId, id, addressRequest)
+        return safeApiCall {
+            networkService.editSingleCustomerAddress(customerId, id, addressRequest)
+        }
     }
 
     override suspend fun editSingleCustomerAddressStar(
@@ -105,15 +161,21 @@ class NetworkManagerImp private constructor(): NetworkManager {
         id: Long,
         addressRequest: AddressDefaultRequest
     ): AddressUpdateRequest {
-        return networkService.editSingleCustomerAddressStar(customerId, id, addressRequest)
+        return safeApiCall {
+            networkService.editSingleCustomerAddressStar(customerId, id, addressRequest)
+        }
     }
 
     override suspend fun getCustomerOrders(userId: Long): OrderResponse {
-        return networkService.getCustomerOrders(userId)
+        return safeApiCall {
+            networkService.getCustomerOrders(userId)
+        }
     }
 
     override suspend fun deleteSingleCustomerAddress(customerId: Long, id: Long) {
-        return networkService.deleteSingleCustomerAddress(customerId,id)
+        return safeApiCall {
+            networkService.deleteSingleCustomerAddress(customerId, id)
+        }
     }
 
     override suspend fun createCheckoutSession(
@@ -128,16 +190,32 @@ class NetworkManagerImp private constructor(): NetworkManager {
         mode: String,
         paymentMethodType: String
     ): CheckoutSessionResponse {
-        return   networkServicePayment.createCheckoutSession(successUrl,cancelUrl,customerEmail,currency,productName,productDescription,unitAmountDecimal,quantity,mode,paymentMethodType)
-
+        return safeApiCall {
+            networkServicePayment.createCheckoutSession(
+                successUrl = successUrl,
+                cancelUrl = cancelUrl,
+                customerEmail = customerEmail,
+                currency = currency,
+                productName = productName,
+                productDescription = productDescription,
+                unitAmountDecimal = unitAmountDecimal,
+                quantity = quantity,
+                mode = mode,
+                paymentMethodType = paymentMethodType
+            )
+        }
     }
 
     override suspend fun createOrder(order: Map<String, OrderBody>): OrderBodyResponse {
-        return networkService.createOrder(order)
+        return safeApiCall {
+            networkService.createOrder(order)
+        }
     }
 
     override suspend fun getSingleOrder(orderId: Long): OrderResponse {
-        return networkService.getSingleOrder(orderId)
+        return safeApiCall {
+            networkService.getSingleOrder(orderId)
+        }
     }
 
 }

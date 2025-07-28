@@ -48,8 +48,11 @@ import kotlin.random.Random
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.lee.shoppe.ui.theme.BluePrimary
 import okhttp3.internal.wait
 import kotlinx.coroutines.launch
@@ -68,10 +71,10 @@ fun ProductsScreen(
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
     var showFilterDialog by remember { mutableStateOf(false) }
     val customerData = CustomerData.getInstance(context)
-    
+
     // State to track favorite status for each product
     var favoriteStates by remember { mutableStateOf(mutableMapOf<Long, Boolean>()) }
-    
+
     // Force recomposition when favorite states change
     val favoriteStatesSnapshot by remember { derivedStateOf { favoriteStates.toMap() } }
 
@@ -99,7 +102,7 @@ fun ProductsScreen(
     LaunchedEffect(brandTitle) {
         viewModel.getProducts(brandTitle ?: "")
     }
-    
+
     // Listen to FavViewModel state changes
     LaunchedEffect(favState) {
         when (favState) {
@@ -116,7 +119,7 @@ fun ProductsScreen(
             else -> {}
         }
     }
-    
+
     // Function to check if a product is favorite
     fun checkFavoriteStatus(productId: Long) {
         if (customerData.isLogged) {
@@ -139,14 +142,14 @@ fun ProductsScreen(
             }
         }
     }
-    
+
     // Function to toggle favorite status
     fun toggleFavorite(product: Product) {
         val productId = product.id ?: 0
         val currentState = favoriteStates[productId] ?: false
-        
+
         println("Toggle favorite called for product $productId, current state: $currentState, isLogged: ${customerData.isLogged}, favListId: ${customerData.favListId}")
-        
+
         if (customerData.isLogged) {
             if (currentState) {
                 // Remove from favorites: show dialog
@@ -156,7 +159,7 @@ fun ProductsScreen(
                 // Add to favorites
                 println("Adding product $productId to favorites")
                 favViewModel.insertFavProduct(
-                    product = product, 
+                    product = product,
                     listId = customerData.favListId,
                     onFavListCreated = { newFavListId ->
                         println("New favorites list created with ID: $newFavListId")
@@ -187,95 +190,99 @@ fun ProductsScreen(
             showBackButton = true
         )
 
-            // Search Bar
-            SearchBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = { 
-                    searchQuery = it
-                    viewModel.emitSearch(it.text.lowercase())
-                }
-            )
+        // Search Bar
+        SearchBar(
+            searchQuery = searchQuery,
+            onSearchQueryChange = {
+                searchQuery = it
+                viewModel.emitSearch(it.text.lowercase())
+            }
+        )
 
-            // Products Grid
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when (productsState) {
-                    is NetworkState.Loading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center),
-                            color = Color(0xFF2196F3)
-                        )
-                    }
-                    is NetworkState.Success -> {
-                        val productResponse = (productsState as NetworkState.Success<ProductResponse>).data
-                        val products = productResponse.products ?: emptyList()
-                        
-                        Column {
-                            // Check favorite status for all products when they are loaded
-                            LaunchedEffect(products) {
-                                if (customerData.isLogged) {
-                                    products.forEach { product ->
-                                        product.id?.let { checkFavoriteStatus(it) }
-                                    }
-                                }
-                            }
-                            
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(products) { product ->
-                                    val productId = product.id ?: 0
-                                    val isFav = favoriteStatesSnapshot[productId] ?: false
-                                    
-                                    println("Rendering product $productId with favorite state: $isFav")
-                                    
-                                    ProductCard(
-                                        product = product,
-                                        onFavoriteClick = { 
-                                            println("Favorite button clicked for product $productId, current state: $isFav")
-                                            toggleFavorite(product)
-                                        },
-                                        onCardClick = { 
-                                            // Navigate to product details
-                                            navController.navigate("product_details/${product.id}")
-                                        },
-                                        isFavorite = isFav
-                                    )
+        // Products Grid
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (productsState) {
+                is NetworkState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color(0xFF2196F3)
+                    )
+                }
+                is NetworkState.Success -> {
+                    val productResponse = (productsState as NetworkState.Success<ProductResponse>).data
+                    val products = productResponse.products ?: emptyList()
+
+                    Column {
+                        // Check favorite status for all products when they are loaded
+                        LaunchedEffect(products) {
+                            if (customerData.isLogged) {
+                                products.forEach { product ->
+                                    product.id?.let { checkFavoriteStatus(it) }
                                 }
                             }
                         }
-                    }
-                    is NetworkState.Failure -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+
+                        // Use rememberLazyGridState for better scroll state management
+                        val gridState = rememberLazyGridState()
+
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            state = gridState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "Failed to load products",
-                                color = Color.Black,
-                                fontSize = 18.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(
-                                onClick = { viewModel.getProducts(brandTitle ?: "") }
-                            ) {
-                                Text("Retry")
+                            items(products) { product ->
+                                val productId = product.id ?: 0
+                                val isFav = favoriteStatesSnapshot[productId] ?: false
+
+                                println("Rendering product $productId with favorite state: $isFav")
+
+                                ProductCard(
+                                    product = product,
+                                    onFavoriteClick = {
+                                        println("Favorite button clicked for product $productId, current state: $isFav")
+                                        toggleFavorite(product)
+                                    },
+                                    onCardClick = {
+                                        // Navigate to product details
+                                        navController.navigate("product_details/${product.id}")
+                                    },
+                                    isFavorite = isFav
+                                )
                             }
                         }
                     }
-
-                    NetworkState.Idle -> TODO()
                 }
+                is NetworkState.Failure -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Failed to load products",
+                            color = Color.Black,
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { viewModel.getProducts(brandTitle ?: "") }
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+
+                NetworkState.Idle -> TODO()
             }
         }
+    }
 
     // Filter Dialog
     if (showFilterDialog) {
@@ -477,13 +484,50 @@ fun ProductCard(
     onCardClick: () -> Unit,
     isFavorite: Boolean
 ) {
+    // Memoize expensive calculations
+    val productKey = remember(product.id) { "product_${product.id}" }
+    val randomRating = remember(productKey) { Random.nextDouble(3.0, 5.0).toFloat() }
+    
+    // Process product title once
+    val displayTitle = remember(product.title) {
+        product.title?.let { title ->
+            val titleParts = title.split("|")
+            val rawTitle = titleParts.getOrNull(1)?.trim() ?: ""
+            val wordList = rawTitle.split(" ")
+            if (wordList.size > 3) wordList.take(3).joinToString(" ") + "..." else rawTitle
+        } ?: ""
+    }
+    val context = LocalContext.current
+    // Process price information once
+    val (displayPrice, currencySymbol) = remember(product.variants) {
+        val currency = CustomerData.getInstance(context).currency
+        val originalPrice = product.variants?.getOrNull(0)?.price?.toDoubleOrNull() ?: 0.0
+        val conversionRate = 1.0 // Default rate
+        
+        val price = if (currency == "USD") {
+            String.format("%.2f", originalPrice / conversionRate)
+        } else {
+            product.variants?.getOrNull(0)?.price ?: "0.0"
+        }
+        
+        val symbol = when (currency) {
+            "USD" -> "$"
+            "EGY" -> "EGP"
+            "EUR" -> "€"
+            "GBP" -> "£"
+            else -> currency
+        }
+        
+        price to symbol
+    }
+
     Card(
         modifier = Modifier
             .width(190.dp)
             .height(320.dp)
-            .clickable { onCardClick() },
+            .clickable(onClick = onCardClick),
         shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(5.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
@@ -495,25 +539,51 @@ fun ProductCard(
                     .fillMaxWidth()
                     .height(180.dp)
             ) {
-                AsyncImage(
-                    model = product.image?.src,
-                    contentDescription = product.title,
-                    modifier = Modifier.fillMaxSize(),
+                // Optimized Coil image loading with better caching and error handling
+                val imageUrl = product.image?.src?.let { url ->
+                    // Add any necessary URL transformations here
+                    if (url.startsWith("//")) "https:$url" else url
+                }
+                
+                val imagePainter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .crossfade(true)
+                        .diskCacheKey(imageUrl) // Cache by URL
+                        .memoryCacheKey(imageUrl) // Cache in memory
+                        .build(),
                     contentScale = ContentScale.Crop,
+                    onError = { error ->
+                        // Log error if needed
+                        println("Image loading failed: ${error.result.throwable?.message}")
+                    },
+                    onSuccess = { success ->
+                        // Image loaded successfully
+                    },
+                    placeholder = painterResource(id = R.drawable.broken_image),
                     error = painterResource(id = R.drawable.broken_image)
                 )
+                
+                Image(
+                    painter = imagePainter,
+                    contentDescription = product.title ?: "Product image",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
 
-                // Favorite button - always show but handle login state
+                // Favorite button with ripple effect
                 IconButton(
                     onClick = onFavoriteClick,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(60.dp)
-
+                        .padding(8.dp)
                 ) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite",
+                        contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                         tint = if (isFavorite) Color(0xFF0057FF) else Color.Black,
                         modifier = Modifier.size(28.dp)
                     )
@@ -526,40 +596,24 @@ fun ProductCard(
                     .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                // Title
-                product.title?.let {
-                    val titleParts = it.split("|")
-                    val rawTitle = titleParts.getOrNull(1)?.trim() ?: ""
-                    val wordList = rawTitle.split(" ")
-
-                    val displayTitle = if (wordList.size > 3) {
-                        wordList.take(3).joinToString(" ") + "..."
-                    } else {
-                        rawTitle
-                    }
-
-                    Text(
-                        text = displayTitle,
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2
-                    )
-                }
-
-
+                // Title - using pre-processed displayTitle
+                Text(
+                    text = displayTitle,
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    minLines = 2,
+                    modifier = Modifier.heightIn(min = 48.dp)
+                )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Rating
+                // Rating - using memoized randomRating
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Ensure rating is between 3.0 and 5.0
-                    val randomRating = remember { Random.nextDouble(3.0, 5.0).toFloat() }
-
                     repeat(5) { index ->
-                        val fullStarThreshold = index + 1
                         Icon(
                             imageVector = if (index < randomRating.toInt()) Icons.Default.Star else Icons.Default.StarOutline,
                             contentDescription = null,
@@ -579,29 +633,7 @@ fun ProductCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Price section
-                val currency = CustomerData.getInstance(LocalContext.current).currency
-                val originalPrice = product.variants?.get(0)?.price?.toDoubleOrNull() ?: 0.0
-                val conversionRate: Double = 1.0 // Default rate
-
-                // Determine the final display price
-                val displayPrice = if (currency == "USD") {
-                    // Convert to USD using rate
-                    val converted = originalPrice / conversionRate
-                    String.format("%.2f", converted)
-                } else {
-                    product.variants?.get(0)?.price ?: "0.0"
-                }
-
-                // Get the appropriate currency symbol
-                val currencySymbol = when (currency) {
-                    "USD" -> "$"
-                    "EGY" -> "EGP"
-                    "EUR" -> "€"
-                    "GBP" -> "£"
-                    else -> currency
-                }
-
+                // Price section - using pre-processed displayPrice and currencySymbol
                 Row(
                     verticalAlignment = Alignment.Bottom
                 ) {

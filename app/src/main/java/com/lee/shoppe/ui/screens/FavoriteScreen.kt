@@ -1,10 +1,12 @@
 package com.lee.shoppe.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -16,14 +18,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -36,13 +41,62 @@ import com.lee.shoppe.data.model.ProductImage
 import com.lee.shoppe.data.model.Variant
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
-import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.screens.dialogBox.EmptyState
-import com.lee.shoppe.ui.theme.BluePrimary
-import com.lee.shoppe.ui.theme.Dark
+import com.lee.shoppe.ui.theme.*
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import kotlinx.coroutines.launch
+
+@Composable
+fun FavoriteHeader(
+    favoriteItemCount: Int,
+) {
+    Surface(
+        shadowElevation = 4.dp,
+        color = Color.White,
+        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Title and Quantity
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = stringResource(R.string.favorites),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = HeaderColor
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                if (favoriteItemCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(BlueLight, shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = favoriteItemCount.toString(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = HeaderColor
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,12 +109,12 @@ fun FavoriteScreen(
     val isNetworkConnected = isNetworkConnected(context)
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    
+
     // State
     var favoriteProducts by remember { mutableStateOf<List<Product>>(emptyList()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
-    
+
     // Collect state from ViewModel
     val favProductsState by favViewModel.product.collectAsState()
     val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.favorite_empty))
@@ -98,8 +152,8 @@ fun FavoriteScreen(
             is NetworkState.Failure -> {
                 val error = state.error
                 val message = when {
-                    error.message?.contains("Too many requests") == true || 
-                    (error is retrofit2.HttpException && error.code() == 429) ->
+                    error.message?.contains("Too many requests") == true ||
+                            (error is retrofit2.HttpException && error.code() == 429) ->
                         context.getString(R.string.too_many_requests_error)
                     else -> error.message ?: context.getString(R.string.unknown_error)
                 }
@@ -122,10 +176,7 @@ fun FavoriteScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            ScreenHeader(
-                title = stringResource(R.string.favorites),
-                onBackClick = { navController.navigateUp() }
-            )
+            FavoriteHeader(favoriteProducts.size)
         }
     ) { paddingValues ->
         Box(
@@ -145,7 +196,7 @@ fun FavoriteScreen(
                     )
                 }
                 is NetworkState.Failure, NetworkState.Idle -> {
-                   //EmptyFavoriteState()
+                    //EmptyFavoriteState()
                 }
                 is NetworkState.Success -> {
                     if (favoriteProducts.isEmpty()) {

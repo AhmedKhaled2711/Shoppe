@@ -1,51 +1,183 @@
 package com.lee.shoppe.data.network.networking
 
+import android.content.Context
+import com.lee.shoppe.BuildConfig
+import com.lee.shoppe.util.NetworkUtil
+import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.Cache
+import okhttp3.CacheControl
 import okhttp3.Credentials
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object RetrofitHelper {
+@Singleton
+class RetrofitHelper @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    private val baseURL = "https://mad44-alex-android-team1.myshopify.com/admin/api/2024-04/"
+    private val CACHE_DIRECTORY = "http-cache"
+    private val MAX_RETRIES = 3
+    private val RETRY_DELAY_MS = 1000L
 
-    private const val baseURL = "https://mad44-alex-android-team1.myshopify.com/admin/api/2024-04/"
+    private var cache: Cache? = null
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        setLevel(HttpLoggingInterceptor.Level.BODY)
+        level = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
     }
 
-    private val authInterceptor = okhttp3.Interceptor { chain ->
-        val credentials = Credentials.basic("24fd0ff00945a069ab50bb3d6f8bf329", "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")
+    private val authInterceptor = Interceptor { chain ->
+        val credentials = Credentials.basic(
+            BuildConfig.SHOPIFY_API_KEY,
+            BuildConfig.SHOPIFY_PASSWORD
+        )
         val request = chain.request().newBuilder()
             .addHeader("Authorization", credentials)
+            .addHeader("Cache-Control", "public, max-age=$MAX_AGE, max-stale=$STALE_WHILE_REVALIDATE")
             .build()
         chain.proceed(request)
     }
 
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
-        .addInterceptor(authInterceptor)
-        .build()
+    private val retryInterceptor = Interceptor { chain ->
+        var request = chain.request()
+        var response: Response? = null
+        var retryCount = 0
+        var shouldRetry: Boolean
 
-    val retrofitInstance: Retrofit = Retrofit.Builder()
-        .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl(baseURL)
-        .build()
+        do {
+            if (retryCount > 0) {
+                try {
+                    Thread.sleep(RETRY_DELAY_MS * retryCount)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw IOException("Interrupted during retry", e)
+                }
+            }
+
+            try {
+                response = chain.proceed(request)
+                shouldRetry = !response.isSuccessful && retryCount < MAX_RETRIES
+                if (shouldRetry) {
+                    response.close()
+                }
+            } catch (e: Exception) {
+                shouldRetry = retryCount < MAX_RETRIES && (e is java.net.SocketTimeoutException || 
+                    e is java.net.ConnectException || 
+                    e is java.net.UnknownHostException)
+                if (!shouldRetry) throw e
+            }
+            retryCount++
+        } while (shouldRetry)
+
+        response ?: throw IOException("Failed to get response after $MAX_RETRIES attempts")
+    }
+
+    @Synchronized
+    private fun getCache(context: Context): Cache {
+        return cache ?: synchronized(this) {
+            val cacheDir = File(context.cacheDir, CACHE_DIRECTORY).apply {
+                if (!exists()) mkdirs()
+            }
+            Cache(cacheDir, CACHE_SIZE).also { cache = it }
+        }
+    }
+
+    fun createClient(context: Context): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .addNetworkInterceptor(retryInterceptor)
+            .addNetworkInterceptor(provideCacheInterceptor())
+            .addInterceptor(provideOfflineCacheInterceptor(context))
+            .cache(getCache(context))
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    private fun provideCacheInterceptor(): Interceptor {
+        return Interceptor { chain ->
+            val response = chain.proceed(chain.request())
+            val cacheControl = CacheControl.Builder()
+                .maxAge(MAX_AGE, TimeUnit.SECONDS)
+                .maxStale(STALE_WHILE_REVALIDATE, TimeUnit.SECONDS)
+                .build()
+            response.newBuilder()
+                .header("Cache-Control", cacheControl.toString())
+                .build()
+        }
+    }
+
+    private fun provideOfflineCacheInterceptor(context: Context): Interceptor {
+        return Interceptor { chain ->
+            var request = chain.request()
+            if (!NetworkUtil.isNetworkAvailable(context)) {
+                val cacheControl = CacheControl.Builder()
+                    .maxStale(7, TimeUnit.DAYS)
+                    .build()
+                request = request.newBuilder()
+                    .cacheControl(cacheControl)
+                    .build()
+            }
+            chain.proceed(request)
+        }
+    }
+
+    val retrofitInstance: Retrofit by lazy {
+        Retrofit.Builder()
+            .client(createClient(context))
+            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(baseURL)
+            .build()
+    }
+    
+    companion object {
+        const val CACHE_SIZE = 10 * 1024 * 1024L // 10MB
+        const val MAX_AGE = 60 * 60 // 1 hour
+        const val STALE_WHILE_REVALIDATE = 60 * 60 * 24 // 1 day
+        private const val CACHE_DIRECTORY = "http-cache"
+        private const val MAX_RETRIES = 3
+        private const val RETRY_DELAY_MS = 1000L
+    }
 }
 
-object RetrofitHelperPayment {
-    private const val BASE_URL = "https://api.stripe.com/"
-    private const val API_KEY = "sk_test_51PSbTgDoeYNScbTmfJjKgahaCBVsau7NFPOIrpy3hphWLFv3NoSONjRMcBNkilYz0GVFUkxW6XJyHbh0VHBZbf2y00iBVrATWB"
+@Singleton
+class RetrofitHelperPayment @Inject constructor() {
+    private val BASE_URL = "https://api.stripe.com/"
+    private val API_KEY = BuildConfig.STRIPE_API_KEY
+    private val STRIPE_VERSION = "2023-10-16"
+    
+    companion object {
+        private const val CONNECT_TIMEOUT = 30L
+        private const val READ_TIMEOUT = 30L
+        private const val WRITE_TIMEOUT = 30L
+    }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        setLevel(HttpLoggingInterceptor.Level.BODY)
+        level = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
     }
 
     private val authInterceptor = Interceptor { chain ->
         val request = chain.request().newBuilder()
             .addHeader("Authorization", "Bearer $API_KEY")
+            .addHeader("Stripe-Version", STRIPE_VERSION)
             .build()
         chain.proceed(request)
     }
@@ -53,12 +185,16 @@ object RetrofitHelperPayment {
     private val client = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
+        .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .build()
 
-    val retrofitInstance: Retrofit =
+    val retrofitInstance: Retrofit by lazy {
         Retrofit.Builder()
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .baseUrl(BASE_URL)
             .build()
+    }
 }

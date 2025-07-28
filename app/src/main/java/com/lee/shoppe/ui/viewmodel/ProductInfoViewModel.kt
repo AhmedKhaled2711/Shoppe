@@ -13,13 +13,19 @@ import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.data.repository.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import retrofit2.HttpException
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 @HiltViewModel
 class ProductInfoViewModel @Inject constructor(
@@ -40,41 +46,107 @@ class ProductInfoViewModel @Inject constructor(
     private val _reviews = MutableStateFlow<NetworkState<List<Review>>>(NetworkState.Idle)
     val reviews: StateFlow<NetworkState<List<Review>>> = _reviews.asStateFlow()
 
+    private var lastApiCallTime = 0L
+    private val MIN_TIME_BETWEEN_CALLS = TimeUnit.SECONDS.toMillis(1) // 1 second delay between API calls
+
+    private suspend fun ensureRateLimit() {
+        val now = System.currentTimeMillis()
+        val timeSinceLastCall = now - lastApiCallTime
+        
+        if (timeSinceLastCall < MIN_TIME_BETWEEN_CALLS) {
+            val delayTime = MIN_TIME_BETWEEN_CALLS - timeSinceLastCall
+            delay(delayTime)
+        }
+        lastApiCallTime = System.currentTimeMillis()
+    }
+
     fun getProductInfo(id: Long) {
         Log.d(TAG, "Fetching product info for ID: $id")
         viewModelScope.launch(Dispatchers.IO) {
-            repository.getProductById(id)
-                .catch { e ->
-                    Log.e(TAG, "Error fetching product info: ${e.message}", e)
-                    if (e is HttpException && e.code() == 429) {
-                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
-                    } else {
-                        _product.value = NetworkState.Failure(e)
+            try {
+                ensureRateLimit()
+                
+                repository.getProductById(id)
+                    .retryWhen { cause, attempt ->
+                        if (cause is IOException || cause is SocketTimeoutException || 
+                            (cause is HttpException && cause.code() == 429)) {
+                            val waitTime = (attempt * 1000L).coerceAtMost(5000L) // Exponential backoff, max 5 seconds
+                            Log.w(TAG, "Retrying API call after $waitTime ms (attempt: ${attempt + 1})")
+                            delay(waitTime)
+                            true
+                        } else {
+                            false
+                        }
                     }
-                }
-                .collect { response ->
-                    Log.d(TAG, "Product info fetched successfully: $response")
-                    _product.value = NetworkState.Success(response)
-                }
+                    .catch { e ->
+                        Log.e(TAG, "Error fetching product info: ${e.message}", e)
+                        val errorMessage = when (e) {
+                            is HttpException -> {
+                                when (e.code()) {
+                                    429 -> "Too many requests. Please wait a moment and try again."
+                                    in 500..599 -> "Server error. Please try again later."
+                                    else -> "Network error: ${e.message}"
+                                }
+                            }
+                            is SocketTimeoutException -> "Connection timeout. Please check your internet connection."
+                            is IOException -> "Network error. Please check your internet connection."
+                            else -> "An error occurred: ${e.localizedMessage ?: e.message}"
+                        }
+                        _product.value = NetworkState.Failure(Exception(errorMessage))
+                    }
+                    .collect { response ->
+                        Log.d(TAG, "Product info fetched successfully: $response")
+                        _product.value = NetworkState.Success(response)
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error in getProductInfo: ${e.message}", e)
+                _product.value = NetworkState.Failure(Exception("An unexpected error occurred"))
+            }
         }
     }
 
     fun getProductSuggestions(vendor: String) {
         Log.d(TAG, "Fetching product suggestions for vendor: $vendor")
         viewModelScope.launch(Dispatchers.IO) {
-            repository.getBrandProducts(vendor)
-                .catch { e ->
-                    Log.e(TAG, "Error fetching product suggestions: ${e.message}", e)
-                    if (e is HttpException && e.code() == 429) {
-                        _productSuggestions.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
-                    } else {
-                        _productSuggestions.value = NetworkState.Failure(e)
+            try {
+                ensureRateLimit()
+                
+                repository.getBrandProducts(vendor)
+                    .retryWhen { cause, attempt ->
+                        if (cause is IOException || cause is SocketTimeoutException || 
+                            (cause is HttpException && cause.code() == 429)) {
+                            val waitTime = (attempt * 1000L).coerceAtMost(5000L) // Exponential backoff, max 5 seconds
+                            Log.w(TAG, "Retrying API call after $waitTime ms (attempt: ${attempt + 1})")
+                            delay(waitTime)
+                            true
+                        } else {
+                            false
+                        }
                     }
-                }
-                .collect { response ->
-                    Log.d(TAG, "Product suggestions fetched successfully: $response")
-                    _productSuggestions.value = NetworkState.Success(response)
-                }
+                    .catch { e ->
+                        Log.e(TAG, "Error fetching product suggestions: ${e.message}", e)
+                        val errorMessage = when (e) {
+                            is HttpException -> {
+                                when (e.code()) {
+                                    429 -> "Too many requests. Please wait a moment and try again."
+                                    in 500..599 -> "Server error. Please try again later."
+                                    else -> "Network error: ${e.message}"
+                                }
+                            }
+                            is SocketTimeoutException -> "Connection timeout. Please check your internet connection."
+                            is IOException -> "Network error. Please check your internet connection."
+                            else -> "An error occurred: ${e.message}"
+                        }
+                        _productSuggestions.value = NetworkState.Failure(Exception(errorMessage))
+                    }
+                    .collect { response ->
+                        Log.d(TAG, "Product suggestions fetched successfully: $response")
+                        _productSuggestions.value = NetworkState.Success(response)
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error in getProductSuggestions: ${e.message}", e)
+                _productSuggestions.value = NetworkState.Failure(Exception("An unexpected error occurred"))
+            }
         }
     }
 
