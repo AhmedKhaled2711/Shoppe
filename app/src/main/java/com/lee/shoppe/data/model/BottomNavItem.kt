@@ -1,7 +1,10 @@
 package com.lee.shoppe.data.model
 
+import androidx.compose.ui.graphics.vector.ImageVector
+
 data class BottomNavItem(
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val route: String
+    val icon: ImageVector,
+    val route: String,
+    val showBadge: Boolean = false
 )

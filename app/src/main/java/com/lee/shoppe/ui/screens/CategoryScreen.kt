@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -168,27 +169,32 @@ fun CategoryScreen(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    items(products) { product ->
+                                    items(products, key = { it.id ?: 0L }) { product ->
                                         val productId = product.id ?: 0L
                                         val isFav = favoriteStatesSnapshot[productId] ?: false
-                                        ProductCard(
-                                            product = product,
-                                            onFavoriteClick = {
-                                                if (customerData.isLogged) {
-                                                    if (isFav) {
-                                                        productToRemove = product
-                                                        showRemoveDialog = true
-                                                    } else {
-                                                        favViewModel.insertFavProduct(product, customerData.favListId)
-                                                        favoriteStates = favoriteStates.toMutableMap().apply { put(productId, true) }
+                                        val index = products.indexOfFirst { it.id == productId }
+                                        
+                                        StaggeredAnimatedItem(index = index) {
+                                            ProductCard(
+                                                product = product,
+                                                onFavoriteClick = {
+                                                    if (customerData.isLogged) {
+                                                        if (isFav) {
+                                                            productToRemove = product
+                                                            showRemoveDialog = true
+                                                        } else {
+                                                            favViewModel.insertFavProduct(product, customerData.favListId)
+                                                            favoriteStates = favoriteStates.toMutableMap().apply { put(productId, true) }
+                                                        }
                                                     }
-                                                }
-                                            },
-                                            onCardClick = {
-                                                navController.navigate("product_details/${product.id}")
-                                            },
-                                            isFavorite = isFav
-                                        )
+                                                },
+                                                onCardClick = {
+                                                    navController.navigate("product_details/${product.id}")
+                                                },
+                                                isFavorite = isFav,
+                                               // modifier = Modifier
+                                            )
+                                        }
                                     }
                                 }
                             }

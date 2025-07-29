@@ -96,11 +96,19 @@ dependencies {
 
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
+    implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
 
     implementation(libs.coil.compose)
 
     //Map
     implementation("com.google.maps.android:maps-compose:4.0.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
+
+    //Bottom Navigation
+    implementation ("com.github.0xRahad:RioBottomNavigation:1.0.2")
+
+    //Animation
+    implementation(libs.androidx.animation)
+
 
 }

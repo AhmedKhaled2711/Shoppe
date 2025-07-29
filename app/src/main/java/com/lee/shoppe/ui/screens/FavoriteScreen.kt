@@ -41,6 +41,7 @@ import com.lee.shoppe.data.model.ProductImage
 import com.lee.shoppe.data.model.Variant
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import com.lee.shoppe.ui.screens.dialogBox.EmptyState
 import com.lee.shoppe.ui.theme.*
 import com.lee.shoppe.ui.utils.isNetworkConnected
@@ -214,17 +215,22 @@ fun FavoriteScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(favoriteProducts) { product ->
-                                ProductCard(
-                                    product = product,
-                                    onFavoriteClick = {
-                                        productToDelete = product
-                                        showDeleteDialog = true
-                                    },
-                                    onCardClick = {
-                                        navController.navigate("product_details/${product.id}")
-                                    },
-                                    isFavorite = true
-                                )
+                                StaggeredAnimatedItem(
+                                    index = favoriteProducts.indexOf(product),
+                                    delayPerItemMs = 50
+                                ) {
+                                    ProductCard(
+                                        product = product,
+                                        onFavoriteClick = {
+                                            productToDelete = product
+                                            showDeleteDialog = true
+                                        },
+                                        onCardClick = {
+                                            navController.navigate("product_details/${product.id}")
+                                        },
+                                        isFavorite = true
+                                    )
+                                }
                             }
                         }
                     }

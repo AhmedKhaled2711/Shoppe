@@ -53,6 +53,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
+import com.lee.shoppe.ui.navigation.Screen
 import com.lee.shoppe.ui.theme.BluePrimary
 import okhttp3.internal.wait
 import kotlinx.coroutines.launch
@@ -228,31 +230,38 @@ fun ProductsScreen(
                         val gridState = rememberLazyGridState()
 
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            state = gridState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            columns = GridCells.Adaptive(minSize = 190.dp),
+                            state = rememberLazyGridState(),
+                            contentPadding = PaddingValues(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(products) { product ->
-                                val productId = product.id ?: 0
-                                val isFav = favoriteStatesSnapshot[productId] ?: false
+                                val isFavorite = favoriteStatesSnapshot[product.id] ?: false
 
-                                println("Rendering product $productId with favorite state: $isFav")
-
-                                ProductCard(
-                                    product = product,
-                                    onFavoriteClick = {
-                                        println("Favorite button clicked for product $productId, current state: $isFav")
-                                        toggleFavorite(product)
-                                    },
-                                    onCardClick = {
-                                        // Navigate to product details
-                                        navController.navigate("product_details/${product.id}")
-                                    },
-                                    isFavorite = isFav
-                                )
+                                StaggeredAnimatedItem(
+                                    index = products.indexOf(product),
+                                    delayPerItemMs = 50
+                                ) {
+                                    ProductCard(
+                                        product = product,
+                                        onFavoriteClick = {
+                                            if (isFavorite) {
+                                                productToRemove = product
+                                                showRemoveDialog = true
+                                            } else {
+                                                favViewModel.insertFavProduct(product, customerData.favListId)
+                                                favoriteStates = favoriteStates.toMutableMap().apply {
+                                                    put(product.id ?: 0L, true)
+                                                }
+                                            }
+                                        },
+                                        onCardClick = {
+                                            navController.navigate("${Screen.ProductDetails.route}/${product.id}")
+                                        },
+                                        isFavorite = isFavorite
+                                    )
+                                }
                             }
                         }
                     }
@@ -487,7 +496,7 @@ fun ProductCard(
     // Memoize expensive calculations
     val productKey = remember(product.id) { "product_${product.id}" }
     val randomRating = remember(productKey) { Random.nextDouble(3.0, 5.0).toFloat() }
-    
+
     // Process product title once
     val displayTitle = remember(product.title) {
         product.title?.let { title ->
@@ -503,13 +512,13 @@ fun ProductCard(
         val currency = CustomerData.getInstance(context).currency
         val originalPrice = product.variants?.getOrNull(0)?.price?.toDoubleOrNull() ?: 0.0
         val conversionRate = 1.0 // Default rate
-        
+
         val price = if (currency == "USD") {
             String.format("%.2f", originalPrice / conversionRate)
         } else {
             product.variants?.getOrNull(0)?.price ?: "0.0"
         }
-        
+
         val symbol = when (currency) {
             "USD" -> "$"
             "EGY" -> "EGP"
@@ -517,7 +526,7 @@ fun ProductCard(
             "GBP" -> "£"
             else -> currency
         }
-        
+
         price to symbol
     }
 
@@ -544,7 +553,7 @@ fun ProductCard(
                     // Add any necessary URL transformations here
                     if (url.startsWith("//")) "https:$url" else url
                 }
-                
+
                 val imagePainter = rememberAsyncImagePainter(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(imageUrl)
@@ -563,7 +572,7 @@ fun ProductCard(
                     placeholder = painterResource(id = R.drawable.broken_image),
                     error = painterResource(id = R.drawable.broken_image)
                 )
-                
+
                 Image(
                     painter = imagePainter,
                     contentDescription = product.title ?: "Product image",
