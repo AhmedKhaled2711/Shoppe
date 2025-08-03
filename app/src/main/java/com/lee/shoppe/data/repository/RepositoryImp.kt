@@ -37,9 +37,6 @@ class RepositoryImp @Inject constructor(
         }
     }
 
-    override suspend fun getCustomers(id: Long): OneCustomer {
-        return networkManager.getCustomers(id)
-    }
 
     override suspend fun createCustomer(customer: CustomerRequest): Flow<CustomerResponse> {
         return flowOf(networkManager.createCustomer(customer))
@@ -142,6 +139,10 @@ class RepositoryImp @Inject constructor(
         return flow {
             emit(networkManager.getCustomerOrders(userId))
         }
+    }
+
+    override suspend fun getSingleCustomer(id: Long, forceRefresh: Boolean): OneCustomer {
+        return networkManager.getSingleCustomer(id, forceRefresh)
     }
 
 }

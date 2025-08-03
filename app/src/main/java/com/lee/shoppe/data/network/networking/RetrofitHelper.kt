@@ -43,20 +43,39 @@ class RetrofitHelper @Inject constructor(
             BuildConfig.SHOPIFY_API_KEY,
             BuildConfig.SHOPIFY_PASSWORD
         )
-        val request = chain.request().newBuilder()
+        val originalRequest = chain.request()
+        
+        // Don't add cache headers for DELETE requests or if it's a force refresh
+        val cacheControl = when {
+            originalRequest.method.equals("DELETE", ignoreCase = true) ||
+            originalRequest.header("Cache-Control")?.contains("no-cache") == true -> {
+                "no-cache, no-store, must-revalidate"
+            }
+            else -> "public, max-age=$MAX_AGE, max-stale=$STALE_WHILE_REVALIDATE"
+        }
+        
+        val request = originalRequest.newBuilder()
             .addHeader("Authorization", credentials)
-            .addHeader("Cache-Control", "public, max-age=$MAX_AGE, max-stale=$STALE_WHILE_REVALIDATE")
+            .addHeader("Cache-Control", cacheControl)
+            .removeHeader("Pragma") // Remove any existing Pragma header
             .build()
+            
         chain.proceed(request)
     }
 
     private val retryInterceptor = Interceptor { chain ->
-        var request = chain.request()
+        val request = chain.request()
+        
+        // Skip retry for DELETE requests
+        if (request.method.equals("DELETE", ignoreCase = true)) {
+            return@Interceptor chain.proceed(request)
+        }
+        
         var response: Response? = null
         var retryCount = 0
-        var shouldRetry: Boolean
+        var lastException: Exception? = null
 
-        do {
+        while (retryCount <= MAX_RETRIES) {
             if (retryCount > 0) {
                 try {
                     Thread.sleep(RETRY_DELAY_MS * retryCount)
@@ -68,20 +87,30 @@ class RetrofitHelper @Inject constructor(
 
             try {
                 response = chain.proceed(request)
-                shouldRetry = !response.isSuccessful && retryCount < MAX_RETRIES
-                if (shouldRetry) {
-                    response.close()
+                // If response is successful, return it immediately
+                if (response.isSuccessful) {
+                    return@Interceptor response
                 }
+                // If this is the last retry, return the error response
+                if (retryCount == MAX_RETRIES) {
+                    return@Interceptor response
+                }
+                // Close the response body to avoid leaks
+                response.close()
             } catch (e: Exception) {
-                shouldRetry = retryCount < MAX_RETRIES && (e is java.net.SocketTimeoutException || 
-                    e is java.net.ConnectException || 
-                    e is java.net.UnknownHostException)
-                if (!shouldRetry) throw e
+                lastException = e
+                // Only retry on specific network exceptions
+                if (retryCount == MAX_RETRIES || 
+                    (e !is java.net.SocketTimeoutException && 
+                     e !is java.net.ConnectException && 
+                     e !is java.net.UnknownHostException)) {
+                    throw e
+                }
             }
             retryCount++
-        } while (shouldRetry)
+        }
 
-        response ?: throw IOException("Failed to get response after $MAX_RETRIES attempts")
+        throw lastException ?: IOException("Failed to get response after $MAX_RETRIES attempts")
     }
 
     @Synchronized

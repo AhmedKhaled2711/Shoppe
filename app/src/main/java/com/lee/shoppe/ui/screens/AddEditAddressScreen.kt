@@ -1,153 +1,226 @@
 package com.lee.shoppe.ui.screens
 
 import android.location.Geocoder
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import android.util.Log
 import com.google.android.gms.maps.model.LatLng
-import com.lee.shoppe.data.model.Address
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
-import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.AddressViewModel
 import java.util.Locale
+import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewModel = hiltViewModel(), navBackStackEntry: NavBackStackEntry? = null) {
+fun AddEditAddressScreen(
+    navController: NavController, 
+    viewModel: AddressViewModel = hiltViewModel(), 
+    navBackStackEntry: NavBackStackEntry? = null
+) {
     val context = LocalContext.current
     val customerId = CustomerData.getInstance(context).id
-    val navBackStackEntry = navController.currentBackStackEntry
-    val isEdit = navBackStackEntry?.arguments?.containsKey("id") == true
+    val actionState = viewModel.actionState.collectAsState()
+    
+    // Get the address ID from the navigation arguments
     val addressId = navBackStackEntry?.arguments?.getLong("id", -1L).takeIf { it != -1L }
+    val isEdit = addressId != null
+    
+    Log.d("AddEditAddressScreen", "Screen created - isEdit: $isEdit, addressId: $addressId")
 
-    // State for form fields with better null handling
+    // Form fields with validation
+    val name = rememberSaveable { mutableStateOf("") }
+    val nameError = remember { mutableStateOf<String?>(null) }
+    
+    val phone = rememberSaveable { mutableStateOf("") }
+    val phoneError = remember { mutableStateOf<String?>(null) }
+    
     val address1 = rememberSaveable { mutableStateOf("") }
+    val address1Error = remember { mutableStateOf<String?>(null) }
+    
     val address2 = rememberSaveable { mutableStateOf("") }
+    val address2Error = remember { mutableStateOf<String?>(null) }
+    
     val city = rememberSaveable { mutableStateOf("") }
     val zip = rememberSaveable { mutableStateOf("") }
     val country = rememberSaveable { mutableStateOf("") }
-    val name = rememberSaveable { mutableStateOf("") }
-    val phone = rememberSaveable { mutableStateOf("") }
     val isDefault = rememberSaveable { mutableStateOf(false) }
     
-    // Collect single address state
-    val addressState by viewModel.singleAddress.collectAsState()
+    // Track if form has been submitted to show validation errors
+    val isFormSubmitted = remember { mutableStateOf(false) }
     
-    // Track loading state
-    val isLoading = remember { mutableStateOf(true) }
-    
-    // Handle navigation after save
-    val actionState by viewModel.actionState.collectAsState()
-    LaunchedEffect(actionState) {
-        when (actionState) {
-            is NetworkState.Success -> {
-                // Navigate back to AddressListScreen when save is successful
-                navController.popBackStack()
-            }
-            is NetworkState.Failure -> {
-                // Handle error if needed
-                Log.e("AddEditAddressScreen", "Error saving address")
-            }
-            else -> {}
+    // Validate form fields
+    fun validateForm(): Boolean {
+        var isValid = true
+        
+        // Reset errors
+        nameError.value = null
+        phoneError.value = null
+        address1Error.value = null
+        address2Error.value = null
+        
+        // Validate name
+        if (name.value.isBlank()) {
+            nameError.value = "Name is required"
+            isValid = false
         }
+        
+        // Validate phone
+        if (phone.value.isBlank()) {
+            phoneError.value = "Phone number is required"
+            isValid = false
+        } else if (!android.util.Patterns.PHONE.matcher(phone.value).matches()) {
+            phoneError.value = "Enter a valid phone number"
+            isValid = false
+        }
+        
+        // Validate address1
+        if (address1.value.isBlank()) {
+            address1Error.value = "Address line 1 is required"
+            isValid = false
+        }
+        
+        return isValid
     }
-
-    // Load address data when in edit mode
-    LaunchedEffect(isEdit, addressId) {
-        Log.d("AddEditAddressScreen", "LaunchedEffect triggered. isEdit: $isEdit, addressId: $addressId")
+    
+    // Save address function with validation
+    fun saveAddress() {
+        if (!validateForm()) {
+            return
+        }
+        
+        val address = com.lee.shoppe.data.model.Address(
+            id = if (isEdit) addressId ?: 0L else 0L,
+            customer_id = customerId,
+            first_name = name.value.trim().split(" ").firstOrNull() ?: "",
+            last_name = name.value.trim().split(" ").drop(1).joinToString(" "),
+            name = name.value.trim(),
+            company = "",
+            address1 = address1.value.trim(),
+            address2 = address2.value.trim(),
+            city = city.value.trim(),
+            province = "",
+            country = country.value.trim(),
+            zip = zip.value.trim(),
+            phone = phone.value.trim(),
+            default = isDefault.value,
+            country_code = "",
+            country_name = country.value.trim(),
+            province_code = ""
+        )
+        
         if (isEdit && addressId != null) {
-            Log.d("AddEditAddressScreen", "Fetching address with ID: $addressId")
-            isLoading.value = true
-            viewModel.fetchAddress(customerId, addressId)
+            viewModel.editAddress(customerId, addressId, address)
         } else {
-            Log.d("AddEditAddressScreen", "Not in edit mode or no address ID")
-            isLoading.value = false
+            viewModel.addAddress(customerId, address)
+        }
+        
+        // Navigate back to AddressListScreen with refresh flag
+        navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+        navController.navigate("address_list") {
+            // Clear the back stack to prevent going back to the edit screen
+            popUpTo("address_list") { inclusive = true }
+            // Clear the back stack up to the address list
+            launchSingleTop = true
         }
     }
-
-    // Handle address data when it's loaded
-    LaunchedEffect(addressState) {
-        Log.d("AddEditAddressScreen", "addressState changed: $addressState")
+    
+    // Single address state for editing - collect as state with lifecycle-aware collection
+    val singleAddressState by viewModel.singleAddress.collectAsState()
+    
+    // Track if we've handled the initial address load
+    val hasHandledInitialLoad = remember { mutableStateOf(false) }
+    
+    // Fetch address data when in edit mode
+    LaunchedEffect(isEdit, addressId) {
+        Log.d("AddEditAddressScreen", "LaunchedEffect - isEdit: $isEdit, addressId: $addressId")
+        
+        // Always reset the state when these values change
+        hasHandledInitialLoad.value = false
+        
         if (isEdit && addressId != null) {
-            when (val state = addressState) {
-                is NetworkState.Success -> {
+            Log.d("AddEditAddressScreen", "Fetching address $addressId for editing")
+            viewModel.fetchAddress(customerId, addressId, forceRefresh = true)
+        } else {
+            // Reset form fields when adding a new address
+            Log.d("AddEditAddressScreen", "Resetting form for new address")
+            address1.value = ""
+            address2.value = ""
+            city.value = ""
+            zip.value = ""
+            country.value = ""
+            name.value = ""
+            phone.value = ""
+            isDefault.value = false
+            viewModel.resetSingleAddressState()
+            hasHandledInitialLoad.value = true
+        }
+    }
+    
+    // Update form fields when single address is loaded
+    LaunchedEffect(singleAddressState) {
+        Log.d("AddEditAddressScreen", "Single address state changed: $singleAddressState")
+        
+        when (val state = singleAddressState) {
+            is NetworkState.Success -> {
+                if (!hasHandledInitialLoad.value) {
                     val address = state.data
                     Log.d("AddEditAddressScreen", "Address loaded successfully: $address")
+                    
+                    // Update all fields at once to avoid partial updates
+                    name.value = address.name ?: ""
+                    phone.value = address.phone ?: ""
                     address1.value = address.address1 ?: ""
                     address2.value = address.address2 ?: ""
                     city.value = address.city ?: ""
                     zip.value = address.zip ?: ""
                     country.value = address.country ?: ""
-                    name.value = address.name ?: ""
-                    phone.value = address.phone ?: ""
-                    isDefault.value = address.default ?: false
-                    isLoading.value = false
+                    isDefault.value = address.default
+                    
+                    hasHandledInitialLoad.value = true
+                    Log.d("AddEditAddressScreen", "Form fields updated with address data")
                 }
-                is NetworkState.Loading -> {
-                    Log.d("AddEditAddressScreen", "Loading address...")
-                    isLoading.value = true
-                }
-                is NetworkState.Failure -> {
-                    Log.e("AddEditAddressScreen", "Error loading address", state.error)
-                    // Handle error
-                    isLoading.value = false
-                    // You might want to show an error message to the user here
-                }
-                is NetworkState.Idle -> {
-                    Log.d("AddEditAddressScreen", "Address state is Idle")
-                }
-                else -> {
-                    Log.d("AddEditAddressScreen", "Unexpected state: $state")
-                }
+            }
+            is NetworkState.Loading -> {
+                Log.d("AddEditAddressScreen", "Loading address data...")
+            }
+            is NetworkState.Failure -> {
+                Log.e("AddEditAddressScreen", "Error loading address: ${state.error}", state.error)
+                // Reset the error state after handling
+                viewModel.resetSingleAddressState()
+            }
+            is NetworkState.Idle -> {
+                Log.d("AddEditAddressScreen", "Idle state - no address loaded yet")
             }
         }
     }
 
-    // Remove Place Picker launcher for address1 and address2
-
-    val navBackStackEntryMapVar = navController.currentBackStackEntryAsState().value
-    val pickedLocation = navBackStackEntryMapVar?.savedStateHandle?.get<LatLng>("picked_location")
-    val pickedLocation2 = navBackStackEntryMapVar?.savedStateHandle?.get<LatLng>("picked_location2")
+    val navBackStackEntry = navController.currentBackStackEntryAsState().value
+    val pickedLocation = navBackStackEntry?.savedStateHandle?.get<LatLng>("picked_location")
+    val pickedLocation2 = navBackStackEntry?.savedStateHandle?.get<LatLng>("picked_location2")
     LaunchedEffect(pickedLocation) {
         pickedLocation?.let {
             val geocoder = Geocoder(context, Locale.getDefault())
@@ -187,7 +260,7 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
         }
     }
 
-    //val isEditAddressLoading = isEdit && addressId != null && ((addressesState.value as? NetworkState.Success<List<Address>>)?.data?.find { it.id == addressId } == null)
+    val isEditAddressLoading = isEdit && addressId != null && singleAddressState is NetworkState.Loading
 
     val customSelectionColors = TextSelectionColors(
         handleColor = BluePrimary,
@@ -200,20 +273,34 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Header
-            ScreenHeader(
-                title = if (isEdit) "Edit Address" else "Add Address",
-                onBackClick = { navController.popBackStack() }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            if (isLoading.value) {
-                // Show loading indicator while waiting for address data
-                Box(
+            // Header (unchanged)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.Black,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                        .size(28.dp)
+                        .clickable { navController.popBackStack() }
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = if (isEdit) "Edit Address" else "Add Address",
+                    color = Color.Black,
+                    fontSize = 22.sp,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            if (isEditAddressLoading) {
+                // Show loading indicator while waiting for address data
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = BluePrimary)
                 }
             } else {
@@ -221,76 +308,179 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .weight(1f),
+                        .padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Name field (always visible and editable)
                     OutlinedTextField(
                         value = name.value,
-                        onValueChange = { name.value = it },
-                        label = { Text("Name") },
+                        onValueChange = { 
+                            name.value = it
+                            if (isFormSubmitted.value) {
+                                nameError.value = if (it.isBlank()) "Name is required" else null
+                            }
+                        },
+                        label = { Text("Full Name") },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = BluePrimary,
+                            focusedBorderColor = if (nameError.value != null) Color.Red else BluePrimary,
                             cursorColor = BluePrimary,
-                            focusedLabelColor = BluePrimary
-                        )
+                            focusedLabelColor = if (nameError.value != null) Color.Red else BluePrimary
+                        ),
+                        isError = nameError.value != null,
+                        supportingText = {
+                            if (nameError.value != null) {
+                                Text(nameError.value!!, color = Color.Red)
+                            } else null
+                        },
+                        singleLine = true
                     )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Phone field
                     OutlinedTextField(
                         value = phone.value,
-                        onValueChange = { phone.value = it },
-                        label = { Text("Phone") },
+                        onValueChange = { 
+                            phone.value = it
+                            if (isFormSubmitted.value) {
+                                phoneError.value = when {
+                                    it.isBlank() -> "Phone number is required"
+                                    !android.util.Patterns.PHONE.matcher(it).matches() -> "Enter a valid phone number"
+                                    else -> null
+                                }
+                            }
+                        },
+                        label = { Text("Phone Number") },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = BluePrimary,
+                            focusedBorderColor = if (phoneError.value != null) Color.Red else BluePrimary,
                             cursorColor = BluePrimary,
-                            focusedLabelColor = BluePrimary
+                            focusedLabelColor = if (phoneError.value != null) Color.Red else BluePrimary
+                        ),
+                        isError = phoneError.value != null,
+                        supportingText = {
+                            if (phoneError.value != null) {
+                                Text(phoneError.value!!, color = Color.Red)
+                            } else null
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    )
+                    // Address 1 field (editable with optional map selection)
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        OutlinedTextField(
+                            value = address1.value,
+                            onValueChange = { 
+                                address1.value = it
+                                if (isFormSubmitted.value) {
+                                    address1Error.value = if (it.isBlank()) "Address line 1 is required" else null
+                                }
+                            },
+                            label = { Text("Address Line 1") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = if (address1Error.value != null) Color.Red else BluePrimary,
+                                cursorColor = BluePrimary,
+                                focusedLabelColor = if (address1Error.value != null) Color.Red else BluePrimary
+                            ),
+                            isError = address1Error.value != null,
+                            supportingText = {
+                                if (address1Error.value != null) {
+                                    Text(address1Error.value!!, color = Color.Red)
+                                } else null
+                            },
+                            singleLine = true,
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { 
+                                        // Save form state before navigation
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_name", name.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_phone", phone.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_address1", address1.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_address2", address2.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_city", city.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_country", country.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_zip", zip.value)                                        // Pass current address to map picker
+                                        val currentAddress = "${address1.value}, ${city.value}, ${country.value} ${zip.value}".trim()
+                                        navController.navigate("map_picker?for=address1&address=${URLEncoder.encode(currentAddress, "UTF-8")}")
+                                    },
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .background(
+                                            color = BluePrimary.copy(alpha = 0.1f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = "Pick location from map",
+                                        tint = BluePrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         )
-                    )
-                    OutlinedTextField(
-                        value = address1.value,
-                        onValueChange = { address1.value = it },
-                        label = { Text("Address 1") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = BluePrimary,
-                            cursorColor = BluePrimary,
-                            focusedLabelColor = BluePrimary
-                        ),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                navController.navigate("map_picker")
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.LocationOn,
-                                    contentDescription = "Pick location from map",
-                                    tint = BluePrimary
-                                )
+                    }
+                    
+                    // Address 2 field (editable with optional map selection)
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        OutlinedTextField(
+                            value = address2.value,
+                            onValueChange = { 
+                                address2.value = it
+                                if (isFormSubmitted.value) {
+                                    address2Error.value = if (it.isBlank()) "Address line 2 is required" else null
+                                }
+                            },
+                            label = { Text("Address Line 2") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = if (address2Error.value != null) Color.Red else BluePrimary,
+                                cursorColor = BluePrimary,
+                                focusedLabelColor = if (address2Error.value != null) Color.Red else BluePrimary
+                            ),
+                            isError = address2Error.value != null,
+                            supportingText = {
+                                if (address2Error.value != null) {
+                                    Text(address2Error.value!!, color = Color.Red)
+                                } else null
+                            },
+                            singleLine = true,
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { 
+                                        // Save form state before navigation
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_name", name.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_phone", phone.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_address1", address1.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_address2", address2.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_city", city.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_country", country.value)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("saved_zip", zip.value)                                        // Pass current address to map picker
+                                        val currentAddress = "${address2.value}, ${city.value}, ${country.value} ${zip.value}".trim()
+                                        navController.navigate("map_picker?for=address2&address=${URLEncoder.encode(currentAddress, "UTF-8")}")
+                                    },
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .background(
+                                            color = BluePrimary.copy(alpha = 0.1f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = "Pick location from map",
+                                        tint = BluePrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
-                        }
-                    )
-                    OutlinedTextField(
-                        value = address2.value,
-                        onValueChange = { address2.value = it },
-                        label = { Text("Address 2") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = BluePrimary,
-                            cursorColor = BluePrimary,
-                            focusedLabelColor = BluePrimary
-                        ),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                navController.navigate("map_picker?for=address2")
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.LocationOn,
-                                    contentDescription = "Pick location from map",
-                                    tint = BluePrimary
-                                )
-                            }
-                        }
-                    )
+                        )
+                    }
+                    
                     OutlinedTextField(
                         value = city.value,
                         onValueChange = { city.value = it },
@@ -325,41 +515,92 @@ fun AddEditAddressScreen(navController: NavController, viewModel: AddressViewMod
                         )
                     )
                     Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Save button - enabled only when all required fields are filled
+                    val isFormValid = name.value.isNotBlank() && 
+                                    phone.value.isNotBlank() && 
+                                    address1.value.isNotBlank()
+                    
                     Button(
-                        onClick = {
-                            val address = Address(
-                                address1 = address1.value,
-                                address2 = address2.value,
-                                city = city.value,
-                                company = "",
-                                country = country.value,
-                                country_code = "",
-                                country_name = country.value,
-                                customer_id = customerId,
-                                default = isDefault.value,
-                                first_name = name.value,
-                                id = addressId ?: 0L,
-                                last_name = "",
-                                name = name.value,
-                                phone = phone.value,
-                                province = "",
-                                province_code = "",
-                                zip = zip.value
-                            )
-                            if (isEdit && addressId != null) {
-                                viewModel.editAddress(customerId, addressId, address)
-                            } else {
-                                viewModel.addAddress(customerId, address)
+                        onClick = { 
+                            isFormSubmitted.value = true
+                            if (validateForm()) {
+                                saveAddress()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isFormValid) BluePrimary else Color.LightGray,
+                            contentColor = Color.White
+                        ),
+                        enabled = isFormValid
                     ) {
                         Text(if (isEdit) "Save Changes" else "Save Address", color = Color.White, fontSize = 16.sp)
                     }
+                    when (val state = actionState.value) {
+                        is NetworkState.Loading -> {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            CircularProgressIndicator(color = BluePrimary)
+                        }
+                        is NetworkState.Failure -> {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Failed: ${state.error.message}", color = Color.Red)
+                        }
+                        is NetworkState.Success -> {
+                            // On success, set refresh flag and navigate back
+                            LaunchedEffect(Unit) {
+                                navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                                navController.popBackStack()
+                            }
+                        }
+                        else -> {}
+                    }
                 }
             }
+        }
+    }
+
+    // Restore form state after returning from map picker
+    LaunchedEffect(Unit) {
+        // Restore saved form fields
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_name")?.let { name.value = it }
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_phone")?.let { phone.value = it }
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_address1")?.let { address1.value = it }
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_address2")?.let { address2.value = it }
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_city")?.let { city.value = it }
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_country")?.let { country.value = it }
+        navController.currentBackStackEntry?.savedStateHandle?.get<String>("saved_zip")?.let { zip.value = it }
+
+        // Handle map selection result
+        navController.currentBackStackEntry?.savedStateHandle?.get<Pair<String, String>>("selected_address")?.let { (addressType, address) ->
+            when (addressType) {
+                "address1" -> {
+                    if (address.isNotBlank()) {
+                        address1.value = address
+                    }
+                    address1Error.value = null
+                }
+                "address2" -> {
+                    if (address.isNotBlank()) {
+                        address2.value = address
+                    }
+                    address2Error.value = null
+                }
+            }
+            // Clear the result to prevent handling it multiple times
+            navController.currentBackStackEntry?.savedStateHandle?.remove<Pair<String, String>>("selected_address")
+        }
+
+        // Clear saved state after restoring
+        listOf(
+            "saved_name", "saved_phone", "saved_address1", "saved_address2",
+            "saved_city", "saved_country", "saved_zip"
+        ).forEach { key ->
+            navController.currentBackStackEntry?.savedStateHandle?.remove<String>(key)
         }
     }
 } 

@@ -123,7 +123,7 @@ fun OrderDetailsScreen(
     // Load data on entry
     LaunchedEffect(customerData.cartListId) {
         if (customerData.cartListId > 0) cartViewModel.getCartProducts(customerData.cartListId)
-        addressViewModel.getAllcustomer(customerData.id)
+        addressViewModel.getCustomerData(customerData.id , forceRefresh = true)
         orderDetailsViewModel.getAdsCode()
     }
 

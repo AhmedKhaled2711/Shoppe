@@ -36,31 +36,49 @@ class AddressViewModel @Inject constructor(
     private val _singleAddress = MutableStateFlow<NetworkState<Address>>(NetworkState.Idle)
     val singleAddress: StateFlow<NetworkState<Address>> = _singleAddress.asStateFlow()
 
-    fun fetchAddresses(customerId: Long) {
+    fun resetSingleAddressState() {
+        _singleAddress.value = NetworkState.Idle
+    }
+
+
+    fun fetchAddress(customerId: Long, addressId: Long, forceRefresh: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
-            _addresses.value = NetworkState.Loading
+            Log.d("AddressViewModel", "Fetching address $addressId for customer $customerId, forceRefresh: $forceRefresh")
+            _singleAddress.value = NetworkState.Loading
             try {
-                val oneCustomer = repository.getCustomers(customerId)
-                _addresses.value = NetworkState.Success(oneCustomer.customer.addresses)
+                // Use getSingleCustomer with forceRefresh to ensure we get fresh data when needed
+                val oneCustomer = repository.getSingleCustomer(customerId, forceRefresh)
+                val address = oneCustomer.customer.addresses.find { it.id == addressId }
+                
+                if (address != null) {
+                    Log.d("AddressViewModel", "Successfully found address: $address")
+                    _singleAddress.value = NetworkState.Success(address)
+                } else {
+                    val error = NoSuchElementException("Address with ID $addressId not found for customer $customerId")
+                    Log.e("AddressViewModel", error.message ?: "Address not found")
+                    _singleAddress.value = NetworkState.Failure(error)
+                }
             } catch (e: Exception) {
-                _addresses.value = NetworkState.Failure(e)
+                Log.e("AddressViewModel", "Error fetching address: ${e.message}", e)
+                _singleAddress.value = NetworkState.Failure(e)
             }
         }
     }
 
-    fun fetchAddress(customerId: Long, addressId: Long) {
+
+    fun fetchAddresses(customerId: Long, forceRefresh: Boolean = true) {
         viewModelScope.launch(Dispatchers.IO) {
-            _singleAddress.value = NetworkState.Loading
+            Log.d("AddressViewModel", "Fetching addresses for customer $customerId, forceRefresh: $forceRefresh")
+            _addresses.value = NetworkState.Loading
             try {
-                val oneCustomer = repository.getCustomers(customerId)
-                val address = oneCustomer.customer.addresses.find { it.id == addressId }
-                if (address != null) {
-                    _singleAddress.value = NetworkState.Success(address)
-                } else {
-                    _singleAddress.value = NetworkState.Failure(NoSuchElementException("Address not found"))
-                }
+                // Use the new forceRefresh parameter in getSingleCustomer
+                val oneCustomer = repository.getSingleCustomer(customerId, forceRefresh)
+                val addresses = oneCustomer.customer.addresses
+                Log.d("AddressViewModel", "Fetched ${addresses.size} addresses")
+                _addresses.value = NetworkState.Success(addresses)
             } catch (e: Exception) {
-                _singleAddress.value = NetworkState.Failure(e)
+                Log.e("AddressViewModel", "Error fetching addresses", e)
+                _addresses.value = NetworkState.Failure(e)
             }
         }
     }
@@ -84,23 +102,23 @@ class AddressViewModel @Inject constructor(
             try {
                 val updateRequest = AddressUpdateRequest(
                     customer_address = CustomerAddress(
-                        address1 = address.address1 ?: "",
-                        address2 = address.address2 ?: "",
-                        city = address.city ?: "",
-                        company = address.company?.toString() ?: "",
-                        country = address.country ?: "",
-                        country_code = address.country_code ?: "",
-                        country_name = address.country_name ?: "",
+                        address1 = address.address1,
+                        address2 = address.address2,
+                        city = address.city,
+                        company = address.company.toString(),
+                        country = address.country,
+                        country_code = address.country_code,
+                        country_name = address.country_name,
                         customer_id = address.customer_id,
-                        default = address.default ?: false,
-                        first_name = address.first_name ?: "",
+                        default = address.default,
+                        first_name = address.first_name,
                         id = address.id,
-                        last_name = address.last_name ?: "",
-                        name = address.name ?: "",
-                        phone = address.phone ?: "",
-                        province = address.province?.toString() ?: "",
-                        province_code = address.province_code ?: "",
-                        zip = address.zip ?: ""
+                        last_name = address.last_name,
+                        name = address.name,
+                        phone = address.phone,
+                        province = address.province.toString(),
+                        province_code = address.province_code,
+                        zip = address.zip
                     )
                 )
                 repository.editSingleCustomerAddress(customerId, addressId, updateRequest)
@@ -114,13 +132,31 @@ class AddressViewModel @Inject constructor(
 
     fun deleteAddress(customerId: Long, addressId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
+            Log.d("AddressViewModel", "Deleting address $addressId for customer $customerId")
             _actionState.value = NetworkState.Loading
             try {
+                // Delete the address
                 repository.deleteSingleCustomerAddress(customerId, addressId)
+                Log.d("AddressViewModel", "Successfully deleted address $addressId")
+                
+                // Update the UI immediately by filtering out the deleted address
+                val currentState = _addresses.value
+                if (currentState is NetworkState.Success) {
+                    val updatedList = currentState.data.filter { it.id != addressId }
+                    _addresses.value = NetworkState.Success(updatedList)
+                    Log.d("AddressViewModel", "Immediately updated UI with ${updatedList.size} addresses")
+                }
+                
+                // Force a fresh fetch from server with cache busting
+                fetchAddresses(customerId, true)
+                
                 _actionState.value = NetworkState.Success(Unit)
-                fetchAddresses(customerId)
             } catch (e: Exception) {
+                Log.e("AddressViewModel", "Error deleting address $addressId", e)
                 _actionState.value = NetworkState.Failure(e)
+                
+                // Even if there's an error, try to refresh the list
+                fetchAddresses(customerId, true)
             }
         }
     }
@@ -138,4 +174,8 @@ class AddressViewModel @Inject constructor(
             }
         }
     }
-} 
+    
+    fun resetActionState() {
+        _actionState.value = NetworkState.Idle
+    }
+}

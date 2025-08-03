@@ -20,7 +20,6 @@ import retrofit2.http.Query
 
 interface NetworkManager {
 
-    suspend fun getCustomers( id: Long): OneCustomer
     suspend fun createCustomer(customer: CustomerRequest): CustomerResponse
     suspend fun createDraftOrders(draftOrder: DraftOrderResponse): DraftOrderResponse
     suspend fun updateCustomer(id: Long, customer: UpdateCustomerRequest): CustomerResponse
@@ -42,6 +41,6 @@ interface NetworkManager {
     suspend fun getSingleOrder(@Path("id") orderId: Long): OrderResponse
     suspend fun editSingleCustomerAddressStar(customerId:Long,id:Long,addressRequest: AddressDefaultRequest): AddressUpdateRequest
     suspend fun getCustomerOrders(@Path("id") userId: Long): OrderResponse
-
+    suspend fun getSingleCustomer(id: Long, forceRefresh: Boolean = false): OneCustomer
 
 }

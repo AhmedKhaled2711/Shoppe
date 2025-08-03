@@ -29,15 +29,17 @@ class CartAddressViewModel @Inject constructor(
     var products1: StateFlow<NetworkState<AddressUpdateRequest>> = _products1
 
 
-    fun getAllcustomer(id:Long) {
+    fun getCustomerData(id: Long, forceRefresh: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
-            Log.i("TAG", "getAllProducts: ViewModel")
+            Log.i("CartAddressViewModel", "Fetching customer with ID: $id, forceRefresh: $forceRefresh")
             try {
-                val response = repository.getCustomers(id)
+                val response = repository.getSingleCustomer(id, forceRefresh)
                 _products.value = NetworkState.Success(response)
             } catch (e: HttpException) {
+                Log.e("CartAddressViewModel", "HTTP error fetching customer: ${e.message}", e)
                 _products.value = NetworkState.Failure(e)
-            }catch (e: Exception) {
+            } catch (e: Exception) {
+                Log.e("CartAddressViewModel", "Error fetching customer: ${e.message}", e)
                 _products.value = NetworkState.Failure(e)
             }
         }
@@ -49,7 +51,7 @@ class CartAddressViewModel @Inject constructor(
             try {
                 val response = repository.editSingleCustomerAddressStar(customerId,id, addressRequest)
                 _products1.value = NetworkState.Success(response)
-                getAllcustomer(customerId)
+                getCustomerData(customerId , forceRefresh = true)
 
             } catch (e: HttpException) {
                 _products1.value = NetworkState.Failure(e)
@@ -78,7 +80,7 @@ class CartAddressViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             Log.i("Deleted", "Deleted Address: ${customerId}")
             repository.deleteSingleCustomerAddress(customerId,id)
-            getAllcustomer(customerId)
+            getCustomerData(customerId , forceRefresh = true)
         }
     }
 

@@ -68,9 +68,12 @@ class NetworkManagerImp @Inject constructor(
         }
     }
 
-    override suspend fun getCustomers(id: Long): OneCustomer {
+
+
+    override suspend fun getSingleCustomer(id: Long, forceRefresh: Boolean): OneCustomer {
         return safeApiCall {
-            networkService.getSingleCustomer(id)
+            val cacheControl = if (forceRefresh) "no-cache, no-store, must-revalidate" else null
+            networkService.getSingleCustomer(id, cacheControl)
         }
     }
 

@@ -21,7 +21,6 @@ import retrofit2.http.Query
 
 interface Repository {
 
-    suspend fun getCustomers( id: Long): OneCustomer
     suspend fun createCustomer(customer: CustomerRequest): Flow<CustomerResponse>
     suspend fun createDraftOrders(draftOrder: DraftOrderResponse): Flow<DraftOrderResponse>
     suspend fun updateCustomer(id: Long, customer: UpdateCustomerRequest): Flow<CustomerResponse>
@@ -47,5 +46,6 @@ interface Repository {
         addressRequest: AddressDefaultRequest
     ): AddressUpdateRequest
     suspend fun getCustomerOrders(@Path("id") userId: Long): Flow<OrderResponse>
+    suspend fun getSingleCustomer(id: Long, forceRefresh: Boolean = false): OneCustomer
 
 }

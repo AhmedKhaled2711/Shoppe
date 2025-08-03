@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -779,7 +780,7 @@ fun CartSummaryBottom(
 
         }
     }
-} 
+}
 
 @Composable
 fun DeleteCartDialog(
@@ -787,6 +788,7 @@ fun DeleteCartDialog(
     title: String,
     subtitle: String,
     confirmText: String,
+    isLoading: Boolean = false,
     onCancel: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -837,13 +839,29 @@ fun DeleteCartDialog(
                             ) {
                                 Text("Cancel", color = Color.White)
                             }
-                            Button(
-                                onClick = onConfirm,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373)),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(confirmText, color = Color.White)
+                            if (isLoading) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                }
+                            } else {
+                                Button(
+                                    onClick = onConfirm,
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373)),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !isLoading
+                                ) {
+                                    Text(confirmText, color = Color.White)
+                                }
                             }
                         }
                     }
@@ -874,4 +892,4 @@ fun DeleteCartDialog(
             }
         }
     }
-} 
+}

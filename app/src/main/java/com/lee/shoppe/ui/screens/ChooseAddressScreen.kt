@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.lee.shoppe.data.model.Address
 import com.lee.shoppe.ui.theme.BluePrimary
-import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.data.network.networking.NetworkState
 import androidx.navigation.NavController
@@ -41,7 +40,7 @@ fun ChooseAddressScreen(
 
     // Initialize with default address if available
     var selectedAddressId by remember { mutableStateOf<Long?>(null) }
-    
+
     // Set default address when data loads
     LaunchedEffect(addressList) {
         if (selectedAddressId == null && addressList.isNotEmpty()) {
@@ -52,7 +51,7 @@ fun ChooseAddressScreen(
 
     // 🔁 Fetch data once when screen is composed
     LaunchedEffect(Unit) {
-        viewModel.getAllcustomer(customerId)
+        viewModel.getCustomerData(customerId , forceRefresh = true)
     }
 
     Column(
@@ -67,7 +66,7 @@ fun ChooseAddressScreen(
             showBackButton = true
         )
         //Spacer(modifier = Modifier.height(8.dp))
-        
+
         // Content
         Box(
             modifier = Modifier
@@ -121,7 +120,7 @@ fun ChooseAddressScreen(
                 }
             }
         }
-        
+
         // Bottom Button
         Button(
             onClick = {
@@ -181,9 +180,9 @@ fun AddressItem(
                 tint = if (isSelected) BluePrimary else Color.Gray,
                 modifier = Modifier.size(24.dp)
             )
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             // Address content
             Column(
                 modifier = Modifier.weight(1f)
@@ -197,7 +196,7 @@ fun AddressItem(
                         fontSize = 16.sp,
                         color = if (isSelected) BluePrimary else Color.Black
                     )
-                    
+
                     // Default address badge
                     if (address.default) {
                         Spacer(modifier = Modifier.width(8.dp))
@@ -217,9 +216,9 @@ fun AddressItem(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = address.address1,
                     fontSize = 14.sp,
@@ -233,15 +232,15 @@ fun AddressItem(
 //                        color = Color.Gray
 //                    )
 //                }
-                
+
                 Spacer(modifier = Modifier.height(2.dp))
-                
+
                 Text(
                     text = "${address.city}, ${address.country}",
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
-                
+
                 if (!address.phone.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
