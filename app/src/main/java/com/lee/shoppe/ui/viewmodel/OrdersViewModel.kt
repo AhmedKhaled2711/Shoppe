@@ -22,17 +22,43 @@ class OrdersViewModel @Inject constructor(
     private var _orders = MutableStateFlow<NetworkState<OrderResponse>>(NetworkState.Loading)
     val orders =_orders.asStateFlow()
 
-    fun getOrders(userId: Long) {
-        viewModelScope.launch(Dispatchers.IO){
-            repository.getCustomerOrders(userId)
-            .catch {
-                e -> _orders.value = NetworkState.Failure(e)
-            }
-            .collect { response ->
+    /**
+     * Fetches customer orders with optional cache control
+     * @param userId The ID of the customer
+     * @param forceRefresh If true, bypasses cache and forces a network request
+     */
+    fun getOrders(userId: Long, forceRefresh: Boolean = false) {
+        _orders.value = NetworkState.Loading
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = if (forceRefresh) {
+                    // Force a network request by adding a no-cache header
+                    repository.getCustomerOrders(userId, true)
+                } else {
+                    repository.getCustomerOrders(userId)
+                }
                 _orders.value = NetworkState.Success(response)
+            } catch (e: Exception) {
+                // If we failed to force refresh, try once more with cache
+                if (forceRefresh) {
+                    try {
+                        val cachedResponse = repository.getCustomerOrders(userId, false)
+                        _orders.value = NetworkState.Success(cachedResponse)
+                    } catch (e2: Exception) {
+                        _orders.value = NetworkState.Failure(e2)
+                    }
+                } else {
+                    _orders.value = NetworkState.Failure(e)
+                }
             }
         }
+    }
 
+    /**
+     * Refreshes the orders list by forcing a network request
+     */
+    fun refreshOrders(userId: Long) {
+        getOrders(userId, true)
     }
 
     override fun onCleared() {

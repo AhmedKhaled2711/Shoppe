@@ -1,14 +1,15 @@
 package com.lee.shoppe.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fashionshop.Model.OrderBody
 import com.example.fashionshop.Model.OrderBodyResponse
+import com.lee.shoppe.data.model.OneCustomer
 import com.lee.shoppe.data.model.PriceRule
-import com.lee.shoppe.data.repository.Repository
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.data.repository.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import javax.inject.Inject
 
 @HiltViewModel
 class OrderDetailsViewModel @Inject constructor(
@@ -26,6 +28,8 @@ class OrderDetailsViewModel @Inject constructor(
     val order: StateFlow<NetworkState<OrderBodyResponse>> = _order.asStateFlow()
     private var _productCode = MutableStateFlow<NetworkState<PriceRule>>(NetworkState.Loading)
     var productCode: StateFlow<NetworkState<PriceRule>> = _productCode
+    private val _singleCustomer = MutableStateFlow<OneCustomer?>(null)
+    val singleCustomer: StateFlow<OneCustomer?> = _singleCustomer.asStateFlow()
 
     fun getAdsCode() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -60,4 +64,21 @@ class OrderDetailsViewModel @Inject constructor(
                 }
         }
     }
-} 
+
+    /**
+     * Fetches a single customer with optional force refresh
+     * @param customerId The ID of the customer to fetch
+     * @param forceRefresh If true, bypasses cache and fetches fresh data from the server
+     * @return The customer data or null if the request fails
+     */
+    suspend fun getSingleCustomer(customerId: Long, forceRefresh: Boolean = false): OneCustomer? {
+        return try {
+            val customer = repository.getSingleCustomer(customerId, forceRefresh)
+            _singleCustomer.value = customer
+            customer
+        } catch (e: Exception) {
+            Log.e("OrderDetailsViewModel", "Error fetching customer: ${e.message}")
+            null
+        }
+    }
+}

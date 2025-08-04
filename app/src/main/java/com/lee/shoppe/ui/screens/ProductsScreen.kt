@@ -257,7 +257,7 @@ fun ProductsScreen(
                                             }
                                         },
                                         onCardClick = {
-                                            navController.navigate("${Screen.ProductDetails.route}/${product.id}")
+                                            navController.navigate(Screen.ProductDetails.route.replace("{productId}", product.id.toString()))
                                         },
                                         isFavorite = isFavorite
                                     )

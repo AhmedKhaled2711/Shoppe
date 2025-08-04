@@ -10,8 +10,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,8 +29,10 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.android.gms.maps.model.LatLng
+import com.lee.shoppe.data.model.Address
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.AddressViewModel
 import java.util.Locale
@@ -112,7 +116,7 @@ fun AddEditAddressScreen(
             return
         }
         
-        val address = com.lee.shoppe.data.model.Address(
+        val address = Address(
             id = if (isEdit) addressId ?: 0L else 0L,
             customer_id = customerId,
             first_name = name.value.trim().split(" ").firstOrNull() ?: "",
@@ -137,15 +141,7 @@ fun AddEditAddressScreen(
         } else {
             viewModel.addAddress(customerId, address)
         }
-        
-        // Navigate back to AddressListScreen with refresh flag
-        navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
-        navController.navigate("address_list") {
-            // Clear the back stack to prevent going back to the edit screen
-            popUpTo("address_list") { inclusive = true }
-            // Clear the back stack up to the address list
-            launchSingleTop = true
-        }
+
     }
     
     // Single address state for editing - collect as state with lifecycle-aware collection
@@ -273,31 +269,14 @@ fun AddEditAddressScreen(
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Header (unchanged)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.Black,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable { navController.popBackStack() }
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = if (isEdit) "Edit Address" else "Add Address",
-                    color = Color.Black,
-                    fontSize = 22.sp,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            // Screen Header
+            ScreenHeader(
+                title = if (isEdit) "Edit Address" else "Add Address",
+                onBackClick = { navController.popBackStack() },
+                backgroundColor = Color.White,
+                titleColor = Color.Black,
+                showBackButton = true
+            )
             if (isEditAddressLoading) {
                 // Show loading indicator while waiting for address data
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -553,8 +532,7 @@ fun AddEditAddressScreen(
                         is NetworkState.Success -> {
                             // On success, set refresh flag and navigate back
                             LaunchedEffect(Unit) {
-                                navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
-                                navController.popBackStack()
+                                 navController.popBackStack()
                             }
                         }
                         else -> {}

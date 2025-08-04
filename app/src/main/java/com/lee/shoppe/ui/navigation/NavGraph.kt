@@ -418,7 +418,13 @@ fun ECommerceNavHost(
             composable("profile_details") {
                 ProfileDetailsScreen(navController)
             }
-            composable("orders") {
+            composable("orders?forceRefresh={forceRefresh}",
+                arguments = listOf(navArgument("forceRefresh") { 
+                    type = NavType.BoolType
+                    defaultValue = false 
+                })
+            ) { backStackEntry ->
+                val forceRefresh = backStackEntry.arguments?.getBoolean("forceRefresh") ?: false
                 OrdersScreen(
                     navController = navController,
                     userId = sharedPrefs.retrieve(SharedPreferenceManager.Key.ID, "0").toLong(),
@@ -427,7 +433,8 @@ fun ECommerceNavHost(
                     },
                     onAddressEditClick = {
                         navController.navigate("address_list")
-                    }
+                    },
+                    forceRefresh = forceRefresh
                 )
             }
             composable(

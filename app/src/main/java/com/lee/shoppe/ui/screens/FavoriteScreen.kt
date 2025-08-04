@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.util.Log
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -120,25 +121,36 @@ fun FavoriteScreen(
     val favProductsState by favViewModel.product.collectAsState()
     val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.favorite_empty))
 
-    // Load favorites when screen is first shown
-    LaunchedEffect(Unit) {
+    // Load favorites when screen is first shown or when favListId changes
+    LaunchedEffect(Unit, customerData.favListId) {
         if (isNetworkConnected && (customerData.isLogged || customerData.isGuestWithPreservedData) && customerData.favListId > 0) {
+            Log.d("FavoriteScreen", "Loading favorites for list ID: ${customerData.favListId}")
             favViewModel.getFavProducts(customerData.favListId)
+        } else {
+            Log.e("FavoriteScreen", "Cannot load favorites. isNetworkConnected: $isNetworkConnected, isLogged: ${customerData.isLogged}, isGuestWithPreservedData: ${customerData.isGuestWithPreservedData}, favListId: ${customerData.favListId}")
+            favoriteProducts = emptyList()
         }
     }
 
     // Process state changes
     LaunchedEffect(favProductsState) {
+        Log.d("FavoriteScreen", "favProductsState changed: ${favProductsState.javaClass.simpleName}")
+
         when (val state = favProductsState) {
             is NetworkState.Success -> {
-                state.data.draft_order.line_items
+                Log.d("FavoriteScreen", "Successfully loaded favorites. Items: ${state.data.draft_order.line_items.size}")
+
+                val products = state.data.draft_order.line_items
                     .drop(1) // Skip the first dummy item
                     .mapNotNull { lineItem ->
-                        lineItem.sku?.split("*")?.takeIf { it.size >= 2 }
-                            ?.let { parts ->
-                                parts[0].toLongOrNull()?.let { productId ->
+                        try {
+                            lineItem.sku?.split("*")?.takeIf { it.size >= 2 }?.let { parts ->
+                                val productId = parts[0].toLongOrNull()
+                                Log.d("FavoriteScreen", "Processing product: $productId, SKU: ${lineItem.sku}")
+
+                                productId?.let { id ->
                                     Product(
-                                        id = productId,
+                                        id = id,
                                         title = lineItem.title ?: "Product",
                                         image = ProductImage(src = parts[1]),
                                         variants = listOf(
@@ -147,8 +159,14 @@ fun FavoriteScreen(
                                     )
                                 }
                             }
+                        } catch (e: Exception) {
+                            Log.e("FavoriteScreen", "Error processing product: ${e.message}")
+                            null
+                        }
                     }
-                    .let { favoriteProducts = it }
+
+                Log.d("FavoriteScreen", "Successfully processed ${products.size} favorite products")
+                favoriteProducts = products
             }
             is NetworkState.Failure -> {
                 val error = state.error
@@ -196,8 +214,35 @@ fun FavoriteScreen(
                         messageSpacing = 8.dp
                     )
                 }
-                is NetworkState.Failure, NetworkState.Idle -> {
-                    //EmptyFavoriteState()
+                is NetworkState.Failure -> {
+                    val error = (favProductsState as NetworkState.Failure).error
+                    Log.e("FavoriteScreen", "Error loading favorites: ${error.message}")
+                    if (favoriteProducts.isEmpty()) {
+                        EmptyState(
+                            lottieComposition,
+                            stringResource(R.string.error_loading_favorites),
+                            stringResource(R.string.please_try_again_later)
+                        )
+                    }
+                }
+                NetworkState.Idle -> {
+                    if (customerData.favListId <= 0) {
+                        EmptyState(
+                            lottieComposition,
+                            stringResource(R.string.no_favorites_yet),
+                            stringResource(R.string.sign_in_to_see_favorites)
+                        )
+                    } else {
+                        // Show loading state when initializing
+                        LoadingWithMessages(
+                            modifier = Modifier.fillMaxSize(),
+                            mainMessage = stringResource(R.string.loading_favorites),
+                            secondaryMessage = stringResource(R.string.please_wait_loading_favorites),
+                            loadingIndicatorColor = BluePrimary,
+                            spacing = 16.dp,
+                            messageSpacing = 8.dp
+                        )
+                    }
                 }
                 is NetworkState.Success -> {
                     if (favoriteProducts.isEmpty()) {

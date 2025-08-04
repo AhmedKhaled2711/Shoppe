@@ -125,5 +125,8 @@ interface NetworkService {
     suspend fun getSingleOrder(@Path("id") orderId: Long): OrderResponse
 
     @GET("customers/{id}/orders.json")
-    suspend fun getCustomerOrders(@Path("id") userId: Long): OrderResponse
+    suspend fun getCustomerOrders(
+        @Path("id") userId: Long,
+        @Header("Cache-Control") cacheControl: String? = null
+    ): OrderResponse
 }

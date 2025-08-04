@@ -27,6 +27,9 @@ class RetrofitHelper @Inject constructor(
     private val CACHE_DIRECTORY = "http-cache"
     private val MAX_RETRIES = 3
     private val RETRY_DELAY_MS = 1000L
+    private val CACHE_SIZE = 10 * 1024 * 1024L // 10MB
+    private val MAX_AGE = 60 * 60 // 1 hour
+    private val STALE_WHILE_REVALIDATE = 60 * 60 * 24 // 1 day
 
     private var cache: Cache? = null
 
@@ -66,19 +69,19 @@ class RetrofitHelper @Inject constructor(
     private val retryInterceptor = Interceptor { chain ->
         val request = chain.request()
         
-        // Skip retry for DELETE requests
-        if (request.method.equals("DELETE", ignoreCase = true)) {
+        // Skip retry for non-GET requests or if it's a force refresh
+        if (!request.method.equals("GET", ignoreCase = true) || 
+            request.header("Cache-Control")?.contains("no-cache") == true) {
             return@Interceptor chain.proceed(request)
         }
         
-        var response: Response? = null
-        var retryCount = 0
         var lastException: Exception? = null
+        var response: Response? = null
 
-        while (retryCount <= MAX_RETRIES) {
-            if (retryCount > 0) {
+        for (attempt in 0..MAX_RETRIES) {
+            if (attempt > 0) {
                 try {
-                    Thread.sleep(RETRY_DELAY_MS * retryCount)
+                    Thread.sleep(RETRY_DELAY_MS * attempt)
                 } catch (e: InterruptedException) {
                     Thread.currentThread().interrupt()
                     throw IOException("Interrupted during retry", e)
@@ -86,30 +89,35 @@ class RetrofitHelper @Inject constructor(
             }
 
             try {
+                response?.close() // Close previous response if any
                 response = chain.proceed(request)
+                
                 // If response is successful, return it immediately
                 if (response.isSuccessful) {
                     return@Interceptor response
                 }
-                // If this is the last retry, return the error response
-                if (retryCount == MAX_RETRIES) {
+                
+                // If this is the last attempt, return the error response
+                if (attempt == MAX_RETRIES) {
                     return@Interceptor response
                 }
-                // Close the response body to avoid leaks
-                response.close()
+                
+                // Close the response body for unsuccessful responses (except the last attempt)
+                response.body?.close()
+                
             } catch (e: Exception) {
                 lastException = e
-                // Only retry on specific network exceptions
-                if (retryCount == MAX_RETRIES || 
+                // If this is the last attempt or not a retryable exception, rethrow
+                if (attempt == MAX_RETRIES || 
                     (e !is java.net.SocketTimeoutException && 
                      e !is java.net.ConnectException && 
                      e !is java.net.UnknownHostException)) {
                     throw e
                 }
             }
-            retryCount++
         }
 
+        // This line should never be reached due to the logic above
         throw lastException ?: IOException("Failed to get response after $MAX_RETRIES attempts")
     }
 
@@ -124,30 +132,39 @@ class RetrofitHelper @Inject constructor(
     }
 
     fun createClient(context: Context): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(authInterceptor)
-            .addNetworkInterceptor(retryInterceptor)
-            .addNetworkInterceptor(provideCacheInterceptor())
-            .addInterceptor(provideOfflineCacheInterceptor(context))
-            .cache(getCache(context))
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
+        return OkHttpClient.Builder().apply {
+            // Add interceptors in the correct order
+            addInterceptor(loggingInterceptor)
+            addInterceptor(authInterceptor)
+            addInterceptor(provideOfflineCacheInterceptor(context))
+            addNetworkInterceptor(provideCacheInterceptor())
+            addNetworkInterceptor(retryInterceptor)
+            
+            // Configure timeouts and cache
+            connectTimeout(30, TimeUnit.SECONDS)
+            readTimeout(30, TimeUnit.SECONDS)
+            writeTimeout(30, TimeUnit.SECONDS)
+            cache(getCache(context))
+        }.build()
     }
 
-    private fun provideCacheInterceptor(): Interceptor {
-        return Interceptor { chain ->
-            val response = chain.proceed(chain.request())
+    private fun provideCacheInterceptor(): Interceptor = Interceptor { chain ->
+        val response = chain.proceed(chain.request())
+        
+        // Only modify cache headers if this is a GET request and not already set
+        if (chain.request().method.equals("GET", ignoreCase = true) && 
+            chain.request().header("Cache-Control") == null) {
             val cacheControl = CacheControl.Builder()
                 .maxAge(MAX_AGE, TimeUnit.SECONDS)
                 .maxStale(STALE_WHILE_REVALIDATE, TimeUnit.SECONDS)
                 .build()
-            response.newBuilder()
+                
+            return@Interceptor response.newBuilder()
                 .header("Cache-Control", cacheControl.toString())
                 .build()
         }
+        
+        response
     }
 
     private fun provideOfflineCacheInterceptor(context: Context): Interceptor {
@@ -174,9 +191,7 @@ class RetrofitHelper @Inject constructor(
     }
     
     companion object {
-        const val CACHE_SIZE = 10 * 1024 * 1024L // 10MB
-        const val MAX_AGE = 60 * 60 // 1 hour
-        const val STALE_WHILE_REVALIDATE = 60 * 60 * 24 // 1 day
+        // Removed duplicate constants that were moved to class properties
         private const val CACHE_DIRECTORY = "http-cache"
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 1000L

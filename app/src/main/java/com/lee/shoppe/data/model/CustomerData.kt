@@ -1,6 +1,7 @@
 package com.lee.shoppe.data.model
 
 import android.content.Context
+import android.util.Log
 import com.lee.shoppe.data.network.caching.SharedPreferenceManager
 
 class CustomerData private constructor(_context: Context) {
@@ -89,7 +90,7 @@ class CustomerData private constructor(_context: Context) {
             // Load guest data
             cartListId = manager.retrieve(SharedPreferenceManager.Key.GUEST_CART_ID, "0").toLong()
             favListId = manager.retrieve(SharedPreferenceManager.Key.GUEST_FAV_ID, "0").toLong()
-            currency = manager.retrieve(SharedPreferenceManager.Key.GUEST_CURRENCY, "EGY")
+            currency = manager.retrieve(SharedPreferenceManager.Key.GUEST_CURRENCY, "EGP")
             language = manager.retrieve(SharedPreferenceManager.Key.GUEST_LANGUAGE, "")
             languageCode = manager.retrieve(SharedPreferenceManager.Key.GUEST_LANGUAGE_CODE, "en")
             
@@ -104,7 +105,7 @@ class CustomerData private constructor(_context: Context) {
             name = manager.retrieve(SharedPreferenceManager.Key.NAME, "")
             email = manager.retrieve(SharedPreferenceManager.Key.EMAIL, "")
             phone = manager.retrieve(SharedPreferenceManager.Key.PHONE, "")
-            currency = manager.retrieve(SharedPreferenceManager.Key.CURRENCY, "EGY")
+            currency = manager.retrieve(SharedPreferenceManager.Key.CURRENCY, "EGP")
             favListId = manager.retrieve(SharedPreferenceManager.Key.FavListID, "0").toLong()
             cartListId = manager.retrieve(SharedPreferenceManager.Key.CartListID, "0").toLong()
             language = manager.retrieve(SharedPreferenceManager.Key.Language, "")
@@ -131,6 +132,37 @@ class CustomerData private constructor(_context: Context) {
         }
     }
 
+    /**
+     * Updates the customer data from a server response
+     * @param customer The customer data from the server
+     */
+    fun updateFromCustomer(customer: OneCustomer) {
+        // Update all fields from the server response
+        id = customer.customer.id ?: id
+        name = "${customer.customer.first_name ?: ""} ${customer.customer.last_name ?: ""}".trim()
+        email = customer.customer.email ?: email
+        phone = customer.customer.phone ?: phone
+        currency = customer.customer.currency ?: currency
+        
+        // Update the default address if available
+        customer.customer.default_address.let { address ->
+            // Update address-related fields if needed
+            // For example, you might want to update the default address in the preferences
+        }
+        
+        // Update the cart and favorites lists if they exist in the response
+        // This depends on your API response structure
+        
+        // Save the updated data to preferences
+        manager.save(SharedPreferenceManager.Key.NAME, name)
+        manager.save(SharedPreferenceManager.Key.EMAIL, email)
+        manager.save(SharedPreferenceManager.Key.PHONE, phone)
+        manager.save(SharedPreferenceManager.Key.CURRENCY, currency)
+        
+        // Log the update for debugging
+        Log.d("CustomerData", "Updated customer data from server response")
+    }
+    
     fun logOut() {
         // Only preserve cart/favorites if we have valid IDs
         val shouldPreserveData = cartListId > 0 || favListId > 0
@@ -178,7 +210,7 @@ class CustomerData private constructor(_context: Context) {
             // Load guest data from preferences
             cartListId = manager.retrieve(SharedPreferenceManager.Key.GUEST_CART_ID, "0").toLong()
             favListId = manager.retrieve(SharedPreferenceManager.Key.GUEST_FAV_ID, "0").toLong()
-            currency = manager.retrieve(SharedPreferenceManager.Key.GUEST_CURRENCY, "EGY")
+            currency = manager.retrieve(SharedPreferenceManager.Key.GUEST_CURRENCY, "EGP")
             language = manager.retrieve(SharedPreferenceManager.Key.GUEST_LANGUAGE, "")
             languageCode = manager.retrieve(SharedPreferenceManager.Key.GUEST_LANGUAGE_CODE, "en")
         } else {
@@ -187,7 +219,7 @@ class CustomerData private constructor(_context: Context) {
             favListId = 0
             
             // Load default currency and language
-            currency = manager.retrieve(SharedPreferenceManager.Key.CURRENCY, "EGY")
+            currency = manager.retrieve(SharedPreferenceManager.Key.CURRENCY, "EGP")
             language = manager.retrieve(SharedPreferenceManager.Key.Language, "")
             languageCode = manager.retrieve(SharedPreferenceManager.Key.LanguageCode, "en")
         }

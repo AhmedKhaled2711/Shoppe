@@ -45,7 +45,10 @@ interface Repository {
         id: Long,
         addressRequest: AddressDefaultRequest
     ): AddressUpdateRequest
-    suspend fun getCustomerOrders(@Path("id") userId: Long): Flow<OrderResponse>
+    suspend fun getCustomerOrders(
+        @Path("id") userId: Long,
+        forceRefresh: Boolean = false
+    ): OrderResponse
     suspend fun getSingleCustomer(id: Long, forceRefresh: Boolean = false): OneCustomer
 
 }

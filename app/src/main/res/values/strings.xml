@@ -153,7 +153,10 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <string name="your_favorites_will_appear_here">Your favorite items will appear here</string>
     <string name="too_many_requests_error">You\'re making requests too quickly. Please wait a moment and try again.</string>
     <string name="unknown_error">An unknown error occurred</string>
-    
+    <string name="error_loading_favorites">Error loading favorites</string>
+    <string name="please_try_again_later">Please try again later</string>
+    <string name="sign_in_to_see_favorites">Sign in to see your favorite items</string>
+
     <!-- Loading Messages -->
     <string name="loading_products">Loading Products</string>
     <string name="loading_product_details">Loading Product Details</string>

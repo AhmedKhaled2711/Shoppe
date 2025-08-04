@@ -34,17 +34,18 @@ import com.lee.shoppe.ui.viewmodel.OrdersViewModel
 @Composable
 fun OrdersScreen(
     navController: NavController,
-    viewModel: OrdersViewModel =  hiltViewModel(),
+    viewModel: OrdersViewModel = hiltViewModel(),
     userId: Long,
     onOrderClick: (Order) -> Unit,
-    onAddressEditClick: () -> Unit
+    onAddressEditClick: () -> Unit,
+    forceRefresh: Boolean = false
 ) {
     val ordersState by viewModel.orders.collectAsState()
     val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.order_empty))
 
     // Trigger data fetch on first composition
-    LaunchedEffect(Unit) {
-        viewModel.getOrders(userId)
+    LaunchedEffect(forceRefresh) {
+        viewModel.getOrders(userId, forceRefresh)
     }
 
     Column(

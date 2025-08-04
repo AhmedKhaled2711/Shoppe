@@ -1,8 +1,5 @@
 package com.lee.shoppe.ui.screens
 
-import android.app.AlertDialog
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -36,13 +33,13 @@ import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.OrderSuccessScreen
 import com.lee.shoppe.ui.components.ScreenHeader
+import com.lee.shoppe.ui.navigation.Screen
 import com.lee.shoppe.ui.utils.PaymentConstants
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.ui.viewmodel.CartViewModel
 import com.lee.shoppe.ui.viewmodel.OrderDetailsViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,17 +60,20 @@ fun PaymentSheetScreen(
     var isLoading by remember { mutableStateOf(true) }
     val loadingMessage = "Processing Payment"
     val secondaryMessage = "Please wait while we connect to the payment gateway..."
+    var showSuccessScreen by remember { mutableStateOf(false) }
 
     val cartState by cartViewModel.cartProducts.collectAsState()
     val addressState by addressViewModel.products.collectAsState()
 
     LaunchedEffect(Unit) {
         cartViewModel.getCartProducts(customerData.cartListId)
-        addressViewModel.getCustomerData(customerData.id , forceRefresh = true)
+        addressViewModel.getCustomerData(customerData.id, forceRefresh = true)
     }
 
-    val lineItems = (cartState as? NetworkState.Success)?.data?.draft_order?.line_items?.drop(1) ?: emptyList()
-    val selectedAddress = (addressState as? NetworkState.Success)?.data?.customer?.addresses?.firstOrNull { it.default }
+    val lineItems =
+        (cartState as? NetworkState.Success)?.data?.draft_order?.line_items?.drop(1) ?: emptyList()
+    val selectedAddress =
+        (addressState as? NetworkState.Success)?.data?.customer?.addresses?.firstOrNull { it.default }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -83,19 +83,29 @@ fun PaymentSheetScreen(
             snackbarHostState.showSnackbar(context.getString(R.string.payment_success))
 
             // Ensure data is loaded before placing order
-            val currentLineItems = (cartState as? NetworkState.Success)?.data?.draft_order?.line_items?.drop(1) ?: emptyList()
-            val currentSelectedAddress = (addressState as? NetworkState.Success)?.data?.customer?.addresses?.firstOrNull { it.default }
-            
+            val currentLineItems =
+                (cartState as? NetworkState.Success)?.data?.draft_order?.line_items?.drop(1)
+                    ?: emptyList()
+            val currentSelectedAddress =
+                (addressState as? NetworkState.Success)?.data?.customer?.addresses?.firstOrNull { it.default }
+
             Log.d("PaymentSheetScreen", "Line items count: ${currentLineItems.size}")
-            Log.d("PaymentSheetScreen", "Selected address: ${currentSelectedAddress?.address1 ?: "null"}")
-            
+            Log.d(
+                "PaymentSheetScreen",
+                "Selected address: ${currentSelectedAddress?.address1 ?: "null"}"
+            )
+
             if (currentSelectedAddress == null || currentLineItems.isEmpty()) {
-                Log.e("PaymentSheetScreen", "Missing data - Address: ${currentSelectedAddress != null}, Items: ${currentLineItems.size}")
+                Log.e(
+                    "PaymentSheetScreen",
+                    "Missing data - Address: ${currentSelectedAddress != null}, Items: ${currentLineItems.size}"
+                )
                 snackbarHostState.showSnackbar("Error: Missing address or cart items. Please try again.")
                 return@launch
             }
 
             placeOrder(
+                coroutineScope = scope,
                 orderDetailsViewModel = orderDetailsViewModel,
                 cartViewModel = cartViewModel,
                 customerData = customerData,
@@ -105,22 +115,26 @@ fun PaymentSheetScreen(
                 paymentMethod = "Visa",
                 currency = customerData.currency,
                 onSuccess = {
-                    showAlertDialog(context)
+                    // Don't dismiss immediately, let the success screen handle it
+                    showSuccessScreen = true
+                    
+                    // Clear the cart and refresh customer data in the background
                     scope.launch {
-                        //delay(4000L)
-                        CoroutineScope(Dispatchers.Main).launch {
-                            navController.navigate("home") {
-                                popUpTo(0)
-                            }
+                        try {
+                            // Force refresh customer data
+                            val refreshedCustomer = orderDetailsViewModel.getSingleCustomer(customerData.id, true)
+                            refreshedCustomer?.let { customerData.updateFromCustomer(it) }
+                        } catch (e: Exception) {
+                            Log.e("PaymentSheetScreen", "Error refreshing customer data: ${e.message}")
                         }
-                        onDismiss()
                     }
                 },
                 onError = { errorMessage ->
                     scope.launch {
                         snackbarHostState.showSnackbar(errorMessage)
                     }
-                    Log.d("PaymentSheetScreen", "Order placement error: $errorMessage")
+                    Log.e("PaymentSheetScreen", "Order placement error: $errorMessage")
+                    onDismiss() // Dismiss on error
                 }
             )
         }
@@ -167,15 +181,15 @@ fun PaymentSheetScreen(
                         settings.useWideViewPort = true
                         settings.builtInZoomControls = false
                         settings.displayZoomControls = false
-                        
+
                         // Enable scrolling
                         isVerticalScrollBarEnabled = true
                         isHorizontalScrollBarEnabled = true
-                        
+
                         // Make WebView focusable for touch events
                         isFocusable = true
                         isFocusableInTouchMode = true
-                        
+
                         webViewClient = object : WebViewClient() {
                             override fun shouldOverrideUrlLoading(
                                 view: WebView?,
@@ -190,7 +204,10 @@ fun PaymentSheetScreen(
                                 return false
                             }
 
-                            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                url: String?
+                            ): Boolean {
                                 if (url != null && url.startsWith(PaymentConstants.SUCCESS_URL)) {
                                     handleSuccess()
                                     return true
@@ -198,7 +215,11 @@ fun PaymentSheetScreen(
                                 return false
                             }
 
-                            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                            override fun onPageStarted(
+                                view: WebView?,
+                                url: String?,
+                                favicon: android.graphics.Bitmap?
+                            ) {
                                 super.onPageStarted(view, url, favicon)
                                 isLoading = true
                                 Log.d("PaymentSheetScreen", "Page started loading: $url")
@@ -217,7 +238,10 @@ fun PaymentSheetScreen(
                             ) {
                                 super.onReceivedError(view, request, error)
                                 isLoading = false
-                                Log.e("PaymentSheetScreen", "WebView error: ${error?.description}, URL: ${request?.url}")
+                                Log.e(
+                                    "PaymentSheetScreen",
+                                    "WebView error: ${error?.description}, URL: ${request?.url}"
+                                )
                                 scope.launch {
                                     snackbarHostState.showSnackbar("Error loading payment page: ${error?.description}")
                                 }
@@ -230,14 +254,17 @@ fun PaymentSheetScreen(
                             ) {
                                 super.onReceivedHttpError(view, request, errorResponse)
                                 isLoading = false
-                                Log.e("PaymentSheetScreen", "HTTP error: ${errorResponse?.statusCode}, URL: ${request?.url}")
+                                Log.e(
+                                    "PaymentSheetScreen",
+                                    "HTTP error: ${errorResponse?.statusCode}, URL: ${request?.url}"
+                                )
                                 scope.launch {
                                     snackbarHostState.showSnackbar("HTTP error: ${errorResponse?.statusCode}")
                                 }
                             }
                         }
                         webChromeClient = WebChromeClient()
-                        
+
                         // Validate payment URL before loading
                         if (paymentUrl.isBlank() || !paymentUrl.startsWith("http")) {
                             Log.e("PaymentSheetScreen", "Invalid payment URL: $paymentUrl")
@@ -261,22 +288,22 @@ fun PaymentSheetScreen(
             }
         }
     }
-}
 
-private fun showAlertDialog(context: android.content.Context) {
-    Handler(Looper.getMainLooper()).post {
-        val alertDialog = AlertDialog.Builder(context)
-            .setTitle("order_success")
-            .setMessage(context.getString(R.string.order_placed_success))
-            .setPositiveButton(context.getString(R.string.ok)) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .create()
-
-        alertDialog.show()
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            alertDialog.dismiss()
-        }, 4000)
+    // Show success screen after successful payment
+    if (showSuccessScreen) {
+        OrderSuccessScreen(
+            onTimeout = {
+                // Navigate to home after showing success message
+                navController.navigate(Screen.Home.route) {
+                    // Pop everything up to and including the home screen
+                    popUpTo(0) { inclusive = true }
+                    // Prevent going back to the payment screen
+                    launchSingleTop = true
+                }
+                onDismiss() // Make sure to dismiss the payment sheet
+            },
+            message = "Your payment was successful!\nYour order has been placed.",
+            timeoutMillis = 2500L
+        )
     }
 }

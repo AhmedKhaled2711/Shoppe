@@ -70,13 +70,16 @@ import com.lee.shoppe.data.model.CheckoutSessionResponse
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.OrderSuccessScreen
 import com.lee.shoppe.ui.components.ScreenHeader
+import com.lee.shoppe.ui.navigation.Screen
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.ui.viewmodel.CartViewModel
 import com.lee.shoppe.ui.viewmodel.OrderDetailsViewModel
 import com.lee.shoppe.ui.viewmodel.PaymentViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
@@ -119,6 +122,7 @@ fun OrderDetailsScreen(
     var showPaymentSheet by remember { mutableStateOf(false) }
     var paymentUrl by remember { mutableStateOf("") }
     var discountValueBody by remember { mutableStateOf("") }
+    var showSuccessScreen by remember { mutableStateOf(false) }
 
     // Load data on entry
     LaunchedEffect(customerData.cartListId) {
@@ -130,7 +134,8 @@ fun OrderDetailsScreen(
     // Calculate cart values
     val lineItems = (cartState as? NetworkState.Success)?.data?.draft_order?.line_items?.drop(1) ?: emptyList()
     val subtotal = lineItems.sumOf { (it.price?.toDoubleOrNull() ?: 0.0) * (it.quantity ?: 1) }
-    val currency = customerData.currency.ifEmpty { "EGP" }
+    // Always use EGP as the currency code
+    val currency = "EGP"
     val discountAmount = subtotal * (discountPercent / 100)
     val total = subtotal - discountAmount
     val selectedAddress = (addressState as? NetworkState.Success)?.data?.customer?.addresses?.find { it.id == addressId }
@@ -177,6 +182,7 @@ fun OrderDetailsScreen(
                 } else if (method == "Cash") {
                     showSuccessAnimation = true
                     placeOrder(
+                        coroutineScope = coroutineScope,
                         orderDetailsViewModel = orderDetailsViewModel,
                         cartViewModel = cartViewModel,
                         customerData = customerData,
@@ -186,13 +192,7 @@ fun OrderDetailsScreen(
                         paymentMethod = method,
                         currency = currency,
                         onSuccess = {
-                            // Navigate to home after 3 seconds
-                            coroutineScope.launch {
-                                delay(3000)
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            }
+                            // The success animation is already shown, let it handle navigation
                         },
                         onError = { errorMsg ->
                             showSuccessAnimation = false
@@ -208,50 +208,19 @@ fun OrderDetailsScreen(
 
     // Success animation overlay
     if (showSuccessAnimation) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White.copy(alpha = 0.95f))
-                .clickable { /* Prevent clicks on overlay */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                if (showSuccessAnimation) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Success",
-                        tint = Color(0xFF4CAF50),
-                        modifier = Modifier
-                            .size(120.dp)
-                            .padding(16.dp)
-                    )
-                } else {
-                    CircularProgressIndicator(
-                        color = BluePrimary,
-                        modifier = Modifier.size(48.dp)
-                    )
+        OrderSuccessScreen(
+            onTimeout = {
+                // Navigate to home after showing success message
+                navController.navigate(Screen.Home.route) {
+                    // Pop everything up to and including the home screen
+                    popUpTo(0) { inclusive = true }
+                    // Prevent going back to the order screen
+                    launchSingleTop = true
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = stringResource(R.string.order_placed_successfully),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color(0xFF26A69A),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.thank_you_for_purchase),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+            },
+            message = "Your order has been placed successfully!\nThank you for your purchase.",
+            timeoutMillis = 2500L
+        )
     }
 
     Column(
@@ -458,6 +427,20 @@ fun OrderDetailsScreen(
                 color = Color.White
             )
         }
+    }
+
+    // Show success screen after order placement
+    if (showSuccessScreen) {
+        OrderSuccessScreen(
+            onTimeout = {
+                // Navigate to home after showing success message
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Cart.route) { inclusive = true }
+                }
+            },
+            message = "Your order has been placed successfully!\nYou can track your order in the Orders section.",
+            timeoutMillis = 2500L
+        )
     }
 }
 
@@ -679,7 +662,8 @@ fun placeOrder(
     paymentMethod: String,
     currency: String,
     onSuccess: () -> Unit,
-    onError: (String) -> Unit
+    onError: (String) -> Unit,
+    coroutineScope: CoroutineScope
 ) {
     if (selectedAddress == null || lineItems.isEmpty()) {
         onError("Missing address or cart items.")
@@ -708,15 +692,20 @@ fun placeOrder(
         last_name = selectedAddress.last_name,
         name = selectedAddress.name,
         country_code = selectedAddress.country_code,
-        default = true
+        default = selectedAddress.default // Use the default value from the selected address
     )
 
+    // Split the full name into first and last names
+    val nameParts = customerData.name.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+    val firstName = nameParts.firstOrNull() ?: ""
+    val lastName = nameParts.drop(1).takeIf { it.isNotEmpty() }?.joinToString(" ") ?: "Customer"
+    
     val customer = CustomerBody(
         id = customerData.id,
         email = customerData.email,
-        first_name = customerData.name,
-        last_name = customerData.name,
-        currency = currency,
+        first_name = firstName,
+        last_name = lastName,
+        currency = "EGP",
         default_address = defaultAddress
     )
 
@@ -740,7 +729,7 @@ fun placeOrder(
             customer = customer,
             line_items = lineItem,
             total_tax = 13.5,
-            currency = currency,
+            currency = "EGP", // Force EGP as the currency code
             total_discounts = discountValue,
             referring_site = paymentMethod
         )
@@ -749,11 +738,29 @@ fun placeOrder(
     orderDetailsViewModel.createOrder(
         orderBody = orderBody,
         onSuccess = {
+            // Clear the cart first
             cartViewModel.clearCart(customerData.cartListId)
-            onSuccess()
+            
+            // Launch a coroutine in the screen's scope
+            coroutineScope.launch {
+                try {
+                    // Force refresh customer data
+                    val refreshedCustomer = orderDetailsViewModel.getSingleCustomer(customerData.id, true)
+                    // Update local customer data with refreshed data if successful
+                    refreshedCustomer?.let { customerData.updateFromCustomer(it) }
+                } catch (e: Exception) {
+                    // Log the error but don't fail the order placement
+                    Log.e("OrderDetailsScreen", "Error refreshing customer data: ${e.message}")
+                } finally {
+                    // Always call onSuccess to proceed with the order success flow
+                    onSuccess()
+                }
+            }
         },
         onError = { errorMsg ->
             onError(errorMsg)
         }
     )
+    
+
 }

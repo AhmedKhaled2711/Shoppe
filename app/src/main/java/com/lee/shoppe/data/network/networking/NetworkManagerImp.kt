@@ -169,9 +169,13 @@ class NetworkManagerImp @Inject constructor(
         }
     }
 
-    override suspend fun getCustomerOrders(userId: Long): OrderResponse {
+    override suspend fun getCustomerOrders(
+        userId: Long,
+        forceRefresh: Boolean
+    ): OrderResponse {
         return safeApiCall {
-            networkService.getCustomerOrders(userId)
+            val cacheControl = if (forceRefresh) "no-cache, no-store, must-revalidate" else null
+            networkService.getCustomerOrders(userId, cacheControl)
         }
     }
 

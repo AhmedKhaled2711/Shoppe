@@ -178,7 +178,7 @@ fun ProfileScreen(navController: NavController) {
                 DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
                 ProfileListItem("Orders") {
-                    navController.navigate("orders")
+                    navController.navigate("orders?forceRefresh=true")
                 }
                 DividerLine()
 //                Spacer(modifier = Modifier.height(10.dp))
