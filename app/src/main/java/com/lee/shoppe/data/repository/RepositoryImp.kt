@@ -70,8 +70,8 @@ class RepositoryImp @Inject constructor(
         return flow { emit(networkManager.getBrandProducts(vendor)) }
     }
 
-    override suspend fun getDraftOrder(id: Long): Flow<DraftOrderResponse> {
-        return flow { emit(networkManager.getDraftOrder(id)) }
+    override suspend fun getDraftOrder(id: Long, forceRefresh: Boolean): Flow<DraftOrderResponse> {
+        return flow { emit(networkManager.getDraftOrder(id, forceRefresh)) }
     }
 
     override suspend fun updateDraftOrder(id: Long, draftOrder: DraftOrderResponse): Flow<DraftOrderResponse> {

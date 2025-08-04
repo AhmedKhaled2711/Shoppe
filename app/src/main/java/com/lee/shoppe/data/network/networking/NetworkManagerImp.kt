@@ -122,9 +122,10 @@ class NetworkManagerImp @Inject constructor(
         }
     }
 
-    override suspend fun getDraftOrder(id: Long): DraftOrderResponse {
+    override suspend fun getDraftOrder(id: Long, forceRefresh: Boolean): DraftOrderResponse {
         return safeApiCall {
-            networkService.getDraftOrder(id)
+            val cacheControl = if (forceRefresh) "no-cache, no-store, must-revalidate" else null
+            networkService.getDraftOrder(id, cacheControl)
         }
     }
 

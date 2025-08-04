@@ -28,7 +28,7 @@ interface Repository {
     suspend fun getBrands(): Flow<BrandResponse>
     suspend fun getDiscountCodes():Flow <PriceRule>
     suspend fun getBrandProducts(@Query("vendor") vendor: String): Flow<ProductResponse>
-    suspend fun getDraftOrder(id: Long): Flow<DraftOrderResponse>
+    suspend fun getDraftOrder(id: Long, forceRefresh: Boolean = false): Flow<DraftOrderResponse>
     suspend fun updateDraftOrder(id: Long, draftOrder: DraftOrderResponse): Flow<DraftOrderResponse>
     suspend fun getProductById(id: Long): Flow<ProductResponse>
     suspend fun addSingleCustomerAddress( id: Long,addressRequest: AddressRequest): AddressRequest

@@ -27,7 +27,7 @@ interface NetworkManager {
     suspend fun getDiscountCodes(): PriceRule
     suspend fun getBrands(): BrandResponse
     suspend fun getBrandProducts(@Query("vendor") vendor: String): ProductResponse
-    suspend fun getDraftOrder(id: Long): DraftOrderResponse
+    suspend fun getDraftOrder(id: Long, forceRefresh: Boolean = false): DraftOrderResponse
     suspend fun updateDraftOrder(id: Long, draftOrder: DraftOrderResponse): DraftOrderResponse
     suspend fun getProductById(id: Long): ProductResponse
     suspend fun addSingleCustomerAddress( id: Long,addressRequest: AddressRequest): AddressRequest

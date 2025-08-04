@@ -355,6 +355,13 @@ fun CouponCardSlider(
 ) {
     val pagerState = rememberPagerState()
 
+    val couponImages = listOf(
+        R.drawable.fiveoff,
+        R.drawable.ten,
+        R.drawable.twentyfive,
+        R.drawable.fivety,
+    )
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -373,8 +380,11 @@ fun CouponCardSlider(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val priceRule = priceRules[page]
+
+                val imageResId = couponImages[page % couponImages.size]
+
                 Image(
-                    painter = painterResource(id = R.drawable.coupon2),
+                    painter = painterResource(id = imageResId),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()

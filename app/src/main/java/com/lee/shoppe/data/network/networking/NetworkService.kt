@@ -69,7 +69,10 @@ interface NetworkService {
     suspend fun getBrandProducts(@Query("vendor") vendor: String): ProductResponse
     
     @GET("draft_orders/{id}.json")
-    suspend fun getDraftOrder(@Path("id") id: Long): DraftOrderResponse
+    suspend fun getDraftOrder(
+        @Path("id") id: Long,
+        @Header("Cache-Control") cacheControl: String? = null
+    ): DraftOrderResponse
     
     @PUT("draft_orders/{id}.json")
     suspend fun updateDraftOrder(

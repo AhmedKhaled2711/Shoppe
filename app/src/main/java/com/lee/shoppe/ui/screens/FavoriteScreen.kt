@@ -8,6 +8,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -18,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import android.util.Log
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -100,7 +104,7 @@ fun FavoriteHeader(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun FavoriteScreen(
     navController: NavController,
@@ -116,6 +120,25 @@ fun FavoriteScreen(
     var favoriteProducts by remember { mutableStateOf<List<Product>>(emptyList()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    
+    // Pull to refresh state
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = {
+            if (isNetworkConnected && (customerData.isLogged || customerData.isGuestWithPreservedData) && customerData.favListId > 0) {
+                isRefreshing = true
+                favViewModel.getFavProducts(customerData.favListId, forceRefresh = true)
+            } else {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.no_internet_connection),
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+    )
 
     // Collect state from ViewModel
     val favProductsState by favViewModel.product.collectAsState()
@@ -123,9 +146,20 @@ fun FavoriteScreen(
 
     // Load favorites when screen is first shown or when favListId changes
     LaunchedEffect(Unit, customerData.favListId) {
-        if (isNetworkConnected && (customerData.isLogged || customerData.isGuestWithPreservedData) && customerData.favListId > 0) {
-            Log.d("FavoriteScreen", "Loading favorites for list ID: ${customerData.favListId}")
-            favViewModel.getFavProducts(customerData.favListId)
+        if (isNetworkConnected && (customerData.isLogged || customerData.isGuestWithPreservedData)) {
+            if (customerData.favListId > 0) {
+                Log.d("FavoriteScreen", "Loading favorites for list ID: ${customerData.favListId}")
+                favViewModel.getFavProducts(customerData.favListId, forceRefresh = false)
+            } else {
+                // Create a new favorites list if one doesn't exist
+                Log.d("FavoriteScreen", "No favorites list found, creating a new one...")
+                favViewModel.checkAndCreateFavListIfNeeded { newFavListId ->
+                    Log.d("FavoriteScreen", "New favorites list created with ID: $newFavListId")
+                    customerData.favListId = newFavListId
+                    // Load the new favorites list
+                    favViewModel.getFavProducts(newFavListId, forceRefresh = false)
+                }
+            }
         } else {
             Log.e("FavoriteScreen", "Cannot load favorites. isNetworkConnected: $isNetworkConnected, isLogged: ${customerData.isLogged}, isGuestWithPreservedData: ${customerData.isGuestWithPreservedData}, favListId: ${customerData.favListId}")
             favoriteProducts = emptyList()
@@ -202,7 +236,16 @@ fun FavoriteScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
         ) {
+            // Pull to refresh indicator
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                backgroundColor = Color.White,
+                contentColor = BluePrimary
+            )
             when (favProductsState) {
                 is NetworkState.Loading -> {
                     LoadingWithMessages(
@@ -215,6 +258,7 @@ fun FavoriteScreen(
                     )
                 }
                 is NetworkState.Failure -> {
+                    isRefreshing = false // Hide refresh indicator on error
                     val error = (favProductsState as NetworkState.Failure).error
                     Log.e("FavoriteScreen", "Error loading favorites: ${error.message}")
                     if (favoriteProducts.isEmpty()) {
@@ -245,6 +289,7 @@ fun FavoriteScreen(
                     }
                 }
                 is NetworkState.Success -> {
+                    isRefreshing = false // Hide refresh indicator when data is loaded
                     if (favoriteProducts.isEmpty()) {
                         EmptyState(
                             lottieComposition,

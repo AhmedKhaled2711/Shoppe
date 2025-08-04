@@ -28,22 +28,40 @@ class FavViewModel @Inject constructor(
     private val _product = MutableStateFlow<NetworkState<DraftOrderResponse>>(NetworkState.Loading)
     val product: StateFlow<NetworkState<DraftOrderResponse>> = _product.asStateFlow()
 
-    fun getFavProducts(listId: Long) {
-        Log.d(TAG, "Fetching favorite products for list ID: $listId")
+    fun getFavProducts(listId: Long, forceRefresh: Boolean = false) {
+        Log.d(TAG, "Fetching favorite products for list ID: $listId, forceRefresh: $forceRefresh")
         viewModelScope.launch(Dispatchers.IO) {
-            repository.getDraftOrder(listId)
-                .catch { e ->
+            try {
+                _product.value = NetworkState.Loading
+                
+                // Get the response with cache control
+                val response = if (forceRefresh) {
+                    // Force network request by bypassing cache
+                    repository.getDraftOrder(listId, forceRefresh = true)
+                } else {
+                    // Use cached response if available
+                    repository.getDraftOrder(listId)
+                }
+                
+                response.catch { e ->
                     Log.e(TAG, "Error fetching favorite products: ${e.message}", e)
-                    if (e is HttpException && e.code() == 429) {
-                        _product.value = NetworkState.Failure(Exception("Too many requests. Please try again later."))
-                    } else {
-                        _product.value = NetworkState.Failure(e)
+                    val errorMessage = when {
+                        e is HttpException && e.code() == 429 -> 
+                            "Too many requests. Please try again later."
+                        e is HttpException -> 
+                            "Failed to load favorites. Please check your connection."
+                        else -> 
+                            "An error occurred while loading favorites: ${e.message}"
                     }
+                    _product.value = NetworkState.Failure(Exception(errorMessage))
+                }.collect { draftOrderResponse ->
+                    Log.d(TAG, "Favorite products fetched successfully")
+                    _product.value = NetworkState.Success(draftOrderResponse)
                 }
-                .collect { response ->
-                    Log.d(TAG, "Favorite products fetched successfully: $response")
-                    _product.value = NetworkState.Success(response)
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error in getFavProducts: ${e.message}", e)
+                _product.value = NetworkState.Failure(e)
+            }
         }
     }
 
