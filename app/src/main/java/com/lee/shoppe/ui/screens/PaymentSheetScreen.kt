@@ -115,7 +115,7 @@ fun PaymentSheetScreen(
                 paymentMethod = "Visa",
                 currency = customerData.currency,
                 onSuccess = {
-                    // Don't dismiss immediately, let the success screen handle it
+                    // Show success screen
                     showSuccessScreen = true
                     
                     // Clear the cart and refresh customer data in the background
@@ -171,9 +171,12 @@ fun PaymentSheetScreen(
                 )
             }
 
+            var webView by remember { mutableStateOf<WebView?>(null) }
+            
             AndroidView(
                 factory = { context ->
                     WebView(context).apply {
+                        webView = this
                         // Enable scrolling and touch
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
@@ -264,6 +267,14 @@ fun PaymentSheetScreen(
                             }
                         }
                         webChromeClient = WebChromeClient()
+                        
+                        // Clear cache and cookies before loading
+                        clearCache(true)
+                        clearFormData()
+                        clearHistory()
+                        settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
+                        settings.domStorageEnabled = true
+                        settings.databaseEnabled = true
 
                         // Validate payment URL before loading
                         if (paymentUrl.isBlank() || !paymentUrl.startsWith("http")) {
@@ -280,7 +291,13 @@ fun PaymentSheetScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // Take remaining space
+                    .weight(1f), // Take remaining space
+                update = { view ->
+                    // This ensures the WebView is properly updated when the URL changes
+                    if (view.url != paymentUrl) {
+                        view.loadUrl(paymentUrl)
+                    }
+                }
             )
 
             if (isLoading) {
@@ -293,14 +310,15 @@ fun PaymentSheetScreen(
     if (showSuccessScreen) {
         OrderSuccessScreen(
             onTimeout = {
-                // Navigate to home after showing success message
+                // Clear the back stack and navigate to home
                 navController.navigate(Screen.Home.route) {
-                    // Pop everything up to and including the home screen
-                    popUpTo(0) { inclusive = true }
-                    // Prevent going back to the payment screen
+                    // Clear the back stack up to home
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                    // Prevent multiple instances of home
                     launchSingleTop = true
                 }
-                onDismiss() // Make sure to dismiss the payment sheet
+                // Dismiss the payment sheet
+                onDismiss()
             },
             message = "Your payment was successful!\nYour order has been placed.",
             timeoutMillis = 2500L

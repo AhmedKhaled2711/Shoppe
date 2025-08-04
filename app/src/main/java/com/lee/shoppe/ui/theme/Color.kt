@@ -18,4 +18,7 @@ val RedAccent = Color(0xFFD97474) // #D97474
 val Dark = Color(0xFF202020) // #202020
 val BlueSecondary = Color(0xFF5982DA) // #5982DA
 val HeaderColor = Color(0xFF202020) // #5982DA
+val SuccessGreen = Color(0xFF4BB543) // #4BB543
+
+
 

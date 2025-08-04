@@ -56,6 +56,7 @@ import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.caching.SharedPreferenceManager
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.OrderSuccessScreen
 import com.lee.shoppe.ui.screens.AboutScreen
 import com.lee.shoppe.ui.screens.AddEditAddressScreen
 import com.lee.shoppe.ui.screens.AddressListScreen
@@ -397,6 +398,18 @@ fun ECommerceNavHost(
             }
             composable("terms_and_conditions") {
                 TermsAndConditionsScreen(navController)
+            }
+            composable(Screen.OrderSuccess.route) {
+                OrderSuccessScreen(
+                    onTimeout = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    message = "Your order has been placed successfully!\nThank you for your purchase.",
+                    timeoutMillis = 2500L
+                )
             }
             composable(
                 route = "products/{brandTitle}",

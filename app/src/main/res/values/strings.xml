@@ -98,7 +98,10 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <string name="your_location">Your Location</string>
     <string name="network_error">Network Error</string>
     <string name="failed_load_data">Failed to load data. Please try again.</string>
-    
+    <string name="order_summary">Order Summary</string>
+    <string name="applied">Applied</string>
+
+
     <!-- Loading Messages -->
     <string name="loading_main_message">Loading...</string>
     <string name="loading_secondary_message">Please wait while we load your data</string>
