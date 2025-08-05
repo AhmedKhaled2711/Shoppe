@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material3.Button
@@ -29,7 +29,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -66,11 +65,12 @@ import com.lee.shoppe.data.model.CheckoutSessionResponse
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.OrderSuccessScreen
 import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.navigation.Screen
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
-import com.lee.shoppe.ui.utils.PaymentConstants
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.ui.viewmodel.CartViewModel
 import com.lee.shoppe.ui.viewmodel.OrderDetailsViewModel
@@ -80,11 +80,6 @@ import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-// Payment method constants
-private const val PAYMENT_METHOD_VISA = "Visa"
-private const val PAYMENT_METHOD_CASH = "Cash"
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderDetailsScreen(
     addressId: Long,
@@ -103,58 +98,54 @@ fun OrderDetailsScreen(
     val paymentState by paymentViewModel.productPayment.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-
-    // State variables with improved naming and organization
+    // State variables
     var couponText by remember { mutableStateOf("") }
     var discountPercent by remember { mutableStateOf(0.0) }
     var isCouponValid by remember { mutableStateOf(false) }
     var showPaymentDialog by remember { mutableStateOf(false) }
     var selectedPaymentMethod by remember { mutableStateOf("") }
     var paymentUrl by remember { mutableStateOf("") }
-    var discountValueBody by remember { mutableStateOf("") }
-    
-    // Derived states for better performance
-    val validateButtonColor = if (isCouponValid) Color(0xFF4CAF50) else BluePrimary
-    
-    // String resources
-    val validateButtonText = if (isCouponValid) {
-        stringResource(R.string.valid)
-    } else {
-        stringResource(R.string.validate)
-    }
+    var isProcessingOrder by remember { mutableStateOf(false) }
+    var showSuccessScreen by remember { mutableStateOf(false) }
 
     // Load data on entry
     LaunchedEffect(customerData.cartListId) {
         if (customerData.cartListId > 0) cartViewModel.getCartProducts(customerData.cartListId)
-        addressViewModel.getCustomerData(customerData.id , forceRefresh = true)
+        addressViewModel.getCustomerData(customerData.id, forceRefresh = true)
         orderDetailsViewModel.getAdsCode()
     }
 
-    // Calculate cart values with null safety
+    // Calculate cart values
     val lineItems = (cartState as? NetworkState.Success)?.data?.draft_order?.line_items?.drop(1) ?: emptyList()
     val subtotal = lineItems.sumOf { (it.price?.toDoubleOrNull() ?: 0.0) * (it.quantity ?: 1) }
-    val currency = "EGP" // Always use EGP as the currency code
-    val discountAmount = (subtotal * (discountPercent / 100)).coerceAtLeast(0.0)
-    val total = (subtotal - discountAmount).coerceAtLeast(0.0)
+    // Always use EGP as the currency code
+    val currency = "EGP"
+    val discountAmount = subtotal * (discountPercent / 100)
+    val total = subtotal - discountAmount
     val selectedAddress = (addressState as? NetworkState.Success)?.data?.customer?.addresses?.find { it.id == addressId }
 
     // Handle payment state changes
     LaunchedEffect(paymentState) {
-        when (paymentState) {
+        when (val state = paymentState) {
             is NetworkState.Success -> {
-                paymentUrl = (paymentState as NetworkState.Success<CheckoutSessionResponse>).data.url
+                isProcessingOrder = false
+                paymentUrl = state.data.url
                 // Navigate to PaymentSheetScreen with properly encoded URL
                 val encodedUrl = URLEncoder.encode(paymentUrl, StandardCharsets.UTF_8.toString())
                 navController.navigate("payment_sheet?paymentUrl=${encodedUrl}&discountValue=${discountAmount}")
             }
             is NetworkState.Failure -> {
+                isProcessingOrder = false
                 // Show error message
-                Log.e("OrderDetailsScreen", "Payment failed: ")
+                val errorMsg = state.error.message ?: "Unknown error"
+                Log.e("OrderDetailsScreen", "Payment failed: $errorMsg")
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Payment failed: $errorMsg")
+                }
             }
             else -> {}
         }
     }
-
 
     // Payment method dialog
     if (showPaymentDialog) {
@@ -163,80 +154,70 @@ fun OrderDetailsScreen(
             onPaymentSelected = { method ->
                 selectedPaymentMethod = method
                 showPaymentDialog = false
-                if (method == PAYMENT_METHOD_VISA) {
-                    // Show loading state before API call
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Preparing secure payment...")
+                // Process order based on payment method
+                when (method) {
+                    "Visa" -> {
+                        // For Visa, get payment URL and navigate to payment sheet
+                        isProcessingOrder = true
+                        paymentViewModel.getPaymentProducts(
+                            successUrl = "https://example.com/success",
+                            cancelUrl = "https://example.com/cancel",
+                            customerEmail = customerData.email,
+                            currency = currency,
+                            productName = "Order #${System.currentTimeMillis()}",
+                            productDescription = "Payment for ${lineItems.size} items",
+                            unitAmountDecimal = (subtotal * 100).toInt(),
+                            quantity = 1,
+                            mode = "payment",
+                            paymentMethodType = "card"
+                        )
                     }
-                    // Trigger Visa payment
-                    paymentViewModel.getPaymentProducts(
-                        successUrl = PaymentConstants.SUCCESS_URL,
-                        cancelUrl = PaymentConstants.CANCEL_URL,
-                        customerEmail = customerData.email,
-                        currency = currency,
-                        productName = "Your Order #${System.currentTimeMillis().toString().takeLast(6)}",
-                        productDescription = "Complete your purchase",
-                        unitAmountDecimal = (total * 100).toInt(),
-                        quantity = 1,
-                        mode = "payment",
-                        paymentMethodType = "card"
-                    )
-                } else if (method == PAYMENT_METHOD_CASH) {
-                    placeOrder(
-                        coroutineScope = coroutineScope,
-                        orderDetailsViewModel = orderDetailsViewModel,
-                        cartViewModel = cartViewModel,
-                        customerData = customerData,
-                        selectedAddress = selectedAddress,
-                        lineItems = lineItems,
-                        discountValue = discountAmount.toString(),
-                        paymentMethod = method,
-                        currency = currency,
-                        onSuccess = {
-                            // Show success screen
-                            navController.navigate(Screen.OrderSuccess.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
-                                launchSingleTop = true
+                    "Cash" -> {
+                        isProcessingOrder = true
+                        placeOrder(
+                            coroutineScope = coroutineScope,
+                            orderDetailsViewModel = orderDetailsViewModel,
+                            cartViewModel = cartViewModel,
+                            customerData = customerData,
+                            selectedAddress = selectedAddress,
+                            lineItems = lineItems,
+                            discountValue = discountAmount.toString(),
+                            paymentMethod = method,
+                            currency = currency,
+                            onSuccess = {
+                                isProcessingOrder = false
+                                showSuccessScreen = true
+                            },
+                            onError = { errorMsg ->
+                                isProcessingOrder = false
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Error: $errorMsg")
+                                }
                             }
-                        },
-                        onError = { error ->
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Error placing order: $error")
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         )
     }
 
-    // Success screen is now handled via navigation
-
-    // Main content with improved visual hierarchy and spacing
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.White)
     ) {
-        // Header with elevation and back button
-        Surface(
-            tonalElevation = 3.dp,
-            shadowElevation = 1.dp,
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            ScreenHeader(
-                title = "Order Summary",
-                onBackClick = { navController.popBackStack() },
-                showBackButton = true
-            )
-        }
+        // Header
+        ScreenHeader(
+            title = stringResource(R.string.order_details),
+            onBackClick = { navController.popBackStack() },
+            showBackButton = true
+        )
 
-        // Scrollable content with proper padding and spacing
-        Column(
+        // Content
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth()
         ) {
             if (cartState is NetworkState.Loading || addressState is NetworkState.Loading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -291,101 +272,54 @@ fun OrderDetailsScreen(
 
                     // Coupon Card
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
+                            containerColor = Color(0xFFF8F9FA)
                         ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 2.dp,
-                            pressedElevation = 1.dp
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Text(
                                 text = "Apply Coupon",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = HeaderColor
                             )
-                            
+                            Spacer(modifier = Modifier.height(12.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                // Coupon Input Field
                                 OutlinedTextField(
                                     value = couponText,
                                     onValueChange = { couponText = it },
-                                    label = { 
-                                        Text(
-                                            "Enter coupon code",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        ) 
-                                    },
-                                    singleLine = true,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
+                                    label = { Text("Enter coupon code") },
+                                    modifier = Modifier.weight(2f),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = BluePrimary,
-                                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                                        focusedLabelColor = BluePrimary,
-                                        cursorColor = BluePrimary,
-                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                                    ),
-                                    shape = RoundedCornerShape(8.dp),
-                                    textStyle = MaterialTheme.typography.bodyLarge,
-                                    enabled = !isCouponValid
+                                        focusedLabelColor = BluePrimary
+                                    )
                                 )
-                                
-                                Spacer(modifier = Modifier.width(12.dp))
-                                
-                                // Apply/Valid Button
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Button(
                                     onClick = {
                                         val codes = (discountCodesState as? NetworkState.Success)?.data?.price_rules ?: emptyList()
-                                        val found = codes.find { it.title.equals(couponText, ignoreCase = true) }
-                                        
+                                        val found = codes.find { it.title == couponText }
                                         if (found != null) {
-                                            // Valid coupon found
                                             discountPercent = found.value.toDoubleOrNull() ?: 0.0
                                             isCouponValid = true
-                                            validateButtonColor = Color(0xFF4CAF50)
-                                            discountValueBody = (subtotal * (discountPercent / 100)).toString()
-                                            
-                                            // Show success message
-                                            coroutineScope.launch {
-                                                snackbarHostState.showSnackbar("Coupon applied successfully!")
-                                            }
                                         } else {
-                                            // Invalid coupon
                                             discountPercent = 0.0
                                             isCouponValid = false
-                                            validateButtonColor = BluePrimary
-                                            discountValueBody = "0"
-                                            
-                                            // Show error message
-                                            coroutineScope.launch {
-                                                snackbarHostState.showSnackbar("Invalid coupon code")
-                                            }
                                         }
                                     },
                                     modifier = Modifier
-                                        .height(56.dp)
-                                        .width(120.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isCouponValid) Color(0xFF4CAF50) else BluePrimary,
-                                        contentColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(8.dp),
-                                    enabled = couponText.isNotEmpty() && !isCouponValid || isCouponValid
+                                        .weight(1f)
+                                        .height(56.dp), // Match OutlinedTextField height
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (isCouponValid) Color(0xFF4CAF50) else Color.Gray),
+                                    shape = RoundedCornerShape(8.dp)
                                 ) {
                                     if (isCouponValid) {
                                         Row(
@@ -393,23 +327,23 @@ fun OrderDetailsScreen(
                                             horizontalArrangement = Arrangement.Center
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Filled.CheckCircle,
+                                                imageVector = Icons.Filled.Check,
                                                 contentDescription = "Valid",
                                                 tint = Color.White,
-                                                modifier = Modifier.size(20.dp)
+                                                modifier = Modifier.size(16.dp)
                                             )
-                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                "Applied",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.SemiBold
+                                                "Valid",
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold
                                             )
                                         }
                                     } else {
                                         Text(
                                             "Apply",
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.SemiBold
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
                                 }
@@ -418,36 +352,24 @@ fun OrderDetailsScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Order Summary Card with improved visual hierarchy
+                    // Order Summary Card
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
+                            containerColor = Color(0xFFF8F9FA)
                         ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 2.dp,
-                            pressedElevation = 1.dp
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Text(
                                 text = "Order Summary",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = HeaderColor
                             )
-                            
-                            Divider(
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
-                            
+                            Spacer(modifier = Modifier.height(12.dp))
                             OrderSummarySection(
                                 subtotal = subtotal,
                                 discountPercent = discountPercent,
@@ -460,95 +382,48 @@ fun OrderDetailsScreen(
             }
         }
 
-        // Sticky Checkout Button with improved visual feedback
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Surface(
+        // Bottom Button
+        Button(
+            onClick = {
+                showPaymentDialog = true
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp
+                .padding(12.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
+            enabled = !showSuccessScreen
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                // Order Total Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Total",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "$currency ${String.format("%.2f", total)}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = BluePrimary
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Checkout Button with loading state
-                Button(
-                    onClick = { showPaymentDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BluePrimary,
-                        contentColor = Color.White,
-                        disabledContainerColor = BluePrimary.copy(alpha = 0.5f)
-                    ),
-                    enabled = selectedAddress != null && lineItems.isNotEmpty()
-                ) {
-                    if (paymentState is NetworkState.Loading) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Proceed to Payment",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                }
-                
-                // Helper text for disabled state
-                if (selectedAddress == null) {
-                    Text(
-                        text = "Please select a shipping address",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .align(Alignment.CenterHorizontally)
-                    )
-                } else if (lineItems.isEmpty()) {
-                    Text(
-                        text = "Your cart is empty",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .align(Alignment.CenterHorizontally)
-                    )
-                }
-            }
+            Text(
+                if (showSuccessScreen) "Processing..." else stringResource(R.string.place_order),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
         }
+    }
 
-        // Bottom spacing for safe area
-        Spacer(modifier = Modifier.height(16.dp))
+    // Show loading screen when processing order
+    if (isProcessingOrder) {
+        LoadingWithMessages(
+            mainMessage = "Processing Your Order",
+            secondaryMessage = "Please wait while we confirm your payment"
+        )
+    }
+    
+    // Show success screen after successful order
+    if (showSuccessScreen) {
+        OrderSuccessScreen(
+            onTimeout = {
+                // Navigate to home and clear back stack
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            message = "Your order has been placed successfully!\nThank you for your purchase.",
+            timeoutMillis = 3500L
+        )
     }
 }
 
@@ -600,7 +475,7 @@ private fun PaymentMethodBottomSheet(
                 icon = Icons.Filled.CreditCard,
                 title = "Visa Card",
                 subtitle = "Pay securely with your Visa card",
-                onClick = { onPaymentSelected(PAYMENT_METHOD_VISA) }
+                onClick = { onPaymentSelected("Visa") }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -610,7 +485,7 @@ private fun PaymentMethodBottomSheet(
                 icon = Icons.Filled.Money,
                 title = "Cash on Delivery",
                 subtitle = "Pay with cash when your order arrives",
-                onClick = { onPaymentSelected(PAYMENT_METHOD_CASH) }
+                onClick = { onPaymentSelected("Cash") }
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -722,104 +597,42 @@ private fun OrderSummarySection(
     total: Double,
     currency: String
 ) {
-    // Helper function for consistent price display
-    @Composable
-    fun PriceRow(
-        label: String,
-        value: String,
-        isHighlighted: Boolean = false,
-        showDiscountBadge: Boolean = false
+    // Subtotal
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Label with optional discount badge
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (isHighlighted) MaterialTheme.colorScheme.onSurface 
-                           else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                if (showDiscountBadge && discountPercent > 0) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFFFFF8E1),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "-${discountPercent.toInt()}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFF8F00),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-            
-            // Price value
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal
-                ),
-                color = if (isHighlighted) MaterialTheme.colorScheme.primary 
-                       else MaterialTheme.colorScheme.onSurface
-            )
+        Text(stringResource(R.string.subtotal), fontSize = 20.sp, fontWeight = FontWeight.Bold )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(String.format("%.2f", subtotal), fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(currency, fontSize = 18.sp , fontWeight = FontWeight.Bold , color = BluePrimary)
         }
     }
+    Spacer(modifier = Modifier.height(8.dp))
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
+    // Discount
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Subtotal
-        PriceRow(
-            label = stringResource(R.string.subtotal),
-            value = String.format("$currency %.2f", subtotal)
-        )
-
-        // Discount (only show if there is a discount)
-        if (discountPercent > 0) {
-            PriceRow(
-                label = stringResource(R.string.discount),
-                value = "-${String.format("$currency %.2f", subtotal * (discountPercent / 100))}",
-                showDiscountBadge = true
-            )
-        }
-
-        // Divider with padding
-        Spacer(modifier = Modifier.height(4.dp))
-        Divider(
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-            thickness = 0.5.dp,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
-        // Total
-        PriceRow(
-            label = stringResource(R.string.total),
-            value = String.format("$currency %.2f", total),
-            isHighlighted = true
-        )
-        
-        // Estimated delivery (informational text)
-        Text(
-            text = "* ${stringResource(R.string.estimated_delivery)}: 3-5 ${stringResource(R.string.business_days)}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        Text(stringResource(R.string.discount), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("${discountPercent}%", fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
     }
-}
+    Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+    // Total
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(stringResource(R.string.total), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(String.format("%.2f", total), fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(currency, fontSize = 18.sp ,fontWeight = FontWeight.Bold, color = BluePrimary)
+        }
+    }
 }
 
 fun placeOrder(
@@ -869,7 +682,7 @@ fun placeOrder(
     val nameParts = customerData.name.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
     val firstName = nameParts.firstOrNull() ?: ""
     val lastName = nameParts.drop(1).takeIf { it.isNotEmpty() }?.joinToString(" ") ?: "Customer"
-    
+
     val customer = CustomerBody(
         id = customerData.id,
         email = customerData.email,
@@ -893,22 +706,14 @@ fun placeOrder(
         )
     }
 
-    // Ensure discount value is not negative
-    val safeDiscountValue = try {
-        val discount = discountValue.toDoubleOrNull() ?: 0.0
-        maxOf(0.0, discount).toString()
-    } catch (e: NumberFormatException) {
-        "0.0"
-    }
-
     val orderBody = mapOf(
         "order" to OrderBody(
             billing_address = addressBody,
             customer = customer,
             line_items = lineItem,
             total_tax = 13.5,
-            currency = "EGP",
-            total_discounts = safeDiscountValue,
+            currency = "EGP", // Force EGP as the currency code
+            total_discounts = discountValue,
             referring_site = paymentMethod
         )
     )
@@ -918,7 +723,7 @@ fun placeOrder(
         onSuccess = {
             // Clear the cart first
             cartViewModel.clearCart(customerData.cartListId)
-            
+
             // Launch a coroutine in the screen's scope
             coroutineScope.launch {
                 try {
@@ -939,6 +744,6 @@ fun placeOrder(
             onError(errorMsg)
         }
     )
-    
+
 
 }

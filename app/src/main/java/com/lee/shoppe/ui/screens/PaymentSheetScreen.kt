@@ -117,7 +117,7 @@ fun PaymentSheetScreen(
                 onSuccess = {
                     // Show success screen
                     showSuccessScreen = true
-                    
+
                     // Clear the cart and refresh customer data in the background
                     scope.launch {
                         try {
@@ -146,7 +146,7 @@ fun PaymentSheetScreen(
                 title = "Payment",
                 onBackClick = {
                     Log.d("PaymentSheetScreen", "Back button clicked")
-                    onDismiss()
+                    navController.popBackStack()
                 },
                 showBackButton = true
             )
@@ -172,7 +172,7 @@ fun PaymentSheetScreen(
             }
 
             var webView by remember { mutableStateOf<WebView?>(null) }
-            
+
             AndroidView(
                 factory = { context ->
                     WebView(context).apply {
@@ -267,7 +267,7 @@ fun PaymentSheetScreen(
                             }
                         }
                         webChromeClient = WebChromeClient()
-                        
+
                         // Clear cache and cookies before loading
                         clearCache(true)
                         clearFormData()
@@ -310,18 +310,15 @@ fun PaymentSheetScreen(
     if (showSuccessScreen) {
         OrderSuccessScreen(
             onTimeout = {
-                // Clear the back stack and navigate to home
+                // Navigate to home and clear back stack
                 navController.navigate(Screen.Home.route) {
-                    // Clear the back stack up to home
                     popUpTo(Screen.Home.route) { inclusive = true }
-                    // Prevent multiple instances of home
                     launchSingleTop = true
                 }
-                // Dismiss the payment sheet
-                onDismiss()
             },
-            message = "Your payment was successful!\nYour order has been placed.",
-            timeoutMillis = 2500L
+            message = "Your order has been placed successfully!\nThank you for your purchase.",
+            timeoutMillis = 3500L
         )
     }
+
 }

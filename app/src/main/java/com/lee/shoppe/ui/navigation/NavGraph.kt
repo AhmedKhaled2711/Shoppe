@@ -408,7 +408,7 @@ fun ECommerceNavHost(
                         }
                     },
                     message = "Your order has been placed successfully!\nThank you for your purchase.",
-                    timeoutMillis = 2500L
+                    timeoutMillis = 3500L
                 )
             }
             composable(
