@@ -8,16 +8,17 @@ import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.lee.shoppe.R
 import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
@@ -32,7 +33,7 @@ fun ProfileDetailsScreen(navController: NavController) {
     ) {
         // Header
         ScreenHeader(
-            title = "Profile Details",
+            title = stringResource(R.string.profile_details),
             onBackClick = { navController.navigateUp() },
             showBackButton = true
         )
@@ -47,7 +48,7 @@ fun ProfileDetailsScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
             Icon(
                 imageVector = Icons.Filled.PersonOutline,
-                contentDescription = "User Avatar",
+                contentDescription = stringResource(R.string.user_avatar),
                 tint = BluePrimary,
                 modifier = Modifier
                     .size(80.dp)
@@ -56,14 +57,22 @@ fun ProfileDetailsScreen(navController: NavController) {
                     .padding(12.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Name: Your Name", fontSize = 20.sp, color = HeaderColor)
-            Text("Email: your.email@example.com", fontSize = 16.sp, color = Color.Gray)
+            Text(
+                text = stringResource(R.string.name_format, stringResource(R.string.default_name)), 
+                fontSize = 20.sp, 
+                color = HeaderColor
+            )
+            Text(
+                text = stringResource(R.string.email_format, stringResource(R.string.default_email)), 
+                fontSize = 16.sp, 
+                color = Color.Gray
+            )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = { /* TODO: Edit profile */ },
                 colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
             ) {
-                Text("Edit Profile", color = Color.White)
+                Text(stringResource(R.string.edit_profile), color = Color.White)
             }
         }
     }

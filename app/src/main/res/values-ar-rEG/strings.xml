@@ -1,0 +1,441 @@
+<resources>
+
+    <string name="client_id">66204164017-37alqjjkcmhro5d9e791urj8ddi16lmp.apps.googleusercontent.com</string>
+
+    <!-- رسائل نجاح الطلب -->
+    <string name="order_placed_successfully">تم تقديم الطلب بنجاح!</string>
+    <string name="thank_you_for_purchase">شكراً لشرائك!</string>
+    <string name="processing">جارٍ المعالجة…</string>
+    <string name="app_name">شوبّي</string>
+
+    <!-- نصوص التسجيل -->
+    <string name="sign_up">تسجيل</string>
+    <string name="create_account">إنشاء حساب</string>
+    <string name="create">إنشاء</string>
+    <string name="get_started_SignUp">لنبدأ!</string>
+    <string name="f_name">الاسم الأول</string>
+    <string name="l_name">اسم العائلة</string>
+    <string name="confirmPassword">تأكيد كلمة المرور</string>
+    <string name="already_have_account">هل لديك حساب بالفعل؟</string>
+    <string name="invalid_email_address">عنوان البريد الإلكتروني غير صالح.</string>
+    <string name="hide_password">إخفاء كلمة المرور</string>
+    <string name="show_password">إظهار كلمة المرور</string>
+    <string name="password_error">يجب أن تتطابق كلمات المرور وأن تحتوي على 6 أحرف على الأقل</string>
+    <string name="fill_both">يرجى ملء الاسم الأول واسم العائلة</string>
+
+    <!-- نصوص خطأ الشبكة -->
+    <string name="network_message_first">لا يوجد اتصال بالإنترنت.</string>
+    <string name="network_message_main">لا يوجد اتصال بالإنترنت</string>
+    <string name="network_message_second">يرجى التحقق من إعدادات الإنترنت الخاصة بك.</string>
+    <string name="network_message">رسالة الشبكة الخاصة بك هنا</string>
+    <string name="network_error">خطأ في الشبكة</string>
+
+    <!-- صفحة تسجيل الدخول -->
+    <string name="login_title1">مرحباً بعودتك</string>
+    <string name="login_title2">سجّل الدخول للمتابعة</string>
+    <string name="orSignup">لا تمتلك حساب؟</string>
+    <string name="or">أو</string>
+    <string name="google">تسجيل الدخول باستخدام Google</string>
+
+    <!-- رسائل المصادقة -->
+    <string name="auth">المصادقة</string>
+    <string name="error_login">فشل تسجيل الدخول، حاول مرة أخرى</string>
+    <string name="error_signup">فشل إنشاء الحساب، حاول مرة أخرى</string>
+    <string name="email_message">يرجى التحقق من بريدك الإلكتروني ثم حاول تسجيل الدخول مرة أخرى</string>
+    <string name="error_email_verify">فشل تسجيل الدخول، يرجى التحقق من بريدك الإلكتروني أولاً</string>
+    <string name="exist">موجود بالفعل</string>
+    <string name="not_exist">غير موجود</string>
+    <string name="empty">حقل فارغ</string>
+    <string name="error_email_format">صيغة البريد الإلكتروني غير صحيحة</string>
+    <string name="error_password_format">يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير واحد، حرف صغير واحد، ورقم واحد على الأقل</string>
+    <string name="error_not_match">كلمة المرور وتأكيد كلمة المرور غير متطابقين</string>
+    <string name="error_name_format">يجب أن يحتوي على 3 أحرف على الأقل</string>
+
+    <!-- شاشة الترحيب Onboarding -->
+    <string name="onboarding_title_hello">مرحباً</string>
+    <string name="onboarding_description_hello">اكتشف مجموعة واسعة من المنتجات المميزة المصممة لتناسب احتياجاتك تماماً. استمتع بعناصر عالية الجودة مصنوعة بعناية لتناسب أسلوب حياتك الفريد وتفضيلاتك.</string>
+    <string name="onboarding_title_enjoy">استمتع</string>
+    <string name="onboarding_description_enjoy">استمتع بعروض حصرية وأسعار لا تقاوم كل يوم.</string>
+
+    <!-- الصفحة الرئيسية -->
+    <string name="shoppe">شوبّي</string>
+    <string name="brands">الماركات</string>
+    <string name="category">الفئات</string>
+    <string name="all">الكل</string>
+    <string name="women">نساء</string>
+    <string name="kid">أطفال</string>
+    <string name="men">رجال</string>
+    <string name="sale">تخفيضات</string>
+    <string name="pieces">قطع</string>
+
+    <!-- الفئات -->
+    <string name="price">نطاق السعر</string>
+    <string name="from">من</string>
+    <string name="to">إلى</string>
+    <string name="dialog_filter">التصفية</string>
+    <string name="ok">موافق</string>
+    <string name="validate">تأكيد</string>
+    <string name="valid">صالح</string>
+    <string name="sure">متأكد؟</string>
+
+    <!-- عربة التسوق -->
+    <string name="decrease_quantity_message">لا يمكن تقليل الكمية عن 1</string>
+    <string name="increase_quantity_message_1">لا يمكن زيادة الكمية عن</string>
+    <string name="increase_quantity_message_2">قطعة</string>
+    <string name="delete_d_address_title">لا يمكن حذف العنوان الافتراضي</string>
+    <string name="delete_d_address_body">لا يمكن حذف العنوان الافتراضي.</string>
+    <string name="delete_address_body">هل أنت متأكد أنك تريد حذف هذا العنوان؟</string>
+    <string name="d_address_success">تم تعيين العنوان الافتراضي بنجاح</string>
+    <string name="permission_denied">تم رفض الإذن</string>
+    <string name="no_current_location">تعذر الحصول على الموقع الحالي، يرجى تفعيل إعدادات الموقع</string>
+    <string name="your_location">موقعك</string>
+    <string name="failed_load_data">فشل تحميل البيانات. يرجى المحاولة مرة أخرى.</string>
+    <string name="order_summary">ملخص الطلب</string>
+    <string name="applied">تم التطبيق</string>
+
+    <!-- رسائل التحميل -->
+    <string name="favorites">المفضلة</string>
+    <string name="loading_favorites">جارٍ تحميل المفضلة</string>
+    <string name="no_favorites">لا توجد عناصر مفضلة بعد</string>
+    <string name="remove_from_favorites">إزالة من المفضلة</string>
+    <string name="are_you_sure_remove_favorite">هل أنت متأكد أنك تريد إزالة هذا العنصر من المفضلة؟</string>
+    <string name="remove">إزالة</string>
+    <string name="sign_in_to_see_favorites">سجّل الدخول لرؤية عناصر المفضلة</string>
+    <string name="your_favorites_will_appear_here">ستظهر عناصر المفضلة هنا</string>
+    <string name="no_favorites_yet">لا توجد عناصر مفضلة بعد</string>
+    <string name="please_try_again_later">يرجى المحاولة لاحقاً</string>
+    <string name="loading_main_message">جارٍ التحميل…</string>
+    <string name="loading_secondary_message">يرجى الانتظار أثناء تحميل بياناتك</string>
+    <string name="clicked_on">تم النقر على</string>
+    <string name="copy_discount_code">تم نسخ رمز الخصم إلى الحافظة</string>
+    <string name="coupon_success">تم تطبيق القسيمة بنجاح</string>
+    <string name="invalid_coupon">قسيمة غير صالحة</string>
+    <string name="invalid_coupon_body">القسيمة التي أدخلتها غير صالحة.</string>
+    <string name="choose_payment_method">اختر طريقة الدفع</string>
+    <string name="order_placed_success">تم تقديم الطلب بنجاح</string>
+    <string name="order_not_found">الطلب غير موجود</string>
+    <string name="order_not_found_body">لم يتم العثور على تفاصيل الطلب.</string>
+    <string name="visa_select">تم اختيار بطاقة فيزا</string>
+    <string name="cash_select">تم اختيار الدفع عند الاستلام</string>
+    <string name="select_payment_method">يرجى اختيار طريقة الدفع</string>
+    <string name="payment_success">تم الدفع بنجاح</string>
+    <string name="payment_finish">تم الانتهاء من عملية الدفع</string>
+    <string name="select_payment">اختر طريقة الدفع</string>
+    <string name="visa_card">بطاقة فيزا</string>
+    <string name="cash_on_delivery">الدفع عند الاستلام</string>
+    <string name="pay_with_card">الدفع بالبطاقة</string>
+    <string name="pay_with_cash">الدفع نقداً</string>
+    <string name="payment_failed">فشل الدفع</string>
+    <string name="payment_method_cash">الدفع عند الاستلام</string>
+    <string name="must_select_variant">يجب اختيار النسخة!</string>
+    <string name="product_not_available">معلومات المنتج غير متاحة</string>
+    <string name="add_product_success">تم إضافة المنتج بنجاح</string>
+    <string name="selected">تم الاختيار</string>
+    <string name="choose_language">اختر اللغة</string>
+    <string name="quantity_change_success">تم تغيير الكمية بنجاح</string>
+    <string name="cart">عربة التسوق</string>
+    <string name="clear_cart_title">أنت على وشك مسح عربة التسوق</string>
+    <string name="clear_cart_message">لن تتمكن من استعادة بياناتك</string>
+    <string name="clear_all">مسح الكل</string>
+    <string name="remove_item_title">أنت على وشك إزالة هذا المنتج</string>
+    <string name="remove_item_message">لن تتمكن من استعادة هذا المنتج</string>
+    <string name="select">اختر</string>
+    <string name="order_details_title">تفاصيل الطلب</string>
+    <string name="order_information">معلومات الطلب</string>
+    <string name="contact_email">البريد الإلكتروني للتواصل</string>
+    <string name="phone_number">رقم الهاتف</string>
+    <string name="delivery_address">عنوان التسليم</string>
+    <string name="total_amount">المبلغ الإجمالي</string>
+    <string name="order_items">عناصر الطلب</string>
+    <string name="loading_order_details">جارٍ تحميل تفاصيل الطلب…</string>
+    <string name="oops">عفوًا!</string>
+    <string name="try_again">حاول مرة أخرى</string>
+    <string name="unknown_product">منتج غير معروف</string>
+    <string name="quantity_short">الكمية: %1$d</string>
+    <string name="na">غير متوفر</string>
+    <string name="product_image">صورة المنتج</string>
+    <string name="error">خطأ</string>
+    <string name="my_orders">طلباتي</string>
+    <string name="loading_orders">جارٍ تحميل طلباتك</string>
+    <string name="loading_orders_message">يرجى الانتظار أثناء جلب سجل طلباتك…</string>
+    <string name="no_orders">لا توجد طلبات.</string>
+    <string name="no_orders_title">لا توجد طلبات حتى الآن</string>
+    <string name="no_orders_message">لم تقم بتقديم أي طلبات بعد. ابدأ التسوق وتتبع طلباتك هنا!</string>
+    <string name="order_number">الطلب رقم: %1$s</string>
+    <string name="date">التاريخ: %1$s</string>
+    <string name="payment_method">طريقة الدفع: %1$s</string>
+    <string name="payment_processing">جارٍ معالجة الدفع</string>
+    <string name="payment_processing_message">يرجى الانتظار أثناء الاتصال ببوابة الدفع…</string>
+    <string name="payment_title">الدفع</string>
+    <string name="payment_error_missing_data">خطأ: العنوان أو عناصر العربة مفقودة. يرجى المحاولة مرة أخرى.</string>
+    <string name="payment_error_loading">خطأ في تحميل صفحة الدفع: %1$s</string>
+    <string name="delete_all">حذف الكل</string>
+    <string name="cart_empty">عربة التسوق فارغة</string>
+    <string name="too_many_requests">أنت تقوم بإرسال الطلبات بسرعة كبيرة. يرجى الانتظار لحظة ثم حاول مرة أخرى.</string>
+    <string name="error_occurred">حدث خطأ. يرجى المحاولة مرة أخرى.</string>
+    <string name="guest_profile">الملف الشخصي للزائر</string>
+    <string name="guest_profile2">هل لديك حساب؟</string>
+    <string name="subTotal">المجموع الفرعي</string>
+    <string name="checkout">إتمام الدفع</string>
+    <string name="order_details">تفاصيل الطلب</string>
+    <string name="back">رجوع</string>
+    <string name="product">المنتج</string>
+    <string name="product_details">تفاصيل المنتج</string>
+    <string name="favorite_updated">تم تحديث المفضلة بنجاح</string>
+    <string name="add_to_cart_success">تم إضافة المنتج إلى العربة بنجاح!</string>
+    <string name="select_variant">اختر النسخة:</string>
+    <string name="description">الوصف</string>
+    <string name="error_loading_product">خطأ في تحميل تفاصيل المنتج</string>
+    <string name="reviews">التقييمات</string>
+    <string name="view_all_reviews">عرض جميع التقييمات</string>
+    <string name="add_to_cart">أضف إلى العربة</string>
+    <string name="buy_now">اشتري الآن</string>
+    <string name="place_order">تقديم الطلب</string>
+    <string name="coupon">قسيمة</string>
+    <string name="subtotal">المجموع الفرعي</string>
+    <string name="discount">الخصم</string>
+    <string name="total">الإجمالي</string>
+    <string name="visa">فيزا</string>
+    <string name="cash">نقداً</string>
+    <string name="success_url">https://example.com/success</string>
+    <string name="cancel_url">https://example.com/cancel</string>
+    <string name="product_name">طلبك</string>
+    <string name="product_description">يرجى إدخال بيانات بطاقتك</string>
+    <string name="close">إغلاق</string>
+
+    <!-- شاشة المفضلة -->
+    <string name="too_many_requests_error">أنت ترسل الطلبات بسرعة كبيرة. يرجى الانتظار لحظة ثم المحاولة مرة أخرى.</string>
+    <string name="unknown_error">حدث خطأ غير معروف</string>
+    <string name="no_internet_connection">لا يوجد اتصال بالإنترنت</string>
+
+    <!-- رسائل التحميل -->
+    <string name="loading_products">جارٍ تحميل المنتجات</string>
+    <string name="loading_product_details">جارٍ تحميل تفاصيل المنتج</string>
+    <string name="please_wait">يرجى الانتظار أثناء تحميل المحتوى</string>
+
+    <!-- شاشة حول التطبيق -->
+    <string name="about_shoppe">حول Shoppe</string>
+    <string name="your_ultimate_shopping_companion">رفيقك النهائي للتسوق</string>
+    <string name="about_our_app">حول تطبيقنا</string>
+    <string name="about_app_description">Shoppe هو تطبيق تجارة إلكترونية حديث مصمم لتقديم أفضل تجربة تسوق عبر الإنترنت. تصفح آلاف المنتجات، إدارة المفضلات، واستمتع بعملية دفع سلسة مع خيارات متعددة.</string>
+    <string name="about_app_tech">تم تطوير التطبيق باستخدام تقنيات أندرويد الحديثة بما في ذلك Jetpack Compose و Hilt للحقن، واتباع إرشادات Material Design 3 لتجربة مستخدم مثالية.</string>
+    <string name="key_features">الميزات الرئيسية</string>
+    <string-array name="features_list">
+        <item>تصفح آلاف المنتجات</item>
+        <item>حفظ المفضلات للرجوع لاحقاً</item>
+        <item>إدارة ذكية لعربة التسوق</item>
+        <item>خيارات دفع متعددة (فيزا، نقداً)</item>
+        <item>عناوين توصيل متعددة</item>
+        <item>تصنيفات المنتجات والفلترة</item>
+        <item>تقييمات ومراجعات المنتجات</item>
+        <item>وظائف بحث متقدمة</item>
+        <item>واجهة حديثة وبديهية</item>
+        <item>معالجة الدفع بأمان</item>
+    </string-array>
+    <string name="email_value">support@shoppe.com</string>
+    <string name="phone">الهاتف</string>
+    <string name="phone_value">+201007394856</string>
+    <string name="address">العنوان</string>
+    <string name="address_value">13 شارع التسوق، مدينة الشيخ زايد، محافظة الجيزة</string>
+    <string name="developed_with_love">تم التطوير بحب ❤️</string>
+    <string name="built_with_modern_tech">تم التطوير باستخدام تقنيات أندرويد الحديثة</string>
+    <string name="version_information">معلومات الإصدار</string>
+    <string name="app_version">إصدار التطبيق:</string>
+    <string name="version_number">1.0.0</string>
+    <string name="build">البناء:</string>
+
+    <!-- الشاشة الرئيسية -->
+    <string name="search_placeholder">ابحث عن المنتجات…</string>
+    <string name="new_items">منتجات جديدة</string>
+
+    <!-- شاشة العناوين -->
+    <string name="add_address">إضافة عنوان</string>
+    <string name="edit_address">تعديل العنوان</string>
+    <string name="save_address">حفظ العنوان</string>
+    <string name="save_changes">حفظ التغييرات</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="name_required">الاسم مطلوب</string>
+    <string name="phone_required">رقم الهاتف مطلوب</string>
+    <string name="invalid_phone">أدخل رقم هاتف صالح</string>
+
+    <!-- شاشة التصنيفات -->
+    <string name="confirm_remove_favorite">هل أنت متأكد من إزالة هذا المنتج من المفضلة؟</string>
+    <string name="product_not_found">المنتج غير موجود</string>
+    <string name="no_matching_products">لم نتمكن من العثور على أي منتج مطابق.</string>
+    <string name="adjust_search_filters">حاول تعديل البحث أو الفلاتر.</string>
+    <string name="filter_products">فلترة المنتجات</string>
+    <string name="subcategory">التصنيف الفرعي</string>
+    <string name="price_range">نطاق السعر</string>
+    <string name="cancel">إلغاء</string>
+    <string name="apply">تطبيق</string>
+    <string name="invalid_phone_number">أدخل رقم هاتف صالح</string>
+    <string name="phone_number_required">رقم الهاتف مطلوب</string>
+    <string name="address_line_1">سطر العنوان 1</string>
+    <string name="address_line_1_required">سطر العنوان 1 مطلوب</string>
+    <string name="address_line_2">سطر العنوان 2</string>
+    <string name="address_line_2_required">سطر العنوان 2 مطلوب</string>
+    <string name="city">المدينة</string>
+    <string name="zip_code">الرمز البريدي</string>
+    <string name="country">الدولة</string>
+    <string name="pick_location">اختر الموقع من الخريطة</string>
+    <string name="saving_address">جارٍ حفظ العنوان…</string>
+    <string name="failed_to_save">فشل حفظ العنوان: %1$s</string>
+    <string name="address_saved">تم حفظ العنوان بنجاح</string>
+    <string name="loading_address">جارٍ تحميل تفاصيل العنوان…</string>
+    <string name="error_loading_address">خطأ في تحميل العنوان</string>
+
+    <!-- قائمة العناوين -->
+    <string name="my_addresses">عناويني</string>
+    <string name="no_addresses">لا توجد عناوين حتى الآن</string>
+    <string name="no_addresses_description">أضف عنوانك الأول للبدء</string>
+    <string name="no_addresses_icon">لا توجد عناوين</string>
+    <string name="delete_address">حذف العنوان</string>
+    <string name="delete_address_confirm">هل أنت متأكد أنك تريد حذف هذا العنوان؟ هذا الإجراء لا يمكن التراجع عنه.</string>
+    <string name="delete">حذف</string>
+    <string name="edit_address_icon">تعديل العنوان</string>
+    <string name="default_address_icon">العنوان الافتراضي</string>
+    <string name="set_as_default">تعيين كافتراضي</string>
+
+    <!-- شاشة اختيار العنوان -->
+    <string name="choose_address">اختر العنوان</string>
+    <string name="loading_addresses">جارٍ تحميل العناوين</string>
+    <string name="fetching_addresses">يرجى الانتظار أثناء جلب العناوين المحفوظة…</string>
+    <string name="continue_to_payment">المتابعة للدفع</string>
+    <string name="not_selected">لم يتم الاختيار</string>
+    <string name="default_address">افتراضي</string>
+    <string name="phone_label">الهاتف: %1$s</string>
+
+    <!-- شاشة المفضلة -->
+    <string name="please_wait_loading_favorites">يرجى الانتظار أثناء تحميل عناصر المفضلة…</string>
+    <string name="error_loading_favorites">خطأ في تحميل المفضلة</string>
+    <string name="cannot_delete_default">لا يمكن حذف العنوان الافتراضي</string>
+
+    <!-- شاشة تسجيل الدخول -->
+    <string name="create_one">أنشئ واحداً</string>
+    <string name="skip">تخطي</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة المرور</string>
+    <string name="login">تسجيل الدخول</string>
+
+    <string name="build_number">2025.07.30</string>
+    <string name="copyright">© 2024 Shoppe. جميع الحقوق محفوظة.</string>
+    <string name="you_might_like">قد يعجبك</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="select_variant_first">اختر المتغير أولاً</string>
+
+    <!-- شاشة المنتجات -->
+    <string name="products_for_brand">منتجات %1$s</string>
+    <string name="products">المنتجات</string>
+    <string name="search_products">ابحث عن المنتجات…</string>
+    <string name="failed_to_load_products">فشل تحميل المنتجات</string>
+    <string name="favorite_update_failed">فشل تحديث المفضلة: %1$s</string>
+    <string name="please_login_first">يرجى تسجيل الدخول أولاً</string>
+    <string name="search">بحث</string>
+    <string name="clear_search">مسح البحث</string>
+    <string name="apply_filters">تطبيق الفلاتر</string>
+    <string name="reset_filters">إعادة تعيين الفلاتر</string>
+    <string name="min_price">الحد الأدنى للسعر</string>
+    <string name="max_price">الحد الأقصى للسعر</string>
+    <string name="invalid_price_range">نطاق السعر غير صالح</string>
+    <string name="please_enter_valid_prices">يرجى إدخال أسعار صالحة</string>
+    <string name="loading">جارٍ التحميل…</string>
+
+    <!-- شاشة تفاصيل الملف الشخصي -->
+    <string name="profile_details">تفاصيل الملف الشخصي</string>
+    <string name="user_avatar">صورة المستخدم</string>
+    <string name="name_format">الاسم: %1$s</string>
+    <string name="email_format">البريد الإلكتروني: %1$s</string>
+    <string name="edit_profile">تعديل الملف الشخصي</string>
+    <string name="default_name">اسمك</string>
+    <string name="default_email">your.email@example.com</string>
+
+    <!-- شاشة الملف الشخصي -->
+    <string name="welcome_guest">مرحباً، زائر!</string>
+    <string name="personal">شخصي</string>
+    <string name="manage_addresses">إدارة العناوين</string>
+    <string name="orders">الطلبات</string>
+    <string name="shop">المتجر</string>
+    <string name="currency">العملة</string>
+    <string name="language">اللغة</string>
+    <string name="settings">الإعدادات</string>
+    <string name="notifications">الإشعارات</string>
+    <string name="help_center">مركز المساعدة</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="terms_of_service">شروط الخدمة</string>
+    <string name="logout">تسجيل الخروج</string>
+    <string name="delete_account">حذف الحساب</string>
+    <string name="logout_confirmation">هل أنت متأكد من تسجيل الخروج؟</string>
+    <string name="delete_account_confirmation">هل أنت متأكد من حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه.</string>
+    <string name="confirm">تأكيد</string>
+    <string name="terms_and_conditions">الشروط والأحكام</string>
+    <string name="account">الحساب</string>
+    <string name="language_english">الإنجليزية</string>
+    <string name="delete_my_account">حذف حسابي</string>
+    <string name="version_format">الإصدار %1$s %2$s، %3$d</string>
+    <string name="logout_confirmation_title">تأكيد تسجيل الخروج</string>
+    <string name="logout_confirmation_message">مرحباً %1$s! هل أنت متأكد من تسجيل الخروج من حسابك؟</string>
+    <string name="delete_account_title">حذف الحساب</string>
+    <string name="language_selection_coming_soon">اختيار اللغة قريباً</string>
+    <string name="choose_currency">اختر العملة</string>
+    <string name="currency_selection_coming_soon">اختيار العملة قريباً</string>
+    <string name="account_deletion_coming_soon">حذف الحساب قريباً</string>
+
+    <!-- شاشة المراجعات -->
+    <string name="loading_reviews">جارٍ تحميل التقييمات…</string>
+    <string name="failed_to_load_reviews">فشل تحميل التقييمات: %1$s</string>
+    <string name="user_photo">صورة %1$s</string>
+    <string name="star_rating">%1$d نجوم</string>
+
+    <!-- شاشة التسجيل -->
+    <string name="signup_success_message">تم إنشاء الحساب بنجاح!</string>
+    <!-- شاشة البداية -->
+    <string name="app_logo">شعار التطبيق</string>
+    <string name="app_name_title">Shoppe</string>
+    <string name="app_tagline">كل ما تحبه\n في مكان واحد</string>
+    <string name="lets_get_started">لنبدأ</string>
+    <string name="have_an_account">لدي حساب بالفعل</string>
+    <string name="arrow_forward">السهم للأمام</string>
+
+    <!-- شاشة الشروط والأحكام -->
+    <string name="terms_conditions_title">الشروط والأحكام</string>
+
+    <!-- الأقسام -->
+    <string name="introduction">مقدمة</string>
+    <string name="introduction_text">مرحباً بك في Shoppe! تحكم هذه الشروط والأحكام ("الشروط") استخدامك لتطبيقنا وخدماتنا. باستخدام Shoppe، فإنك توافق على الالتزام بهذه الشروط.</string>
+
+    <string name="acceptance_title">الموافقة على الشروط</string>
+    <string name="acceptance_text">باستخدامك للتطبيق أو إنشاء حساب، فإنك تقر بأنك قرأت وفهمت ووافقت على هذه الشروط. إذا لم توافق، يرجى التوقف عن استخدام التطبيق.</string>
+
+    <string name="user_account">حساب المستخدم</string>
+    <string name="user_account_text">• أنت مسؤول عن الحفاظ على سرية بيانات حسابك\n• يجب تقديم معلومات دقيقة وكاملة عند إنشاء الحساب\n• أنت مسؤول عن جميع الأنشطة التي تتم تحت حسابك\n• يجب إخطارنا فوراً بأي استخدام غير مصرح به لحسابك</string>
+
+    <string name="products_services">المنتجات والخدمات</string>
+    <string name="products_services_text">• جميع المنتجات تخضع للتوافر\n• وصف المنتجات والأسعار دقيقة وقت الإدراج\n• نحتفظ بالحق في تعديل أو إيقاف المنتجات دون إشعار\n• صور المنتجات لأغراض التوضيح وقد تختلف عن المنتجات الفعلية</string>
+
+    <string name="orders_payment">الطلبات والدفع</string>
+    <string name="orders_payment_text">• جميع الطلبات تخضع للقبول والتوافر\n• الأسعار بالدولار الأمريكي وتشمل الضرائب المطبقة\n• نقبل عدة طرق دفع كما هو موضح عند إتمام الطلب\n• توافق على تقديم معلومات دفع صحيحة وكاملة</string>
+
+    <string name="shipping_delivery">الشحن والتوصيل</string>
+    <string name="shipping_delivery_text">• تختلف تكاليف الشحن وأوقات التوصيل حسب الموقع\n• لسنا مسؤولين عن التأخيرات خارج نطاق سيطرتنا\n• تنتقل مسؤولية الفقدان إليك عند التسليم\n• يرجى تفقد الطلب عند الاستلام</string>
+
+    <string name="returns_refunds">الإرجاع والاسترداد</string>
+    <string name="returns_refunds_text">• يمكنك إرجاع المنتجات المؤهلة خلال 30 يوماً من الاستلام\n• يجب أن تكون المنتجات في حالتها الأصلية مع الملصقات\n• سيتم معالجة الاسترداد خلال 5–7 أيام عمل\n• تكاليف الشحن غير قابلة للاسترداد إلا إذا كان الخطأ من جانبنا</string>
+
+    <string name="intellectual_property">الملكية الفكرية</string>
+    <string name="intellectual_property_text">• جميع المحتويات في التطبيق ملك لنا أو للمرخِّصين لدينا\n• لا يجوز استخدام العلامات التجارية بدون إذن كتابي مسبق\n• يمكنك الوصول واستخدام التطبيق لأغراض شخصية وغير تجارية فقط\n• الاستخدام غير المصرح به قد ينتهك حقوق الطبع والقوانين الأخرى</string>
+
+    <string name="privacy">الخصوصية</string>
+    <string name="privacy_text">• نحن نحترم خصوصيتك ونحمي معلوماتك الشخصية\n• باستخدام التطبيق، فإنك توافق على سياسة الخصوصية الخاصة بنا\n• ننفذ إجراءات أمنية لحماية بياناتك\n• قد نقوم بتحديث ممارسات الخصوصية كما هو موضح في سياسة الخصوصية</string>
+
+    <string name="liability">تحديد المسؤولية</string>
+    <string name="liability_text">• لسنا مسؤولين عن أي أضرار غير مباشرة أو عرضية أو تبعية\n• تكون مسؤوليتنا الكلية محدودة بالمبلغ الذي دفعته مقابل المنتجات\n• بعض الولايات القضائية لا تسمح بتحديد المسؤولية، لذا قد لا ينطبق هذا عليك\n• لسنا مسؤولين عن منتجات أو خدمات أطراف ثالثة</string>
+
+    <string name="modifications">التعديلات</string>
+    <string name="modifications_text">• قد نقوم بتعديل هذه الشروط في أي وقت\n• تصبح التغييرات نافذة عند نشرها في التطبيق\n• استمرارك في الاستخدام يعتبر قبولاً بالشروط المعدلة\n• سنقوم بإخطارك بأي تغييرات مهمة</string>
+
+    <string name="contact_us">تواصل معنا</string>
+    <string name="contact_us_text">إذا كان لديك أي استفسارات حول هذه الشروط، يرجى التواصل معنا على:\n\nالبريد الإلكتروني: support@shoppe.com\nالهاتف: +1 (555) 123–4567\n\nنهدف للرد على جميع الاستفسارات خلال يومي عمل.</string>
+    <string name="payment_method_visa">فيزا</string>
+    <string name="select_language">اختر اللغة</string>
+
+</resources>

@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,7 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import com.lee.shoppe.R
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.HeaderColor
@@ -45,15 +47,15 @@ fun TermsAndConditionsScreen(navController: NavController) {
                     modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back),
                         tint = HeaderColor,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Terms & Conditions",
+                    text = stringResource(R.string.terms_conditions_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
                     color = HeaderColor
@@ -96,14 +98,14 @@ private fun IntroductionSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Introduction",
+                text = stringResource(R.string.introduction),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "Welcome to Shoppe! These Terms and Conditions (\"Terms\") govern your use of our mobile application and services. By accessing or using Shoppe, you agree to be bound by these Terms.",
+                text = stringResource(R.string.introduction_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -124,14 +126,14 @@ private fun AcceptanceSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Acceptance of Terms",
+                text = stringResource(R.string.acceptance_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "By creating an account or using our services, you acknowledge that you have read, understood, and agree to these Terms. If you do not agree, please discontinue use of our application.",
+                text = stringResource(R.string.acceptance_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -152,17 +154,14 @@ private fun UserAccountSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "User Account",
+                text = stringResource(R.string.user_account),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "• You are responsible for maintaining the confidentiality of your account credentials\n" +
-                        "• You must provide accurate and complete information when creating your account\n" +
-                        "• You are responsible for all activities that occur under your account\n" +
-                        "• You must notify us immediately of any unauthorized use of your account",
+                text = stringResource(R.string.user_account_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -183,17 +182,14 @@ private fun ProductsAndServicesSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Products and Services",
+                text = stringResource(R.string.products_services),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "• All products are subject to availability\n" +
-                        "• Product descriptions and prices are accurate at the time of listing\n" +
-                        "• We reserve the right to modify or discontinue products without notice\n" +
-                        "• Product images are for illustration purposes and may vary from actual products",
+                text = stringResource(R.string.products_services_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -214,17 +210,14 @@ private fun OrdersAndPaymentSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Orders and Payment",
+                text = stringResource(R.string.orders_payment),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "• All orders are subject to acceptance and availability\n" +
-                        "• Payment must be completed at the time of order\n" +
-                        "• We accept various payment methods including credit cards and digital wallets\n" +
-                        "• Prices include applicable taxes unless otherwise stated",
+                text = stringResource(R.string.orders_payment_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -245,17 +238,14 @@ private fun ShippingAndDeliverySection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Shipping and Delivery",
+                text = stringResource(R.string.shipping_delivery),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "• Delivery times are estimates and may vary\n" +
-                        "• Shipping costs are calculated based on location and order value\n" +
-                        "• Risk of loss passes to you upon delivery\n" +
-                        "• You must inspect items upon delivery and report any issues immediately",
+                text = stringResource(R.string.shipping_delivery_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -276,17 +266,14 @@ private fun ReturnsAndRefundsSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Returns and Refunds",
+                text = stringResource(R.string.returns_refunds),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "• Returns must be initiated within 30 days of delivery\n" +
-                        "• Items must be in original condition with tags attached\n" +
-                        "• Refunds will be processed to the original payment method\n" +
-                        "• Return shipping costs may apply unless the item is defective",
+                text = stringResource(R.string.returns_refunds_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -307,14 +294,14 @@ private fun IntellectualPropertySection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Intellectual Property",
+                text = stringResource(R.string.intellectual_property),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "All content, trademarks, and intellectual property on Shoppe are owned by us or our licensors. You may not use, reproduce, or distribute any content without our written permission.",
+                text = stringResource(R.string.intellectual_property_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -335,14 +322,14 @@ private fun PrivacySection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Privacy",
+                text = stringResource(R.string.privacy),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and protect your personal information.",
+                text = stringResource(R.string.privacy_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -363,14 +350,14 @@ private fun LimitationOfLiabilitySection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Limitation of Liability",
+                text = stringResource(R.string.liability),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "To the fullest extent permitted by law, Shoppe shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services.",
+                text = stringResource(R.string.liability_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -391,14 +378,14 @@ private fun ModificationsSection() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Modifications",
+                text = stringResource(R.string.modifications),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting. Your continued use of the app constitutes acceptance of the modified Terms.",
+                text = stringResource(R.string.modifications_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 lineHeight = 20.sp
@@ -420,14 +407,14 @@ private fun ContactSection() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Contact Us",
+                text = stringResource(R.string.contact_us),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = BluePrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "If you have any questions about these Terms and Conditions, please contact us:",
+                text = stringResource(R.string.contact_us_text),
                 fontSize = 14.sp,
                 color = Color.Black,
                 textAlign = TextAlign.Center,

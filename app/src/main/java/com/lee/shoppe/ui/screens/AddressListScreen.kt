@@ -14,21 +14,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,8 +45,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -155,7 +148,7 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
             }
             is NetworkState.Failure -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Failed to load addresses", color = RedAccent)
+                    Text(stringResource(R.string.error_loading_address), color = RedAccent)
                 }
             }
             is NetworkState.Success -> {
@@ -169,20 +162,20 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
-                            contentDescription = "No Addresses",
+                            contentDescription = stringResource(R.string.no_addresses_icon),
                             modifier = Modifier.size(80.dp),
                             tint = BlueSecondary
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "No Addresses Yet",
+                            stringResource(R.string.no_addresses),
                             style = MaterialTheme.typography.titleMedium,
                             color = HeaderColor,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Add your first address to get started",
+                            stringResource(R.string.no_addresses_description),
                             style = MaterialTheme.typography.bodyMedium,
                             color = BlueSecondary,
                             textAlign = TextAlign.Center
@@ -227,7 +220,7 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
                         
                         // Sticky header
                         ScreenHeader(
-                            title = "My Addresses",
+                            title = stringResource(R.string.my_addresses),
                             onBackClick = { navController.popBackStack() },
                             backgroundColor = Color.White,
                             titleColor = HeaderColor,
@@ -257,7 +250,7 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
             ) {
                 Icon(
                     imageVector = Icons.Default.Add, 
-                    contentDescription = "Add Address",
+                    contentDescription = stringResource(R.string.add_address),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -268,9 +261,9 @@ fun AddressListScreen(navController: NavController, viewModel: AddressViewModel 
     if (showDeleteDialog && pendingDeleteAddressId != null) {
         DeleteCartDialog(
             show = showDeleteDialog,
-            title = "Delete Address",
-            subtitle = "Are you sure you want to delete this address? This action cannot be undone.",
-            confirmText = "Delete",
+            title = stringResource(R.string.delete_address),
+            subtitle = stringResource(R.string.delete_address_confirm),
+            confirmText = stringResource(R.string.delete),
             isLoading = actionState.value is NetworkState.Loading,
             onCancel = {
                 if (actionState.value !is NetworkState.Loading) {
@@ -331,7 +324,7 @@ private fun AddressCard(
                 ) {
                     Icon(
                         imageVector = if (address.default) Icons.Default.Star else Icons.Outlined.Star,
-                        contentDescription = if (address.default) "Default Address" else "Set as Default",
+                        contentDescription = if (address.default) stringResource(R.string.default_address_icon) else stringResource(R.string.set_as_default),
                         tint = if (address.default) BluePrimary else BlueLight
                     )
                 }
@@ -343,7 +336,7 @@ private fun AddressCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Address",
+                        contentDescription = stringResource(R.string.edit_address_icon),
                         tint = BluePrimary
                     )
                 }
@@ -356,7 +349,7 @@ private fun AddressCard(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.delete_24),
-                        contentDescription = if (address.default) "Cannot delete default address" else "Delete Address",
+                        contentDescription = if (address.default) stringResource(R.string.cannot_delete_default) else stringResource(R.string.delete_address),
                         modifier = Modifier.size(24.dp),
                         colorFilter = ColorFilter.tint(if (address.default) Color.Gray else RedAccent)
                     )

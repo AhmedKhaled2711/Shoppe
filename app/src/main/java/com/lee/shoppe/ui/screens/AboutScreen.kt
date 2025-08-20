@@ -1,28 +1,40 @@
 package com.lee.shoppe.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -100,7 +112,7 @@ private fun AboutHeader(
             
             // Title
             Text(
-                text = "About Shoppe",
+                text = stringResource(R.string.about_shoppe),
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 color = HeaderColor
@@ -143,14 +155,14 @@ private fun AppLogoSection() {
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Shoppe",
+                text = stringResource(R.string.app_name),
                 color = HeaderColor,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
             
             Text(
-                text = "Your Ultimate Shopping Companion",
+                text = stringResource(R.string.your_ultimate_shopping_companion),
                 color = Color.Gray,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center
@@ -173,7 +185,7 @@ private fun AppInfoSection() {
             modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                text = "About Our App",
+                text = stringResource(R.string.about_our_app),
                 color = HeaderColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -182,7 +194,7 @@ private fun AppInfoSection() {
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "Shoppe is a modern e-commerce application designed to provide you with the best online shopping experience. Browse through thousands of products, manage your favorites, and enjoy seamless checkout with multiple payment options.",
+                text = stringResource(R.string.about_app_description),
                 color = Color.Black,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
@@ -191,7 +203,7 @@ private fun AppInfoSection() {
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Built with modern Android technologies including Jetpack Compose, Hilt for dependency injection, and following Material Design 3 guidelines for the best user experience.",
+                text = stringResource(R.string.about_app_tech),
                 color = Color.Gray,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
@@ -214,7 +226,7 @@ private fun FeaturesSection() {
             modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                text = "Key Features",
+                text = stringResource(R.string.key_features),
                 color = HeaderColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -222,20 +234,12 @@ private fun FeaturesSection() {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            val features = listOf(
-                "🛍️ Browse thousands of products",
-                "❤️ Save favorites for later",
-                "🛒 Smart shopping cart management",
-                "💳 Multiple payment options (Visa, Cash)",
-                "📍 Multiple delivery addresses",
-                "🎯 Product categories and filtering",
-                "⭐ Product ratings and reviews",
-                "🔍 Advanced search functionality",
-                "📱 Modern, intuitive interface",
-                "🔒 Secure payment processing"
+            val features = stringArrayResource(R.array.features_list).toList()
+            val featureIcons = listOf(
+                "🛍️", "❤️", "🛒", "💳", "📍", "🎯", "⭐", "🔍", "📱", "🔒"
             )
             
-            features.forEach { feature ->
+            features.forEachIndexed { index, feature ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -243,7 +247,7 @@ private fun FeaturesSection() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = feature,
+                        text = "${featureIcons.getOrNull(index) ?: "•"} $feature",
                         color = Color.Black,
                         fontSize = 14.sp
                     )
@@ -267,7 +271,7 @@ private fun ContactSection() {
             modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                text = "Contact Us",
+                text = stringResource(R.string.contact_us),
                 color = HeaderColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -277,20 +281,20 @@ private fun ContactSection() {
             
             ContactItem(
                 icon = Icons.Default.Email,
-                label = "Email",
-                value = "support@shoppe.com"
+                label = stringResource(R.string.email),
+                value = stringResource(R.string.email_value)
             )
             
             ContactItem(
                 icon = Icons.Default.Phone,
-                label = "Phone",
-                value = "+1 (555) 123-4567"
+                label = stringResource(R.string.phone),
+                value = stringResource(R.string.phone_value)
             )
             
             ContactItem(
                 icon = Icons.Default.Place,
-                label = "Address",
-                value = "13 Shopping Street, Sheikh Zayed City, Giza Governorate"
+                label = stringResource(R.string.address),
+                value = stringResource(R.string.address_value)
             )
         }
     }
@@ -352,7 +356,7 @@ private fun DeveloperSection() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Developed with ❤️",
+                text = stringResource(R.string.developed_with_love),
                 color = HeaderColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
@@ -361,7 +365,7 @@ private fun DeveloperSection() {
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Built using modern Android development practices",
+                text = stringResource(R.string.built_with_modern_tech),
                 color = Color.Gray,
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center
@@ -423,7 +427,7 @@ private fun VersionSection() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Version Information",
+                text = stringResource(R.string.version_information),
                 color = HeaderColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
@@ -436,12 +440,12 @@ private fun VersionSection() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "App Version:",
+                    text = stringResource(R.string.app_version),
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
                 Text(
-                    text = "1.0.0",
+                    text = stringResource(R.string.version_number),
                     color = Color.Black,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
@@ -455,12 +459,12 @@ private fun VersionSection() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Build:",
+                    text = stringResource(R.string.build),
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
                 Text(
-                    text = "2025.07.30",
+                    text = stringResource(R.string.build_number),
                     color = Color.Black,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
@@ -470,7 +474,7 @@ private fun VersionSection() {
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "© 2024 Shoppe. All rights reserved.",
+                text = stringResource(R.string.copyright),
                 color = Color.Gray,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center

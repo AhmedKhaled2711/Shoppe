@@ -1,42 +1,29 @@
 package com.lee.shoppe.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import android.util.Log
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.lee.shoppe.R
@@ -165,7 +152,9 @@ fun FavoriteScreen(
             favoriteProducts = emptyList()
         }
     }
-
+    val too_many_requests = stringResource(R.string.too_many_requests)
+    val error_occurred = stringResource(R.string.error_occurred)
+    val product = stringResource(R.string.product)
     // Process state changes
     LaunchedEffect(favProductsState) {
         Log.d("FavoriteScreen", "favProductsState changed: ${favProductsState.javaClass.simpleName}")
@@ -185,7 +174,7 @@ fun FavoriteScreen(
                                 productId?.let { id ->
                                     Product(
                                         id = id,
-                                        title = lineItem.title ?: "Product",
+                                        title = lineItem.title ?: product,
                                         image = ProductImage(src = parts[1]),
                                         variants = listOf(
                                             Variant(price = lineItem.price ?: "0.0")
@@ -207,8 +196,8 @@ fun FavoriteScreen(
                 val message = when {
                     error.message?.contains("Too many requests") == true ||
                             (error is retrofit2.HttpException && error.code() == 429) ->
-                        context.getString(R.string.too_many_requests_error)
-                    else -> error.message ?: context.getString(R.string.unknown_error)
+                        too_many_requests
+                    else -> error_occurred
                 }
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(message)

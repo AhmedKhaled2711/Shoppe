@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,7 +42,6 @@ import com.lee.shoppe.ui.viewmodel.CartViewModel
 import com.lee.shoppe.ui.viewmodel.OrderDetailsViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentSheetScreen(
     paymentUrl: String,
@@ -58,8 +57,8 @@ fun PaymentSheetScreen(
     val customerData = remember { CustomerData.getInstance(context) }
 
     var isLoading by remember { mutableStateOf(true) }
-    val loadingMessage = "Processing Payment"
-    val secondaryMessage = "Please wait while we connect to the payment gateway..."
+    val loadingMessage = stringResource(id = R.string.payment_processing)
+    val secondaryMessage = stringResource(id = R.string.payment_processing_message)
     var showSuccessScreen by remember { mutableStateOf(false) }
 
     val cartState by cartViewModel.cartProducts.collectAsState()
@@ -76,6 +75,7 @@ fun PaymentSheetScreen(
         (addressState as? NetworkState.Success)?.data?.customer?.addresses?.firstOrNull { it.default }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val payment_method_visa = stringResource(id = R.string.payment_method_visa)
 
     val handleSuccess: () -> Unit = {
         Log.i("PaymentSheetScreen", "Payment successful, proceeding with order placement")
@@ -100,7 +100,7 @@ fun PaymentSheetScreen(
                     "PaymentSheetScreen",
                     "Missing data - Address: ${currentSelectedAddress != null}, Items: ${currentLineItems.size}"
                 )
-                snackbarHostState.showSnackbar("Error: Missing address or cart items. Please try again.")
+                snackbarHostState.showSnackbar(context.getString(R.string.payment_error_missing_data))
                 return@launch
             }
 
@@ -112,7 +112,7 @@ fun PaymentSheetScreen(
                 selectedAddress = currentSelectedAddress,
                 lineItems = currentLineItems,
                 discountValue = discountValue.toString(),
-                paymentMethod = "Visa",
+                paymentMethod = payment_method_visa,
                 currency = customerData.currency,
                 onSuccess = {
                     // Show success screen
@@ -143,7 +143,7 @@ fun PaymentSheetScreen(
     Scaffold(
         topBar = {
             ScreenHeader(
-                title = "Payment",
+                title = stringResource(id = R.string.payment_title),
                 onBackClick = {
                     Log.d("PaymentSheetScreen", "Back button clicked")
                     navController.popBackStack()
@@ -246,7 +246,7 @@ fun PaymentSheetScreen(
                                     "WebView error: ${error?.description}, URL: ${request?.url}"
                                 )
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("Error loading payment page: ${error?.description}")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.payment_error_loading, error?.description ?: ""))
                                 }
                             }
 

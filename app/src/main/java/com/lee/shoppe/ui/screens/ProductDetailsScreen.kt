@@ -99,7 +99,7 @@ fun ProductDetailsScreen(
             is NetworkState.Success -> {
                 println("FavViewModel operation completed successfully in ProductDetailsScreen")
                 // Optionally show success message
-                android.widget.Toast.makeText(context, "Favorite updated successfully", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.favorite_updated), android.widget.Toast.LENGTH_SHORT).show()
             }
             is NetworkState.Failure -> {
                 println("FavViewModel operation failed in ProductDetailsScreen: ${(favState as NetworkState.Failure).error.message}")
@@ -164,12 +164,12 @@ fun ProductDetailsScreen(
     LaunchedEffect(productCardState) {
         when (productCardState) {
             is NetworkState.Success -> {
-                android.widget.Toast.makeText(context, "Product added to cart successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.add_to_cart_success), android.widget.Toast.LENGTH_SHORT).show()
                 productInfoViewModel.resetProductCardState()
             }
             is NetworkState.Failure -> {
                 val errorMessage = (productCardState as NetworkState.Failure).error.message
-                android.widget.Toast.makeText(context, errorMessage ?: "Failed to add to cart", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, errorMessage ?: context.getString(R.string.error_occurred), android.widget.Toast.LENGTH_SHORT).show()
                 productInfoViewModel.resetProductCardState()
             }
             else -> {}
@@ -202,7 +202,7 @@ fun ProductDetailsScreen(
         ) {
             // Header
             ScreenHeader(
-                title = "Product Details",
+                title = stringResource(id = R.string.product_details),
                 onBackClick = { navController.navigateUp() },
                 showBackButton = true
             )
@@ -322,30 +322,6 @@ fun ProductDetailsScreen(
                                 }
                             }
 
-                            /*
-                    item {
-                        // Rating
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val randomRating = remember { Random.nextFloat() * 5 }
-                            repeat(5) { index ->
-                                Icon(
-                                    imageVector = if (index < randomRating.toInt()) Icons.Default.Star else Icons.Default.StarOutline,
-                                    contentDescription = null,
-                                    tint = if (index < randomRating.toInt()) Color(0xFFFFD700) else Color(0xFFE0E0E0),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "(${String.format("%.1f", randomRating)})",
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
-                        }
-                            }*/
-
                             item {
                                 // Price and Currency
                                 Row(
@@ -378,7 +354,7 @@ fun ProductDetailsScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
-                                            text = "Select Variant:",
+                                            text = stringResource(id = R.string.select_variant),
                                             color = Color.Black,
                                             fontSize = 18.sp,
                                             fontWeight = FontWeight.Bold
@@ -444,7 +420,7 @@ fun ProductDetailsScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
-                                            text = "Description",
+                                            text = stringResource(id = R.string.description),
                                             color = Color.Black,
                                             fontSize = 18.sp,
                                             fontWeight = FontWeight.Bold
@@ -490,7 +466,7 @@ fun ProductDetailsScreen(
                                         if (suggestions.isNotEmpty()) {
                                             Column(modifier = Modifier.fillMaxWidth()) {
                                                 Text(
-                                                    text = "You Might Like",
+                                                    text = stringResource(id = R.string.you_might_like),
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 18.sp,
                                                     color = Color.Black,
@@ -578,7 +554,7 @@ fun ProductDetailsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Product not found",
+                                text = stringResource(id = R.string.product_not_found),
                                 color = Color.Black,
                                 fontSize = 18.sp
                             )
@@ -601,7 +577,7 @@ fun ProductDetailsScreen(
                                 tint = Color.Red
                             )
                             Text(
-                                text = "Failed to load product",
+                                text = stringResource(id = R.string.error_loading_product),
                                 color = Color.Black,
                                 fontSize = 18.sp
                             )
@@ -612,7 +588,7 @@ fun ProductDetailsScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Retry",
+                                    text = stringResource(id = R.string.retry),
                                     color = Color.White
                                 )
                             }
@@ -654,8 +630,10 @@ fun ProductDetailsScreen(
             onAddToCart = {
                 // Use the same add to cart logic as before
                 if (customerData.isLogged) {
-                    if (selectedVariantId == -1L && (productState is NetworkState.Success && (productState as NetworkState.Success<ProductResponse>).data.product?.variants?.size ?: 0 > 1)) {
-                        Toast.makeText(context, "Please select a variant first", Toast.LENGTH_SHORT).show()
+                    if (selectedVariantId == -1L && (productState is NetworkState.Success && ((productState as NetworkState.Success<ProductResponse>).data.product?.variants?.size
+                            ?: 0) > 1)
+                    ) {
+                        Toast.makeText(context, context.getString(R.string.select_variant_first), Toast.LENGTH_SHORT).show()
                     } else {
                         val product = (productState as? NetworkState.Success<ProductResponse>)?.data?.product
                         val variantId = if (selectedVariantId == -1L) {

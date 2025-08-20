@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -56,7 +57,7 @@ fun OrdersScreen(
 
         // Header
         ScreenHeader(
-            title = "My Orders",
+            title = stringResource(id = R.string.my_orders),
             onBackClick = { navController.popBackStack() },
             showBackButton = true
         )
@@ -67,8 +68,8 @@ fun OrdersScreen(
             is NetworkState.Loading -> {
                 LoadingWithMessages(
                     modifier = Modifier.fillMaxSize(),
-                    mainMessage = "Loading Your Orders",
-                    secondaryMessage = "Please wait while we fetch your order history...",
+                    mainMessage = stringResource(id = R.string.loading_orders),
+                    secondaryMessage = stringResource(id = R.string.loading_orders_message),
                     loadingIndicatorColor = BluePrimary,
                     spacing = 16.dp,
                     messageSpacing = 8.dp
@@ -80,12 +81,12 @@ fun OrdersScreen(
                 val orders = orderResponse.orders
                 if (orders.isNullOrEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No orders found.", color = Color.Gray)
+                        Text(stringResource(id = R.string.no_orders), color = Color.Gray)
                     }
                     EmptyState(
                         lottieComposition,
-                        "No Orders Yet",
-                        "You haven’t placed any orders. Start shopping and track them here!"
+                        stringResource(id = R.string.no_orders_title),
+                        stringResource(id = R.string.no_orders_message)
                     )
                 } else {
                     LazyColumn(
@@ -105,7 +106,7 @@ fun OrdersScreen(
             is NetworkState.Failure -> {
                 val error = (ordersState as NetworkState.Failure).error.message ?: "Unknown error"
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Failed to load orders:\n$error", color = Color.Red)
+                    Text("${stringResource(id = R.string.error_occurred)}\n$error", color = Color.Red)
                 }
             }
 
@@ -124,11 +125,11 @@ fun OrderCard(order: Order, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp , end = 16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Order #${order.number}", fontWeight = FontWeight.Bold, color = BluePrimary)
+            Text(stringResource(id = R.string.order_number, order.number ?: ""), fontWeight = FontWeight.Bold, color = BluePrimary)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Date: ${order.created_at?.substringBefore("T")}", fontSize = 14.sp, color = Color.Gray)
+            Text(stringResource(id = R.string.date, order.created_at?.substringBefore("T") ?: ""), fontSize = 14.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Payment Method: ${order.referring_site}", fontSize = 14.sp, color = Color.Gray)
+            Text(stringResource(id = R.string.payment_method, order.referring_site ?: stringResource(id = R.string.na)), fontSize = 14.sp, color = Color.Gray)
         }
     }
 }

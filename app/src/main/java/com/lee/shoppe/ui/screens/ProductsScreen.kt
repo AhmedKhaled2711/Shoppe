@@ -1,27 +1,58 @@
 package com.lee.shoppe.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import com.lee.shoppe.ui.components.ScreenHeader
-import com.lee.shoppe.ui.components.ScreenHeader
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,36 +60,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.Product
 import com.lee.shoppe.data.model.ProductResponse
 import com.lee.shoppe.data.network.networking.NetworkState
-import com.lee.shoppe.ui.viewmodel.ProductsViewModel
-import com.lee.shoppe.ui.viewmodel.FavViewModel
-import kotlin.random.Random
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.background
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
+import com.lee.shoppe.ui.components.ScreenHeader
 import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import com.lee.shoppe.ui.navigation.Screen
 import com.lee.shoppe.ui.theme.BluePrimary
-import okhttp3.internal.wait
+import com.lee.shoppe.ui.viewmodel.FavViewModel
+import com.lee.shoppe.ui.viewmodel.ProductsViewModel
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
+import kotlin.random.Random
 
 @Composable
 fun ProductsScreen(
@@ -91,9 +116,9 @@ fun ProductsScreen(
         if (productsState is NetworkState.Failure) {
             val error = (productsState as NetworkState.Failure).error
             val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
-                "You're making requests too quickly. Please wait a moment and try again."
+                context.getString(R.string.too_many_requests)
             } else {
-                error.message ?: "An error occurred. Please try again."
+                error.message ?: context.getString(R.string.error_occurred)
             }
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(message)
@@ -110,13 +135,16 @@ fun ProductsScreen(
         when (favState) {
             is NetworkState.Success -> {
                 println("FavViewModel operation completed successfully")
-                // Optionally show success message
-                android.widget.Toast.makeText(context, "Favorite updated successfully", android.widget.Toast.LENGTH_SHORT).show()
+                // Show success message
+                android.widget.Toast.makeText(context, context.getString(R.string.favorite_updated), android.widget.Toast.LENGTH_SHORT).show()
             }
             is NetworkState.Failure -> {
                 println("FavViewModel operation failed: ${(favState as NetworkState.Failure).error.message}")
                 // Show error message
-                android.widget.Toast.makeText(context, "Failed to update favorite: ${(favState as NetworkState.Failure).error.message}", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, 
+                    context.getString(R.string.favorite_update_failed, (favState as NetworkState.Failure).error.message ?: ""), 
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
             }
             else -> {}
         }
@@ -175,7 +203,7 @@ fun ProductsScreen(
         } else {
             // Show login prompt or navigate to login
             println("User not logged in, cannot toggle favorite")
-            // You can implement this based on your app's requirements
+            android.widget.Toast.makeText(context, context.getString(R.string.please_login_first), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -187,7 +215,7 @@ fun ProductsScreen(
     ) {
         // Header
         ScreenHeader(
-            title = brandTitle?.let { "Products for $it" } ?: "Products",
+            title = brandTitle?.let { context.getString(R.string.products_for_brand, it) } ?: context.getString(R.string.products),
             onBackClick = { navController.navigateUp() },
             showBackButton = true
         )
@@ -275,7 +303,7 @@ fun ProductsScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Failed to load products",
+                            text = context.getString(R.string.failed_to_load_products),
                             color = Color.Black,
                             fontSize = 18.sp
                         )
@@ -283,7 +311,7 @@ fun ProductsScreen(
                         Button(
                             onClick = { viewModel.getProducts(brandTitle ?: "") }
                         ) {
-                            Text("Retry")
+                            Text(context.getString(R.string.retry))
                         }
                     }
                 }
@@ -307,9 +335,9 @@ fun ProductsScreen(
     if (showRemoveDialog && productToRemove != null) {
         DeleteCartDialog(
             show = true,
-            title = "Remove from Favorites",
-            subtitle = "Are you sure you want to remove this product from your favorites?",
-            confirmText = "Remove",
+            title = context.getString(R.string.remove_from_favorites),
+            subtitle = context.getString(R.string.confirm_remove_favorite),
+            confirmText = context.getString(R.string.remove),
             onCancel = { showRemoveDialog = false; productToRemove = null },
             onConfirm = {
                 productToRemove?.let { product ->
@@ -345,7 +373,7 @@ fun SearchBar(
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "Search",
+                contentDescription = stringResource(R.string.search),
                 tint = Color.Gray,
                 modifier = Modifier.size(22.dp)
             )
@@ -365,7 +393,7 @@ fun SearchBar(
                     decorationBox = { innerTextField ->
                         if (searchQuery.text.isEmpty()) {
                             Text(
-                                text = "Search products...",
+                                text = stringResource(R.string.search_products),
                                 color = Color.Gray,
                                 fontSize = 16.sp
                             )
@@ -381,7 +409,7 @@ fun SearchBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Clear search",
+                        contentDescription = stringResource(R.string.clear_search),
                         tint = primaryColor
                     )
                 }
@@ -410,8 +438,8 @@ fun FilterDialog(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "Filter by Price",
-                    fontSize = 20.sp,
+                    text = stringResource(R.string.price_range),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = BluePrimary
                 )
@@ -420,12 +448,11 @@ fun FilterDialog(
 
                 OutlinedTextField(
                     value = fromPrice,
-                    onValueChange = { fromPrice = it },
-                    label = { Text("From Price") },
+                    onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) fromPrice = it },
+                    label = { Text(stringResource(R.string.from)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = BluePrimary,
                         unfocusedBorderColor = Color.Gray,
@@ -438,12 +465,11 @@ fun FilterDialog(
 
                 OutlinedTextField(
                     value = toPrice,
-                    onValueChange = { toPrice = it },
-                    label = { Text("To Price") },
+                    onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) toPrice = it },
+                    label = { Text(stringResource(R.string.to)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = BluePrimary,
                         unfocusedBorderColor = Color.Gray,
@@ -463,7 +489,11 @@ fun FilterDialog(
                         border = BorderStroke(1.dp, BluePrimary),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Cancel", color = BluePrimary, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            color = BluePrimary,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -477,14 +507,17 @@ fun FilterDialog(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
                     ) {
-                        Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = stringResource(R.string.apply_filters),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun ProductCard(
@@ -564,7 +597,7 @@ fun ProductCard(
                     contentScale = ContentScale.Crop,
                     onError = { error ->
                         // Log error if needed
-                        println("Image loading failed: ${error.result.throwable?.message}")
+                        println("Image loading failed: ${error.result.throwable.message}")
                     },
                     onSuccess = { success ->
                         // Image loaded successfully

@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.lee.shoppe.data.model.Review
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.viewmodel.ProductInfoViewModel
@@ -28,6 +27,8 @@ import com.lee.shoppe.ui.components.ScreenHeader
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.lee.shoppe.R
 
 @Composable
 fun ReviewScreen(
@@ -47,7 +48,7 @@ fun ReviewScreen(
         ) {
             // Header
             ScreenHeader(
-                title = "Reviews",
+                title = stringResource(R.string.reviews),
                 onBackClick = { onBack?.invoke() },
                 showBackButton = onBack != null
             )
@@ -58,7 +59,11 @@ fun ReviewScreen(
             when (reviewState) {
                 is NetworkState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(stringResource(R.string.loading_reviews))
+                        }
                     }
                 }
                 is NetworkState.Success -> {
@@ -78,7 +83,7 @@ fun ReviewScreen(
                 is NetworkState.Failure -> {
                     val error = (reviewState as NetworkState.Failure).error.message
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Failed to load reviews: $error")
+                        Text(stringResource(R.string.failed_to_load_reviews, error ?: "Unknown error"))
                     }
                 }
                 else -> {}
@@ -98,7 +103,7 @@ fun ReviewItem(review: Review) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     painter = painterResource(id = review.imageResId),
-                    contentDescription = "${review.name}'s photo",
+                    contentDescription = stringResource(R.string.user_photo, review.name),
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape),
@@ -112,7 +117,7 @@ fun ReviewItem(review: Review) {
                 repeat(5) { i ->
                     Icon(
                         imageVector = if (i < review.rate.toInt()) Icons.Default.Star else Icons.Default.StarOutline,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.star_rating, i + 1),
                         tint = if (i < review.rate.toInt()) Color(0xFFECA61B) else Color(0xFFE0E0E0),
                         modifier = Modifier.size(25.dp)
                     )

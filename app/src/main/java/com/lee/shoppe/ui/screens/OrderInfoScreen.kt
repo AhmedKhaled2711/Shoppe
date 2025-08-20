@@ -1,9 +1,7 @@
 package com.lee.shoppe.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,6 +50,7 @@ import com.example.fashionshop.Model.AddressOrder
 import com.example.fashionshop.Model.LineItemBody
 import com.example.fashionshop.Model.Order
 import com.example.fashionshop.Model.OrderResponse
+import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.ScreenHeader
@@ -78,7 +78,7 @@ fun OrderInfoScreen(
     ) {
         // Header
         ScreenHeader(
-            title = "Order Details",
+            title = stringResource(id = R.string.order_details_title),
             onBackClick = { navController.popBackStack() },
             showBackButton = true
         )
@@ -98,13 +98,13 @@ fun OrderInfoScreen(
                         OrderContent(order = response.order)
                     } else {
                         ErrorView(
-                            message = "Order not found",
+                            message = stringResource(id = R.string.order_not_found),
                             onRetry = { viewModel.getOrder(orderId) }
                         )
                     }
                 }
                 is NetworkState.Failure -> ErrorView(
-                    message = "Failed to load order details",
+                    message = stringResource(id = R.string.failed_load_data),
                     onRetry = { viewModel.getOrder(orderId) }
                 )
                 else -> {}
@@ -140,7 +140,7 @@ private fun OrderContent(order: Order) {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ShoppingBag,
-                        contentDescription = "Order Items",
+                        contentDescription = stringResource(id = R.string.order_items),
                         tint = BluePrimary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -148,7 +148,7 @@ private fun OrderContent(order: Order) {
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Text(
-                        text = "Order Items",
+                        text = stringResource(id = R.string.order_items),
                         color = BluePrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -196,7 +196,7 @@ private fun OrderDetailsSection(order: Order) {
         ) {
             // Header
             Text(
-                text = "Order Information",
+                text = stringResource(id = R.string.order_information),
                 color = HeaderColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -205,28 +205,28 @@ private fun OrderDetailsSection(order: Order) {
             // Contact Email
             OrderDetailRow(
                 icon = Icons.Filled.Email,
-                label = "Contact Email",
-                value = order.email ?: order.contact_email ?: "N/A"
+                label = stringResource(id = R.string.contact_email),
+                value = order.email ?: order.contact_email ?: stringResource(id = R.string.na)
             )
 
             // Phone Number
             OrderDetailRow(
                 icon = Icons.Filled.Phone,
-                label = "Phone Number",
-                value = order.phone ?: order.billing_address?.phone ?: "N/A"
+                label = stringResource(id = R.string.phone_number),
+                value = order.phone ?: order.billing_address?.phone ?: stringResource(id = R.string.na)
             )
 
             // Payment Method
             OrderDetailRow(
                 icon = Icons.Filled.ShoppingBag,
-                label = "Payment Method",
-                value = order.payment_gateway_names?.firstOrNull() ?: order.referring_site ?: "N/A"
+                label = stringResource(id = R.string.payment_method),
+                value = order.payment_gateway_names?.firstOrNull() ?: order.referring_site ?: stringResource(id = R.string.na)
             )
 
             // Address
             OrderDetailRow(
                 icon = Icons.Filled.LocationOn,
-                label = "Delivery Address",
+                label = stringResource(id = R.string.delivery_address),
                 value = formatAddress(order.billing_address),
                 isMultiline = true
             )
@@ -249,7 +249,7 @@ private fun OrderDetailsSection(order: Order) {
                     else -> currency
                 }
                 Text(
-                    text = "Total Amount",
+                    text = stringResource(id = R.string.total_amount),
                     color = HeaderColor,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -310,8 +310,9 @@ private fun OrderDetailRow(
     }
 }
 
+@Composable
 private fun formatAddress(address: AddressOrder?): String {
-    if (address == null) return "N/A"
+    if (address == null) return stringResource(id = R.string.na)
     return listOfNotNull(
         address.address1,
         address.address2,
@@ -355,7 +356,7 @@ private fun OrderItemRow(item: LineItemBody) {
                 ) {
                     Image(
                         painter = rememberAsyncImagePainter(imageUrl),
-                        contentDescription = "Product image",
+                        contentDescription = stringResource(R.string.product_image),
                         modifier = Modifier.fillMaxSize()
                             .background(Color.White)
                     )
@@ -366,14 +367,14 @@ private fun OrderItemRow(item: LineItemBody) {
             // Product Details
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.title?.substringAfter("|")?.trim() ?: "Unknown Product",
+                    text = item.title?.substringAfter("|")?.trim() ?: stringResource(R.string.unknown_product),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Qty: ${item.quantity ?: 1}",
+                    text = stringResource(R.string.quantity_short, item.quantity ?: 1),
                     color = Color.Gray,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
@@ -426,7 +427,7 @@ private fun LoadingView() {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Loading order details...",
+                    text = stringResource(id = R.string.loading_order_details),
                     color = HeaderColor,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
@@ -457,7 +458,7 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
                 // Error Icon
                 Icon(
                     imageVector = Icons.Filled.ShoppingBag,
-                    contentDescription = "Error",
+                    contentDescription = stringResource(id = R.string.error),
                     tint = Color.Red,
                     modifier = Modifier.size(48.dp)
                 )
@@ -465,7 +466,7 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Oops!",
+                    text = stringResource(id = R.string.oops),
                     color = HeaderColor,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -492,7 +493,7 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
                     modifier = Modifier.height(48.dp)
                 ) {
                     Text(
-                        text = "Try Again",
+                        text = stringResource(id = R.string.try_again),
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp

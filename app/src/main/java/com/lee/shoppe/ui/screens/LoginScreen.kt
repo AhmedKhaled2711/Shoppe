@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -57,10 +58,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -70,6 +73,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.lee.shoppe.R
+import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.data.model.CustomerRequest
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.viewmodel.AuthenticationViewModel
@@ -192,7 +196,12 @@ fun LoginScreen(
                 onClick = { /* Skip logic */ },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text(text = stringResource(id = R.string.skip).uppercase(), color = Color.Gray, fontSize = 16.sp)
+                Text(
+                    text = stringResource(id = R.string.skip).uppercase(),
+                    color = Color.Gray,
+                    fontSize = 16.sp,
+                    modifier = Modifier.clickable { onSkip() }
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -212,8 +221,17 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = stringResource(id = R.string.login_title1), fontSize = 32.sp, color = Color.Black)
-            Text(text = stringResource(id = R.string.login_title2), fontSize = 20.sp, color = Color.Gray)
+            Text(
+                text = stringResource(id = R.string.login_title1),
+                fontSize = 32.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(id = R.string.login_title2),
+                fontSize = 20.sp,
+                color = Color.Gray
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
             OutlinedTextField(
@@ -226,6 +244,7 @@ fun LoginScreen(
                     )
                 },
                 label = { Text(stringResource(id = R.string.email)) },
+                placeholder = { Text(stringResource(id = R.string.email)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -234,7 +253,8 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(stringResource(id = R.string.password)) },
+label = { Text(stringResource(id = R.string.password)) },
+                placeholder = { Text(stringResource(id = R.string.password)) },
                 singleLine = true,
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 leadingIcon = {
@@ -277,13 +297,22 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(60.dp)
             ) {
-                Text(stringResource(id = R.string.login), color = Color.White, fontSize = 24.sp)
+                Text(
+                    text = stringResource(id = R.string.login),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Gray)
-                Text(" ${stringResource(id = R.string.or)} ", color = Color.Black, fontSize = 18.sp)
+                Text(
+                    text = " ${stringResource(id = R.string.or)} ",
+                    color = Color.Gray,
+                    fontSize = 16.sp
+                )
                 HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Gray)
             }
 
@@ -312,7 +341,12 @@ fun LoginScreen(
                     tint = Color.Unspecified
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = stringResource(id = R.string.google), color = Color.Black, fontSize = 22.sp)
+                Text(
+                    text = stringResource(id = R.string.google),
+                    color = Color.Black,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -321,14 +355,14 @@ fun LoginScreen(
                 Text(
                     text = stringResource(R.string.orSignup),
                     color = Color.Gray,
-                    fontSize = 18.sp
+                    fontSize = 16.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.create).uppercase(),
+                    text = stringResource(R.string.create),
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF004CFF),
-                    fontSize = 18.sp,
+                    color = BluePrimary,
+                    fontSize = 16.sp,
                     modifier = Modifier.clickable { onSignup() }
                 )
             }
@@ -336,22 +370,46 @@ fun LoginScreen(
 
         // Lottie Animation on Network Error (Empty View Example)
         val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.boy))
-        val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
+        val progress by animateLottieCompositionAsState(
+            composition,
+            iterations = LottieConstants.IterateForever
+        )
         // If you want to show this based on network state:
-        /*
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            LottieAnimation(composition = composition, progress = { progress }, modifier = Modifier.size(200.dp))
-            Text(stringResource(id = R.string.network_message_main), fontSize = 20.sp, color = Color.Black, textAlign = TextAlign.Center)
-            Text(stringResource(id = R.string.network_message_first), fontSize = 18.sp, color = Color.Gray, textAlign = TextAlign.Center)
-            Text(stringResource(id = R.string.network_message_second), fontSize = 18.sp, color = Color.Gray, textAlign = TextAlign.Center)
+        if (errorMessage == context.getString(R.string.network_message_main)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier.size(200.dp)
+                )
+                Text(
+                    text = stringResource(id = R.string.network_message_main),
+                    fontSize = 20.sp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = stringResource(id = R.string.network_message_first),
+                    fontSize = 16.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = stringResource(id = R.string.network_message_second),
+                    fontSize = 16.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
-        */
 
         // Show progress indicator
         if (isLoading) {

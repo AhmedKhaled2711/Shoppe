@@ -2,27 +2,57 @@ package com.lee.shoppe.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.*
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -31,27 +61,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import com.lee.shoppe.ui.components.LoadingWithMessages
-import com.lee.shoppe.R
-import com.lee.shoppe.data.model.CustomerData
-import com.lee.shoppe.data.model.ProductResponse
-import com.lee.shoppe.data.network.networking.NetworkState
-import com.lee.shoppe.ui.viewmodel.CategoryViewModel
-import com.lee.shoppe.ui.viewmodel.FavViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.airbnb.lottie.LottieComposition
-import androidx.compose.material.icons.filled.ArrowBack
+import com.lee.shoppe.R
+import com.lee.shoppe.data.model.CustomerData
+import com.lee.shoppe.data.model.ProductResponse
+import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import com.lee.shoppe.ui.theme.BlueLight
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import com.lee.shoppe.ui.theme.BluePrimary
+import com.lee.shoppe.ui.viewmodel.CategoryViewModel
+import com.lee.shoppe.ui.viewmodel.FavViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,9 +113,9 @@ fun CategoryScreen(
         if (productsState is NetworkState.Failure) {
             val error = (productsState as NetworkState.Failure).error
             val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
-                "You're making requests too quickly. Please wait a moment and try again."
+                context.getString(R.string.too_many_requests)
             } else {
-                error.message ?: "An error occurred. Please try again."
+                error.message ?: context.getString(R.string.error_occurred)
             }
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(message)
@@ -231,9 +257,9 @@ fun CategoryScreen(
         // Remove from Favorite Dialog
         DeleteCartDialog(
             show = showRemoveDialog && productToRemove != null,
-            title = "Remove from Favorites",
-            subtitle = "Are you sure you want to remove this product from your favorites?",
-            confirmText = "Remove",
+            title = stringResource(R.string.remove_from_favorites),
+            subtitle = stringResource(R.string.confirm_remove_favorite),
+            confirmText = stringResource(R.string.remove),
             onCancel = { showRemoveDialog = false; productToRemove = null },
             onConfirm = {
                 productToRemove?.let { product ->
@@ -270,20 +296,20 @@ fun EmptyStateLottie(lottieComposition: LottieComposition?) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Product not found",
+                text = stringResource(R.string.product_not_found),
                 color = Color.Black,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "We couldn’t find any matching product.",
+                text = stringResource(R.string.no_matching_products),
                 color = Color.Gray,
                 fontSize = 16.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Try adjusting your search or filters.",
+                text = stringResource(R.string.adjust_search_filters),
                 color = Color.Gray,
                 fontSize = 16.sp
             )
@@ -347,7 +373,7 @@ fun SearchBarCategory(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_filter),
-                    contentDescription = "Filter",
+                    contentDescription = stringResource(R.string.filter_products),
                     tint = primaryColor
                 )
             }
@@ -379,7 +405,10 @@ fun CategoryToggleRow(
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.height(38.dp)
             ) {
-                Text(category, fontWeight = FontWeight.Medium)
+                Text(
+                    text = if (category == stringResource(R.string.all).uppercase()) stringResource(R.string.all) else category,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -397,7 +426,12 @@ fun FilterSheetContent(
     var fromPrice by remember { mutableStateOf("") }
     var toPrice by remember { mutableStateOf("") }
     val categories = listOf("All", "WOMEN", "KID", "MEN", "SALE")
-    val subCategories = listOf("", "SHOES", "ACCESSORIES", "T-SHIRTS")
+    val subCategories = listOf(
+        "",
+        "SHOES",
+        "ACCESSORIES",
+        "T-SHIRTS"
+    )
     val primaryColor = Color(0xFF0057FF)
     Column(
         modifier = Modifier
@@ -406,17 +440,17 @@ fun FilterSheetContent(
     ) {
         // Title
         Text(
-            text = "Filter Products",
+            text = stringResource(R.string.filter_products),
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
             color = primaryColor,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
+        HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
         Spacer(modifier = Modifier.height(16.dp))
         // Category Section
-        Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+        Text(stringResource(R.string.category), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(categories) { cat ->
@@ -424,7 +458,10 @@ fun FilterSheetContent(
                     selected = mainCategory == cat || (cat == "All" && mainCategory == " "),
                     onClick = { onCategoryChange(if (cat == "All") " " else cat) },
                     label = {
-                        Text(cat, color = if (mainCategory == cat || (cat == "All" && mainCategory == " ")) Color.White else Color.Black)
+                        Text(
+                            if (cat == stringResource(R.string.all).uppercase()) stringResource(R.string.all) else cat,
+                            color = if (mainCategory == cat || (cat == stringResource(R.string.all).uppercase() && mainCategory == " ")) Color.White else Color.Black
+                        )
                     },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = primaryColor,
@@ -436,10 +473,10 @@ fun FilterSheetContent(
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
+        HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
         Spacer(modifier = Modifier.height(16.dp))
         // Subcategory Section
-        Text("Subcategory", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+        Text(stringResource(R.string.subcategory), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(subCategories) { sub ->
@@ -447,7 +484,7 @@ fun FilterSheetContent(
                     selected = subCategory == sub,
                     onClick = { onSubCategoryChange(sub) },
                     label = {
-                        Text(if (sub.isBlank()) "All" else sub, color = if (subCategory == sub) Color.White else Color.Black)
+                        Text(sub.ifBlank { stringResource(R.string.all) }, color = if (subCategory == sub) Color.White else Color.Black)
                     },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = primaryColor,
@@ -459,16 +496,16 @@ fun FilterSheetContent(
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
+        HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
         Spacer(modifier = Modifier.height(16.dp))
         // Price Range Section
-        Text("Price Range", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+        Text(stringResource(R.string.price_range), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = fromPrice,
                 onValueChange = { fromPrice = it },
-                label = { Text("From", color = Color.Gray) },
+                label = { Text(stringResource(R.string.from), color = Color.Gray) },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -483,7 +520,7 @@ fun FilterSheetContent(
             OutlinedTextField(
                 value = toPrice,
                 onValueChange = { toPrice = it },
-                label = { Text("To", color = Color.Gray) },
+                label = { Text(stringResource(R.string.to), color = Color.Gray) },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -507,7 +544,7 @@ fun FilterSheetContent(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = primaryColor)
             ) {
-                Text("Cancel", color = primaryColor, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.cancel), color = primaryColor, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.width(16.dp))
             Button(
@@ -519,7 +556,7 @@ fun FilterSheetContent(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
             ) {
-                Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.apply), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }

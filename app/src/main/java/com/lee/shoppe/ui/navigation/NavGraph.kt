@@ -1,7 +1,5 @@
 package com.lee.shoppe.ui.navigation
 
-import MapPickerScreen
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,13 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,12 +27,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +42,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.lee.shoppe.R
 import com.lee.shoppe.data.model.BottomNavItem
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
@@ -66,6 +58,7 @@ import com.lee.shoppe.ui.screens.ChooseAddressScreen
 import com.lee.shoppe.ui.screens.FavoriteScreen
 import com.lee.shoppe.ui.screens.HomeScreen
 import com.lee.shoppe.ui.screens.LoginScreen
+import com.lee.shoppe.ui.screens.MapPickerScreen
 import com.lee.shoppe.ui.screens.OnboardingScreen
 import com.lee.shoppe.ui.screens.OrderDetailsScreen
 import com.lee.shoppe.ui.screens.OrderInfoScreen
@@ -79,7 +72,6 @@ import com.lee.shoppe.ui.screens.ReviewScreen
 import com.lee.shoppe.ui.screens.SignupScreen
 import com.lee.shoppe.ui.screens.StartScreen
 import com.lee.shoppe.ui.screens.TermsAndConditionsScreen
-import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.BlueSecondary
 import com.lee.shoppe.ui.viewmodel.CartViewModel
@@ -128,12 +120,19 @@ fun ECommerceNavHost(
         Screen.Favorite.route,
         Screen.Profile.route
     )
+//    val navItems = listOf(
+//        BottomNavItem("Home", Icons.Filled.Home, Screen.Home.route),
+//        BottomNavItem("Category", Icons.AutoMirrored.Filled.List, Screen.Category.route),
+//        BottomNavItem("Cart", Icons.Filled.ShoppingCart, Screen.Cart.route, showBadge = true),
+//        BottomNavItem("Favorite", Icons.Filled.Favorite, Screen.Favorite.route),
+//        BottomNavItem("Profile", Icons.Filled.Person, Screen.Profile.route)
+//    )
     val navItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Home, Screen.Home.route),
-        BottomNavItem("Category", Icons.AutoMirrored.Filled.List, Screen.Category.route),
-        BottomNavItem("Cart", Icons.Filled.ShoppingCart, Screen.Cart.route, showBadge = true),
-        BottomNavItem("Favorite", Icons.Filled.Favorite, Screen.Favorite.route),
-        BottomNavItem("Profile", Icons.Filled.Person, Screen.Profile.route)
+        BottomNavItem("Home", R.drawable.ic_shop, Screen.Home.route),
+        BottomNavItem("Category", R.drawable.ic_categories_new, Screen.Category.route),
+        BottomNavItem("Cart", R.drawable.ic_cart, Screen.Cart.route, showBadge = true),
+        BottomNavItem("Favorite",R.drawable.ic_wishlist, Screen.Favorite.route),
+        BottomNavItem("Profile", R.drawable.ic_profile, Screen.Profile.route)
     )
 
     Scaffold(
@@ -182,8 +181,7 @@ fun ECommerceNavHost(
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = item.label,
+                                        painter = painterResource(id = item.icon),                                        contentDescription = item.label,
                                         tint = iconTint,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -258,7 +256,7 @@ fun ECommerceNavHost(
                             ) {
                                 // Cart Icon
                                 Icon(
-                                    imageVector = Icons.Filled.ShoppingCart,
+                                    painterResource( R.drawable.ic_cart),
                                     contentDescription = "Cart",
                                     tint = Color.White,
                                     modifier = Modifier

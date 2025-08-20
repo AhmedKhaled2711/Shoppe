@@ -1,8 +1,8 @@
 package com.lee.shoppe.ui.screens
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,25 +12,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,12 +47,14 @@ import androidx.navigation.NavController
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
+import com.lee.shoppe.ui.components.LanguageSelectionDialog
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.Dark
 import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.theme.RedAccent
 import com.lee.shoppe.ui.utils.isNetworkConnected
+import com.lee.shoppe.utils.LanguageUtils
 import kotlinx.coroutines.launch
 
 @Composable
@@ -89,7 +90,7 @@ fun ProfileScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(10.dp))
             // Header
             Text(
-                text = "Shoppe",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = BluePrimary,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -107,7 +108,7 @@ fun ProfileScreen(navController: NavController) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Filled.PersonOutline,
-                            contentDescription = "User Avatar",
+                            contentDescription = stringResource(R.string.user_avatar),
                             tint = BluePrimary,
                             modifier = Modifier
                                 .size(64.dp)
@@ -117,13 +118,13 @@ fun ProfileScreen(navController: NavController) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = customerData.name.ifBlank { "Your Name" },
+                            text = customerData.name.ifBlank { stringResource(R.string.default_name) },
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = HeaderColor
                         )
                         Text(
-                            text = customerData.email.ifBlank { "your.email@example.com" },
+                            text = customerData.email.ifBlank { stringResource(R.string.default_email) },
                             fontSize = 15.sp,
                             color = Color.Gray
                         )
@@ -149,7 +150,7 @@ fun ProfileScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Welcome, Guest!",
+                        text = stringResource(R.string.welcome_guest),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = HeaderColor
@@ -159,25 +160,25 @@ fun ProfileScreen(navController: NavController) {
                         onClick = { navController.navigate("login") },
                         colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
                     ) {
-                        Text("Login", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.login), color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
             if (customerData.isLogged) {
                 // Personal Section
-                SectionHeader("Personal")
+                SectionHeader(stringResource(R.string.personal))
 //                ProfileListItem("Profile") {
 //                    navController.navigate("profile_details")
 //                }
 //                DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("Manage Addresses") {
+                ProfileListItem(stringResource(R.string.manage_addresses)) {
                     navController.navigate("address_list")
                 }
                 DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("Orders") {
+                ProfileListItem(stringResource(R.string.orders)) {
                     navController.navigate("orders?forceRefresh=true")
                 }
                 DividerLine()
@@ -189,13 +190,13 @@ fun ProfileScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
                 // Shop Section
-                SectionHeader("Shop")
+                SectionHeader(stringResource(R.string.shop))
 //                ProfileListItem("Country", "EGY") {
 //                    showCurrencyDialog.value = true
 //                }
 //                DividerLine()
 //                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("Currency", customerData.currency.ifBlank { "$ USD" }) {
+                ProfileListItem(stringResource(R.string.currency), customerData.currency.ifBlank { "$ USD" }) {
                     showCurrencyDialog.value = true
                 }
                 DividerLine()
@@ -205,19 +206,23 @@ fun ProfileScreen(navController: NavController) {
 //                }
 //                DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("Terms and Conditions") {
+                ProfileListItem(stringResource(R.string.terms_and_conditions)) {
                     navController.navigate("terms_and_conditions")
                 }
                 DividerLine()
                 Spacer(modifier = Modifier.height(24.dp))
                 // Account Section
-                SectionHeader("Account")
-                ProfileListItem("Language", customerData.language.ifBlank { "English" }) {
+                SectionHeader(stringResource(R.string.account))
+                val currentLanguage = when (LanguageUtils.getLanguage(context)) {
+                    "ar" -> stringResource(R.string.language_arabic)
+                    else -> stringResource(R.string.language_english)
+                }
+                ProfileListItem(stringResource(R.string.language), currentLanguage) {
                     showLanguageDialog.value = true
                 }
                 DividerLine()
                 Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem("About Shoppe") {
+                ProfileListItem(stringResource(R.string.about_shoppe)) {
                     navController.navigate("about")
                 }
                 DividerLine()
@@ -228,12 +233,12 @@ fun ProfileScreen(navController: NavController) {
                     colors = ButtonDefaults.buttonColors(containerColor = BlueLight),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Logout", color = BluePrimary, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.logout), color = BluePrimary, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 // Delete Account
                 Text(
-                    text = "Delete My Account",
+                    text = stringResource(R.string.delete_my_account),
                     color = RedAccent,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -249,13 +254,13 @@ fun ProfileScreen(navController: NavController) {
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "Shoppe",
+                    text = stringResource(R.string.app_name),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = BluePrimary
                 )
                 Text(
-                    text = "Version 1.0 Jul, 2025",
+                    text = stringResource(R.string.version_format, "1.0", "Jul", 2025),
                     color = Color.Gray,
                     fontSize = 13.sp
                 )
@@ -268,9 +273,9 @@ fun ProfileScreen(navController: NavController) {
     // Professional Logout Dialog using DeleteCartDialog
     DeleteCartDialog(
         show = showLogoutDialog.value,
-        title = "Logout Confirmation",
-        subtitle = "Hello ${customerData.name.ifBlank { "User" }}! Are you sure you want to logout from your account?",
-        confirmText = "Logout",
+        title = stringResource(R.string.logout_confirmation_title),
+        subtitle = stringResource(R.string.logout_confirmation_message, customerData.name.ifBlank { stringResource(R.string.default_name) }),
+        confirmText = stringResource(R.string.logout),
         onCancel = { showLogoutDialog.value = false },
         onConfirm = {
             customerData.logOut()
@@ -280,40 +285,46 @@ fun ProfileScreen(navController: NavController) {
             }
         }
     )
+    val account_deletion_coming_soon =  stringResource(R.string.account_deletion_coming_soon)
     // Delete Account Dialog
     DeleteCartDialog(
         show = showDeleteDialog.value,
-        title = "Delete Account",
-        subtitle = "Are you sure you want to delete your account? This action cannot be undone.",
-        confirmText = "Delete",
+        title = stringResource(R.string.delete_account_title),
+        subtitle = stringResource(R.string.delete_account_confirmation),
+        confirmText = stringResource(R.string.delete),
         onCancel = { showDeleteDialog.value = false },
         onConfirm = {
             // TODO: Implement delete logic
             showDeleteDialog.value = false
             coroutineScope.launch { 
-                snackbarHostState.showSnackbar("Account deletion coming soon") 
+                snackbarHostState.showSnackbar(account_deletion_coming_soon)
             }
         }
     )
-    // Language Dialog (static)
+    // Language Dialog
     if (showLanguageDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showLanguageDialog.value = false },
-            title = { Text("Choose Language") },
-            text = { Text("Language selection coming soon") },
-            confirmButton = {
-                Button(onClick = { showLanguageDialog.value = false }) { Text("OK") }
-            }
+        LanguageSelectionDialog(
+            onDismiss = { showLanguageDialog.value = false },
+            onLanguageSelected = { languageCode ->
+                LanguageUtils.setLocale(context, languageCode)
+                (context as? Activity)?.let { activity ->
+                    activity.intent.putExtra("lang_changed", true)
+                    activity.finish()
+                    activity.startActivity(activity.intent)
+                    activity.overridePendingTransition(0, 0)
+                }
+            },
+            currentLanguage = LanguageUtils.getLanguage(context)
         )
     }
     // Currency Dialog (static)
     if (showCurrencyDialog.value) {
         AlertDialog(
             onDismissRequest = { showCurrencyDialog.value = false },
-            title = { Text("Choose Currency") },
-            text = { Text("Currency selection coming soon") },
+            title = { Text(stringResource(R.string.choose_currency)) },
+            text = { Text(stringResource(R.string.currency_selection_coming_soon)) },
             confirmButton = {
-                Button(onClick = { showCurrencyDialog.value = false }) { Text("OK") }
+                Button(onClick = { showCurrencyDialog.value = false }) { Text(stringResource(R.string.ok)) }
             }
         )
     }

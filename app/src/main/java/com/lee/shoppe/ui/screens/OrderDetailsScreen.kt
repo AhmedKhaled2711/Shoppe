@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Money
@@ -26,8 +26,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -61,7 +61,6 @@ import com.example.fashionshop.Model.LineItemBody
 import com.example.fashionshop.Model.OrderBody
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.Address
-import com.lee.shoppe.data.model.CheckoutSessionResponse
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
@@ -123,7 +122,8 @@ fun OrderDetailsScreen(
     val discountAmount = subtotal * (discountPercent / 100)
     val total = subtotal - discountAmount
     val selectedAddress = (addressState as? NetworkState.Success)?.data?.customer?.addresses?.find { it.id == addressId }
-
+    val unknown_error =  stringResource(id = R.string.unknown_error)
+    val payment_failed = stringResource(R.string.payment_failed )
     // Handle payment state changes
     LaunchedEffect(paymentState) {
         when (val state = paymentState) {
@@ -137,16 +137,22 @@ fun OrderDetailsScreen(
             is NetworkState.Failure -> {
                 isProcessingOrder = false
                 // Show error message
-                val errorMsg = state.error.message ?: "Unknown error"
+                val errorMsg = state.error.message ?: unknown_error
                 Log.e("OrderDetailsScreen", "Payment failed: $errorMsg")
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Payment failed: $errorMsg")
+                    snackbarHostState.showSnackbar(
+                        payment_failed
+                    )
                 }
             }
             else -> {}
         }
     }
-
+    val success_url = stringResource(id = R.string.success_url)
+    val cancel_url = stringResource(id = R.string.cancel_url)
+    val product_name = stringResource(id = R.string.product_name)
+    val product_description  = stringResource(id = R.string.product_description)
+    val error_occurred  = stringResource(R.string.error_occurred)
     // Payment method dialog
     if (showPaymentDialog) {
         PaymentMethodBottomSheet(
@@ -160,12 +166,12 @@ fun OrderDetailsScreen(
                         // For Visa, get payment URL and navigate to payment sheet
                         isProcessingOrder = true
                         paymentViewModel.getPaymentProducts(
-                            successUrl = "https://example.com/success",
-                            cancelUrl = "https://example.com/cancel",
+                            successUrl = success_url,
+                            cancelUrl = cancel_url,
                             customerEmail = customerData.email,
                             currency = currency,
-                            productName = "Order #${System.currentTimeMillis()}",
-                            productDescription = "Payment for ${lineItems.size} items",
+                            productName = product_name,
+                            productDescription = product_description,
                             unitAmountDecimal = (subtotal * 100).toInt(),
                             quantity = 1,
                             mode = "payment",
@@ -191,7 +197,9 @@ fun OrderDetailsScreen(
                             onError = { errorMsg ->
                                 isProcessingOrder = false
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Error: $errorMsg")
+                                snackbarHostState.showSnackbar(
+                                    error_occurred + ": $errorMsg"
+                                )
                                 }
                             }
                         )
@@ -249,7 +257,7 @@ fun OrderDetailsScreen(
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = address.name ?: "Address",
+                                    text = address.name ,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 14.sp
                                 )
@@ -258,7 +266,7 @@ fun OrderDetailsScreen(
                                     fontSize = 14.sp,
                                     color = Color.Gray
                                 )
-                                if (!address.phone.isNullOrBlank()) {
+                                if (address.phone.isNotBlank()) {
                                     Text(
                                         text = "Phone: ${address.phone}",
                                         fontSize = 12.sp,
@@ -463,7 +471,7 @@ private fun PaymentMethodBottomSheet(
         ) {
             // Header
             Text(
-                text = "Choose Payment Method",
+                text = stringResource(id = R.string.choose_payment_method),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = HeaderColor,
@@ -473,8 +481,8 @@ private fun PaymentMethodBottomSheet(
             // Visa Payment Option
             PaymentOptionCard(
                 icon = Icons.Filled.CreditCard,
-                title = "Visa Card",
-                subtitle = "Pay securely with your Visa card",
+                title = stringResource(id = R.string.visa_card),
+                subtitle = stringResource(id = R.string.pay_with_card),
                 onClick = { onPaymentSelected("Visa") }
             )
 
@@ -483,8 +491,8 @@ private fun PaymentMethodBottomSheet(
             // Cash Payment Option
             PaymentOptionCard(
                 icon = Icons.Filled.Money,
-                title = "Cash on Delivery",
-                subtitle = "Pay with cash when your order arrives",
+                title = stringResource(id = R.string.cash_on_delivery),
+                subtitle = stringResource(id = R.string.pay_with_cash),
                 onClick = { onPaymentSelected("Cash") }
             )
 
@@ -504,7 +512,7 @@ private fun PaymentMethodBottomSheet(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Cancel",
+                    text = stringResource(id = R.string.cancel),
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -551,7 +559,7 @@ private fun PaymentOptionCard(
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = title,
+                    contentDescription = title, // This is already using the string resource passed from parent
                     tint = BluePrimary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -579,8 +587,8 @@ private fun PaymentOptionCard(
 
             // Arrow or selection indicator
             Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Select",
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(id = R.string.select),
                 tint = Color.Gray,
                 modifier = Modifier
                     .size(20.dp)
@@ -619,7 +627,7 @@ private fun OrderSummarySection(
         Text(stringResource(R.string.discount), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("${discountPercent}%", fontSize = 20.sp, fontWeight = FontWeight.Bold , color = BluePrimary)
     }
-    Divider(modifier = Modifier.padding(vertical = 8.dp))
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
     // Total
     Row(

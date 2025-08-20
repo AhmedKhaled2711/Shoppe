@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +27,7 @@ import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.CartAddressViewModel
 import com.lee.shoppe.data.network.networking.NetworkState
 import androidx.navigation.NavController
+import com.lee.shoppe.R
 
 @Composable
 fun ChooseAddressScreen(
@@ -61,7 +63,7 @@ fun ChooseAddressScreen(
     ) {
         // Header
         ScreenHeader(
-            title = "Choose Address",
+            title = stringResource(R.string.choose_address),
             onBackClick = { navController.popBackStack() },
             showBackButton = true
         )
@@ -77,8 +79,8 @@ fun ChooseAddressScreen(
                 isLoading -> {
                     LoadingWithMessages(
                         modifier = Modifier.fillMaxSize(),
-                        mainMessage = "Loading Addresses",
-                        secondaryMessage = "Please wait while we fetch your saved addresses...",
+                        mainMessage = stringResource(R.string.loading_addresses),
+                        secondaryMessage = stringResource(R.string.fetching_addresses),
                         loadingIndicatorColor = BluePrimary,
                         spacing = 16.dp,
                         messageSpacing = 8.dp
@@ -138,7 +140,7 @@ fun ChooseAddressScreen(
             )
         ) {
             Text(
-                "Continue to Payment",
+                stringResource(R.string.continue_to_payment),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
@@ -176,7 +178,7 @@ fun AddressItem(
             // Radio button indicator
             Icon(
                 imageVector = if (isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-                contentDescription = if (isSelected) "Selected" else "Not selected",
+                contentDescription = if (isSelected) stringResource(R.string.selected) else stringResource(R.string.not_selected),
                 tint = if (isSelected) BluePrimary else Color.Gray,
                 modifier = Modifier.size(24.dp)
             )
@@ -191,7 +193,7 @@ fun AddressItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = address.name ?: "Address",
+                        text = address.name ?: stringResource(R.string.address),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = if (isSelected) BluePrimary else Color.Black
@@ -207,7 +209,7 @@ fun AddressItem(
                             modifier = Modifier.padding(0.dp)
                         ) {
                             Text(
-                                text = "Default",
+                                text = stringResource(R.string.default_address),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BluePrimary,
@@ -244,7 +246,7 @@ fun AddressItem(
                 if (!address.phone.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Phone: ${address.phone}",
+                        text = stringResource(R.string.phone_label, address.phone ?: ""),
                         fontSize = 12.sp,
                         color = Color.Gray
                     )

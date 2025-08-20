@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.lee.shoppe.R
 import com.lee.shoppe.ui.theme.ShoppeTheme
 
@@ -63,9 +64,9 @@ fun StartScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.log), // Replace with your image resource
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(80.dp) // Adjust size as needed
+                    painter = painterResource(id = R.drawable.log),
+                    contentDescription = stringResource(R.string.app_logo),
+                    modifier = Modifier.size(80.dp)
                 )
             }
 
@@ -74,7 +75,7 @@ fun StartScreen(
 
             // Title
             Text(
-                text = "Shoppe",
+                text = stringResource(R.string.app_name_title),
                 color = Color(0xFF202020),
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold,
@@ -85,7 +86,7 @@ fun StartScreen(
 
             // Subtitle
             Text(
-                text = "All Your Favorites  \nin One Place",
+                text = stringResource(R.string.app_tagline),
                 color = Color(0xFF202020),
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Normal,
@@ -114,7 +115,7 @@ fun StartScreen(
                     .height(60.dp)
             ) {
                 Text(
-                    text = "Let's get started",
+                    text = stringResource(R.string.lets_get_started),
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp
                 )
@@ -125,7 +126,7 @@ fun StartScreen(
             // Secondary Text Button with arrow icon
             TextButton(onClick = onSignInClick) {
                 Text(
-                    text = "I already have an account",
+                    text = stringResource(R.string.have_an_account),
                     color = Color.Black,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Normal
@@ -140,7 +141,7 @@ fun StartScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Arrow forward",
+                        contentDescription = stringResource(R.string.arrow_forward),
                         tint = Color.White, // for contrast
                         modifier = Modifier.size(16.dp)
                     )

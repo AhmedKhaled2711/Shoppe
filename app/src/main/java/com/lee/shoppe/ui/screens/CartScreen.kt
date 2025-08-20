@@ -1,28 +1,65 @@
 package com.lee.shoppe.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -32,27 +69,16 @@ import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
-import com.lee.shoppe.ui.theme.*
+import com.lee.shoppe.ui.theme.BlueLight
+import com.lee.shoppe.ui.theme.BluePrimary
+import com.lee.shoppe.ui.theme.Dark
+import com.lee.shoppe.ui.theme.HeaderColor
 import com.lee.shoppe.ui.viewmodel.CartViewModel
-import coil.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import android.util.Log
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.window.Dialog
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import com.airbnb.lottie.LottieComposition
-import kotlinx.coroutines.flow.count
 
 @Composable
-fun CartScreen(
+    fun CartScreen(
     navController: NavController,
     cartViewModel: CartViewModel = hiltViewModel(),
     onCheckout: () -> Unit = {}
@@ -101,15 +127,16 @@ fun CartScreen(
             Log.d("CartScreen", "No cart to load - not logged in and no guest cart")
         }
     }
-
+    val too_many_requests = stringResource(R.string.too_many_requests)
+    val error_occurred = stringResource(R.string.error_occurred)
     // Show Snackbar for HTTP 429 or too many requests
     LaunchedEffect(cartProductsState) {
         if (cartProductsState is NetworkState.Failure) {
             val error = (cartProductsState as NetworkState.Failure).error
             val message = if (error.message?.contains("Too many requests") == true || (error is retrofit2.HttpException && error.code() == 429)) {
-                "You're making requests too quickly. Please wait a moment and try again."
+                too_many_requests
             } else {
-                error.message ?: "An error occurred. Please try again."
+                error.message ?: error_occurred
             }
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(message)
@@ -204,9 +231,9 @@ fun CartScreen(
         // Confirm delete all dialog
         DeleteCartDialog(
             show = showDeleteAllDialog,
-            title = "You are going to clear your cart",
-            subtitle = "You won't be able to restore your data",
-            confirmText = "Clear All",
+            title = stringResource(R.string.clear_cart_title),
+            subtitle = stringResource(R.string.clear_cart_message),
+            confirmText = stringResource(R.string.clear_all),
             onCancel = { showDeleteAllDialog = false },
             onConfirm = {
                 showDeleteAllDialog = false
@@ -218,9 +245,9 @@ fun CartScreen(
         // Confirm delete item dialog
         DeleteCartDialog(
             show = showDeleteItemDialog && pendingDeleteProductId != null,
-            title = "You are going to remove this product",
-            subtitle = "You won't be able to restore this item",
-            confirmText = "Remove",
+            title = stringResource(R.string.remove_item_title),
+            subtitle = stringResource(R.string.remove_item_message),
+            confirmText = stringResource(R.string.remove),
             onCancel = { showDeleteItemDialog = false; pendingDeleteProductId = null },
             onConfirm = {
                 showDeleteItemDialog = false
@@ -288,7 +315,7 @@ fun CartHeader(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.delete_24),
-                        contentDescription = "Delete all",
+                        contentDescription = stringResource(R.string.delete_all),
                         tint = Color(0xFFE57373),
                         modifier = Modifier.size(24.dp)
                     )
@@ -388,7 +415,7 @@ fun EmptyCartState(lottieComposition: LottieComposition?) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Your cart is empty",
+            text = stringResource(R.string.cart_empty),
             color = Color.Gray,
             fontSize = 16.sp,
             textAlign = TextAlign.Center
@@ -818,6 +845,7 @@ fun DeleteCartDialog(
                             color = Color.Black,
                             modifier = Modifier.padding(top = 8.dp),
                             textAlign = TextAlign.Center
+
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(

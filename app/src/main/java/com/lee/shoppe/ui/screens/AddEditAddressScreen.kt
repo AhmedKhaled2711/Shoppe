@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +30,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.android.gms.maps.model.LatLng
+import com.lee.shoppe.R
 import com.lee.shoppe.data.model.Address
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.network.networking.NetworkState
@@ -88,22 +90,22 @@ fun AddEditAddressScreen(
         
         // Validate name
         if (name.value.isBlank()) {
-            nameError.value = "Name is required"
+            nameError.value = context.getString(R.string.name_required)
             isValid = false
         }
         
         // Validate phone
         if (phone.value.isBlank()) {
-            phoneError.value = "Phone number is required"
+            phoneError.value = context.getString(R.string.phone_required)
             isValid = false
         } else if (!android.util.Patterns.PHONE.matcher(phone.value).matches()) {
-            phoneError.value = "Enter a valid phone number"
+            phoneError.value = context.getString(R.string.invalid_phone)
             isValid = false
         }
         
         // Validate address1
         if (address1.value.isBlank()) {
-            address1Error.value = "Address line 1 is required"
+            address1Error.value = context.getString(R.string.address_line_1_required)
             isValid = false
         }
         
@@ -271,7 +273,7 @@ fun AddEditAddressScreen(
         ) {
             // Screen Header
             ScreenHeader(
-                title = if (isEdit) "Edit Address" else "Add Address",
+                title = if (isEdit) stringResource(R.string.edit_address) else stringResource(R.string.add_address),
                 onBackClick = { navController.popBackStack() },
                 backgroundColor = Color.White,
                 titleColor = Color.Black,
@@ -290,16 +292,19 @@ fun AddEditAddressScreen(
                         .padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val name_required =  stringResource(R.string.name_required)
+                    val phone_number_required =  stringResource(R.string.phone_number_required)
+                    val invalid_phone_number = stringResource(R.string.invalid_phone_number)
                     // Name field (always visible and editable)
                     OutlinedTextField(
                         value = name.value,
                         onValueChange = { 
                             name.value = it
                             if (isFormSubmitted.value) {
-                                nameError.value = if (it.isBlank()) "Name is required" else null
+                                nameError.value = if (it.isBlank()) name_required else null
                             }
                         },
-                        label = { Text("Full Name") },
+                        label = { Text(stringResource(R.string.full_name)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             focusedBorderColor = if (nameError.value != null) Color.Red else BluePrimary,
@@ -324,13 +329,13 @@ fun AddEditAddressScreen(
                             phone.value = it
                             if (isFormSubmitted.value) {
                                 phoneError.value = when {
-                                    it.isBlank() -> "Phone number is required"
-                                    !android.util.Patterns.PHONE.matcher(it).matches() -> "Enter a valid phone number"
+                                    it.isBlank() -> phone_number_required
+                                    !android.util.Patterns.PHONE.matcher(it).matches() -> invalid_phone_number
                                     else -> null
                                 }
                             }
                         },
-                        label = { Text("Phone Number") },
+                        label = { Text(stringResource(R.string.phone_number)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             focusedBorderColor = if (phoneError.value != null) Color.Red else BluePrimary,
@@ -353,10 +358,10 @@ fun AddEditAddressScreen(
                             onValueChange = { 
                                 address1.value = it
                                 if (isFormSubmitted.value) {
-                                    address1Error.value = if (it.isBlank()) "Address line 1 is required" else null
+                                    address1Error.value = if (it.isBlank()) context.getString(R.string.address_line_1_required) else null
                                 }
                             },
-                            label = { Text("Address Line 1") },
+                            label = { Text(stringResource(R.string.address_line_1)) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = TextFieldDefaults.outlinedTextFieldColors(
                                 focusedBorderColor = if (address1Error.value != null) Color.Red else BluePrimary,
@@ -394,7 +399,7 @@ fun AddEditAddressScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.LocationOn,
-                                        contentDescription = "Pick location from map",
+                                        contentDescription = stringResource(R.string.pick_location),
                                         tint = BluePrimary,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -410,10 +415,10 @@ fun AddEditAddressScreen(
                             onValueChange = { 
                                 address2.value = it
                                 if (isFormSubmitted.value) {
-                                    address2Error.value = if (it.isBlank()) "Address line 2 is required" else null
+                                    address2Error.value = if (it.isBlank()) context.getString(R.string.address_line_2_required) else null
                                 }
                             },
-                            label = { Text("Address Line 2") },
+                            label = { Text(stringResource(R.string.address_line_2)) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = TextFieldDefaults.outlinedTextFieldColors(
                                 focusedBorderColor = if (address2Error.value != null) Color.Red else BluePrimary,
@@ -451,7 +456,7 @@ fun AddEditAddressScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.LocationOn,
-                                        contentDescription = "Pick location from map",
+                                        contentDescription = stringResource(R.string.pick_location),
                                         tint = BluePrimary,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -463,7 +468,7 @@ fun AddEditAddressScreen(
                     OutlinedTextField(
                         value = city.value,
                         onValueChange = { city.value = it },
-                        label = { Text("City") },
+                        label = { Text(stringResource(R.string.city)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             focusedBorderColor = BluePrimary,
@@ -474,7 +479,7 @@ fun AddEditAddressScreen(
                     OutlinedTextField(
                         value = zip.value,
                         onValueChange = { zip.value = it },
-                        label = { Text("Zip Code") },
+                        label = { Text(stringResource(R.string.zip_code)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             focusedBorderColor = BluePrimary,
@@ -485,7 +490,7 @@ fun AddEditAddressScreen(
                     OutlinedTextField(
                         value = country.value,
                         onValueChange = { country.value = it },
-                        label = { Text("Country") },
+                        label = { Text(stringResource(R.string.country)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             focusedBorderColor = BluePrimary,
@@ -518,7 +523,12 @@ fun AddEditAddressScreen(
                         ),
                         enabled = isFormValid
                     ) {
-                        Text(if (isEdit) "Save Changes" else "Save Address", color = Color.White, fontSize = 16.sp)
+                        Text(
+                            if (isEdit) stringResource(R.string.save_changes) 
+                            else stringResource(R.string.save_address), 
+                            color = Color.White, 
+                            fontSize = 16.sp
+                        )
                     }
                     when (val state = actionState.value) {
                         is NetworkState.Loading -> {
@@ -527,7 +537,10 @@ fun AddEditAddressScreen(
                         }
                         is NetworkState.Failure -> {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Failed: ${state.error.message}", color = Color.Red)
+                            Text(
+                                stringResource(R.string.failed_to_save, state.error.message ?: ""), 
+                                color = Color.Red
+                            )
                         }
                         is NetworkState.Success -> {
                             // On success, set refresh flag and navigate back
