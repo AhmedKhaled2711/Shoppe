@@ -2,6 +2,9 @@
 
 A complete, production-ready e-commerce mobile application built with modern Android development practices. Shoppe showcases a full-featured shopping experience with seamless user authentication, product browsing, cart management, and secure payment processing.
 
+📌 Watch the short demo here:
+👉 https://www.youtube.com/shorts/qkAslpJshkU
+
 ## 🚀 Features
 
 ### 🎯 Core Features
