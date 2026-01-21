@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,10 +22,16 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // Add BuildConfig fields
-        buildConfigField("String", "SHOPIFY_API_KEY", "\"24fd0ff00945a069ab50bb3d6f8bf329\"")
-        buildConfigField("String", "SHOPIFY_PASSWORD", "\"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\"")
-        buildConfigField("String", "STRIPE_API_KEY", "\"sk_test_51PSbTgDoeYNScbTmfJjKgahaCBVsau7NFPOIrpy3hphWLFv3NoSONjRMcBNkilYz0GVFUkxW6XJyHbh0VHBZbf2y00iBVrATWB\"")
+        // Add BuildConfig fields - Read from local.properties for security
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(FileInputStream(localPropertiesFile))
+        }
+        
+        buildConfigField("String", "SHOPIFY_API_KEY", "\"${localProperties.getProperty("SHOPIFY_API_KEY", "")}\"")
+        buildConfigField("String", "SHOPIFY_PASSWORD", "\"${localProperties.getProperty("SHOPIFY_PASSWORD", "")}\"")
+        buildConfigField("String", "STRIPE_API_KEY", "\"${localProperties.getProperty("STRIPE_API_KEY", "")}\"")
     }
 
     buildTypes {

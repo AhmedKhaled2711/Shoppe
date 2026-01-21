@@ -164,13 +164,21 @@ git clone https://github.com/yourusername/Shoppe.git
 cd Shoppe
 ```
 
-### 2. Configure API Keys
-Open `app/build.gradle.kts` and update the following fields:
-```kotlin
-buildConfigField("String", "SHOPIFY_API_KEY", "\"your_shopify_api_key\"")
-buildConfigField("String", "SHOPIFY_PASSWORD", "\"your_shopify_password\"")
-buildConfigField("String", "STRIPE_API_KEY", "\"your_stripe_api_key\"")
+### 2. Configure API Keys (SECURE METHOD)
+
+⚠️ **IMPORTANT**: For security reasons, API keys are stored in `local.properties` (not committed to Git).
+
+1. Create `local.properties` file in project root (already exists in this repo)
+2. Add your API keys to `local.properties`:
+
+```properties
+# API Keys - DO NOT COMMIT TO GIT
+SHOPIFY_API_KEY=your_shopify_api_key
+SHOPIFY_PASSWORD=your_shopify_password
+STRIPE_API_KEY=your_stripe_api_key
 ```
+
+🔒 **Security Note**: Never commit API keys to version control. The `local.properties` file is already in `.gitignore`.
 
 ### 3. Configure Google Maps
 Open `app/src/main/AndroidManifest.xml` and update:
@@ -254,11 +262,12 @@ Onboarding → Start → Login/Signup → Home
 
 ## 🔒 Security Considerations
 
-- API keys stored in BuildConfig (not hardcoded)
-- HTTPS for all network communications
-- Input validation and sanitization
-- Secure payment processing with Stripe
-- User authentication with Firebase
+- **API Keys Protection** - All sensitive keys stored in `local.properties` (excluded from Git)
+- **HTTPS Only** - All network communications use secure protocols
+- **Input Validation** - Proper sanitization of user inputs
+- **Secure Payments** - Payment processing through trusted Stripe integration
+- **Authentication** - Firebase Auth with secure token management
+- **No Hardcoded Secrets** - BuildConfig reads from secure local storage
 
 ## 🧪 Testing
 
