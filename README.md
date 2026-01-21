@@ -142,6 +142,48 @@ app/src/main/java/com/lee/shoppe/
 - **Espresso** - UI testing
 - **Compose Testing** - UI component testing
 
+## 📱 App Screenshots
+
+### 🎯 Onboarding & Authentication
+<p align="center">
+  <img src="screenshots/01_onboarding_1_welcome.png" width="180" />
+  <img src="screenshots/01_onboarding_2_features.png" width="180" />
+  <img src="screenshots/01_onboarding_3_getstarted.png" width="180" />
+  <img src="screenshots/02_auth_1_start.png" width="180" />
+  <img src="screenshots/02_auth_2_login.png" width="180" />
+</p>
+
+### 🏠 Main Navigation & Home
+<p align="center">
+  <img src="screenshots/03_main_home.png" width="180" />
+  <img src="screenshots/04_home_1_featured.png" width="180" />
+  <img src="screenshots/04_home_2_categories.png" width="180" />
+</p>
+
+### 🛍️ Shopping Experience
+<p align="center">
+  <img src="screenshots/05_products_1_category.png" width="180" />
+  <img src="screenshots/05_products_2_details.png" width="180" />
+  <img src="screenshots/06_shopping_1_cart.png" width="180" />
+  <img src="screenshots/06_shopping_2_favorites.png" width="180" />
+</p>
+
+### 👤 User Management & Orders
+<p align="center">
+  <img src="screenshots/07_user_1_profile.png" width="180" />
+  <img src="screenshots/07_user_2_addresses.png" width="180" />
+  <img src="screenshots/09_order_1_chooseaddress.png" width="180" />
+  <img src="screenshots/10_management_1_orders.png" width="180" />
+</p>
+
+### 🗺️ Maps & Location
+<p align="center">
+  <img src="screenshots/08_maps_1_picker.png" width="180" />
+  <img src="screenshots/08_maps_2_selection.png" width="180" />
+</p>
+
+*📸 For detailed screenshots guide, see [SCREENSHOTS_GUIDE.md](SCREENSHOTS_GUIDE.md)*
+
 ## 📋 Requirements
 
 ### Prerequisites
