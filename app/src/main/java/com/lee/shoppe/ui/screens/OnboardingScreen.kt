@@ -54,12 +54,10 @@ fun OnboardingScreen(onFinish: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 0.dp, top = 35.dp, end = 0.dp, bottom = 0.dp),
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-
-            Spacer(modifier = Modifier.height(35.dp))
 
             HorizontalPager(
                 count = pages.size,
@@ -83,9 +81,6 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            Spacer(modifier = Modifier.height(35.dp))
-
-
         }
     }
 }
@@ -105,8 +100,9 @@ fun OnboardingPageContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp)
+            //.padding(horizontal = 8.dp)
             .background(Color.White, shape = RoundedCornerShape(24.dp)),
+            //.padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
@@ -119,7 +115,7 @@ fun OnboardingPageContent(
                 .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
         )
 
-        Spacer(modifier = Modifier.height(45.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = stringResource(id = page.titleRes),
@@ -128,7 +124,7 @@ fun OnboardingPageContent(
             color = Color.Black
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = stringResource(id = page.descriptionRes),
@@ -141,8 +137,7 @@ fun OnboardingPageContent(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
-        //Spacer(modifier = Modifier.weight(1f)) // Push button to bottom
+        Spacer(modifier = Modifier.height(40.dp))
 
         if (isLastPage) {
             Button(
@@ -153,9 +148,9 @@ fun OnboardingPageContent(
                     contentColor = Color(0xFFF3F3F3)
                 ),
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(vertical = 24.dp)
-                    .height(50.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp , vertical = 16.dp)
+                    .height(56.dp)
             ) {
                 Text(
                     text = "Let's Start",

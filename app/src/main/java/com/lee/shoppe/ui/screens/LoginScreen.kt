@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +16,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,6 +31,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +41,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -76,9 +82,11 @@ import com.lee.shoppe.R
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.data.model.CustomerRequest
 import com.lee.shoppe.data.network.networking.NetworkState
+import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.viewmodel.AuthenticationViewModel
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
@@ -188,19 +196,33 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+            val interactionSource = remember { MutableInteractionSource() }
+
             TextButton(
-                onClick = { /* Skip logic */ },
-                modifier = Modifier.align(Alignment.End)
+                onClick = onSkip,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(end = 8.dp, top = 8.dp),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+                shape = RoundedCornerShape(8.dp),
+                interactionSource = interactionSource
             ) {
                 Text(
-                    text = stringResource(id = R.string.skip).uppercase(),
-                    color = Color.Gray,
-                    fontSize = 16.sp,
-                    modifier = Modifier.clickable { onSkip() }
+                    text = stringResource(R.string.skip).uppercase(),
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 0.5.sp
+                    ),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
 
@@ -246,14 +268,19 @@ fun LoginScreen(
                 label = { Text(stringResource(id = R.string.email)) },
                 placeholder = { Text(stringResource(id = R.string.email)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = BluePrimary,
+                    cursorColor = BluePrimary,
+                    focusedLabelColor = BluePrimary
+                )
             )
 
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-label = { Text(stringResource(id = R.string.password)) },
+                label = { Text(stringResource(id = R.string.password)) },
                 placeholder = { Text(stringResource(id = R.string.password)) },
                 singleLine = true,
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
@@ -272,7 +299,12 @@ label = { Text(stringResource(id = R.string.password)) },
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = BluePrimary,
+                    cursorColor = BluePrimary,
+                    focusedLabelColor = BluePrimary
+                )
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -332,7 +364,7 @@ label = { Text(stringResource(id = R.string.password)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
-                border = BorderStroke(2.dp, Color(0xFFFF9800))
+                border = BorderStroke(2.dp,  BlueLight)//Color(0xFFFF9800))
             ) {
                 Icon(painter = painterResource(
                     id = R.drawable.ic_google_c),

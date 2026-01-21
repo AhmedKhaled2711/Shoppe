@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +68,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -77,6 +80,7 @@ import com.lee.shoppe.data.model.Product
 import com.lee.shoppe.data.model.ProductResponse
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.ScreenHeader
+import com.lee.shoppe.ui.components.GuestUserDialog
 import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import com.lee.shoppe.ui.navigation.Screen
 import com.lee.shoppe.ui.theme.BluePrimary
@@ -107,6 +111,7 @@ fun ProductsScreen(
 
     var showRemoveDialog by remember { mutableStateOf(false) }
     var productToRemove by remember { mutableStateOf<Product?>(null) }
+    var showGuestDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -258,11 +263,10 @@ fun ProductsScreen(
                         val gridState = rememberLazyGridState()
 
                         LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = 190.dp),
-                            state = rememberLazyGridState(),
+                            columns = GridCells.Fixed(2),
                             contentPadding = PaddingValues(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(products) { product ->
                                 val isFavorite = favoriteStatesSnapshot[product.id] ?: false
@@ -274,14 +278,18 @@ fun ProductsScreen(
                                     ProductCard(
                                         product = product,
                                         onFavoriteClick = {
-                                            if (isFavorite) {
-                                                productToRemove = product
-                                                showRemoveDialog = true
-                                            } else {
-                                                favViewModel.insertFavProduct(product, customerData.favListId)
-                                                favoriteStates = favoriteStates.toMutableMap().apply {
-                                                    put(product.id ?: 0L, true)
+                                            if (customerData.isLogged) {
+                                                if (isFavorite) {
+                                                    productToRemove = product
+                                                    showRemoveDialog = true
+                                                } else {
+                                                    favViewModel.insertFavProduct(product, customerData.favListId)
+                                                    favoriteStates = favoriteStates.toMutableMap().apply {
+                                                        put(product.id ?: 0L, true)
+                                                    }
                                                 }
+                                            } else {
+                                                showGuestDialog = true
                                             }
                                         },
                                         onCardClick = {
@@ -347,6 +355,21 @@ fun ProductsScreen(
                 showRemoveDialog = false
                 productToRemove = null
             }
+        )
+    }
+
+    // Guest User Dialog
+    if (showGuestDialog) {
+        val guestLottieComposition by rememberLottieComposition(
+            LottieCompositionSpec.RawRes(R.raw.l)
+        )
+        GuestUserDialog(
+            onDismiss = { showGuestDialog = false },
+            onLoginClick = {
+                showGuestDialog = false
+                navController.navigate("login")
+            },
+            lottieComposition = guestLottieComposition
         )
     }
 }
@@ -529,6 +552,7 @@ fun ProductCard(
     // Memoize expensive calculations
     val productKey = remember(product.id) { "product_${product.id}" }
     val randomRating = remember(productKey) { Random.nextDouble(3.0, 5.0).toFloat() }
+    val interactionSource = remember { MutableInteractionSource() }
 
     // Process product title once
     val displayTitle = remember(product.title) {

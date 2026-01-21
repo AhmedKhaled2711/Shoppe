@@ -55,7 +55,6 @@ fun AddEditAddressScreen(
     val addressId = navBackStackEntry?.arguments?.getLong("id", -1L).takeIf { it != -1L }
     val isEdit = addressId != null
     
-    Log.d("AddEditAddressScreen", "Screen created - isEdit: $isEdit, addressId: $addressId")
 
     // Form fields with validation
     val name = rememberSaveable { mutableStateOf("") }
@@ -189,13 +188,13 @@ fun AddEditAddressScreen(
                     Log.d("AddEditAddressScreen", "Address loaded successfully: $address")
                     
                     // Update all fields at once to avoid partial updates
-                    name.value = address.name ?: ""
-                    phone.value = address.phone ?: ""
-                    address1.value = address.address1 ?: ""
-                    address2.value = address.address2 ?: ""
-                    city.value = address.city ?: ""
-                    zip.value = address.zip ?: ""
-                    country.value = address.country ?: ""
+                    name.value = address.name
+                    phone.value = address.phone
+                    address1.value = address.address1
+                    address2.value = address.address2
+                    city.value = address.city
+                    zip.value = address.zip
+                    country.value = address.country 
                     isDefault.value = address.default
                     
                     hasHandledInitialLoad.value = true

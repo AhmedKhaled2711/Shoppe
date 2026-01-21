@@ -47,6 +47,9 @@ import com.lee.shoppe.data.model.Reviews
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.components.GuestUserDialog
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import com.lee.shoppe.ui.viewmodel.ProductInfoViewModel
 import kotlinx.coroutines.flow.first
@@ -80,6 +83,7 @@ fun ProductDetailsScreen(
     var selectedVariantId by remember { mutableStateOf(-1L) }
     var selectedPrice by remember { mutableStateOf("") }
     var showRemoveDialog by remember { mutableStateOf(false) }
+    var showGuestDialog by remember { mutableStateOf(false) }
     var productToRemove by remember { mutableStateOf<Product?>(null) }
 
     // Collect states from ViewModels
@@ -480,11 +484,20 @@ fun ProductDetailsScreen(
                                                             modifier = Modifier
                                                                 .width(160.dp)
                                                                 .height(240.dp)
+                                                                .padding(vertical = 10.dp)
                                                                 .clickable {
                                                                     navController.navigate("product_details/${product.id}")
                                                                 },
-                                                            shape = RoundedCornerShape(10.dp),
-                                                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                                                            shape = RoundedCornerShape(16.dp),
+                                                            elevation = CardDefaults.cardElevation(
+                                                                defaultElevation = 2.dp,
+                                                                pressedElevation = 1.dp,
+                                                                hoveredElevation = 4.dp,
+                                                                focusedElevation = 4.dp
+                                                            ),
+                                                            colors = CardDefaults.cardColors(
+                                                                containerColor = Color.White
+                                                            ),
                                                         ) {
                                                             Column(
                                                                 modifier = Modifier.fillMaxSize()
@@ -492,7 +505,8 @@ fun ProductDetailsScreen(
                                                                 Box(
                                                                     modifier = Modifier
                                                                         .fillMaxWidth()
-                                                                        .height(120.dp)
+                                                                        .weight(1f)
+                                                                        .background(Color(0xFFF9F9F9))
                                                                 ) {
                                                                     AsyncImage(
                                                                         model = product.image?.src,
@@ -507,15 +521,22 @@ fun ProductDetailsScreen(
                                                                         .fillMaxWidth()
                                                                         .padding(8.dp)
                                                                 ) {
-                                                                    product.title?.let {
-                                                                        Text(
-                                                                            text = it,
-                                                                            color = Color.Black,
-                                                                            fontSize = 14.sp,
-                                                                            fontWeight = FontWeight.Bold,
-                                                                            maxLines = 2
-                                                                        )
+                                                                    // Process product title once
+                                                                    val displayTitle = remember(product.title) {
+                                                                        product.title?.let { title ->
+                                                                            val titleParts = title.split("|")
+                                                                            val rawTitle = titleParts.getOrNull(1)?.trim() ?: ""
+                                                                            val wordList = rawTitle.split(" ")
+                                                                            if (wordList.size > 3) wordList.take(3).joinToString(" ") + "..." else rawTitle
+                                                                        } ?: ""
                                                                     }
+                                                                    Text(
+                                                                        text = displayTitle,
+                                                                        color = Color.Black,
+                                                                        fontSize = 14.sp,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        maxLines = 2
+                                                                    )
                                                                     Spacer(modifier = Modifier.height(4.dp))
                                                                     // Price
                                                                     val price = product.variants?.get(0)?.price ?: "0.0"
@@ -529,7 +550,7 @@ fun ProductDetailsScreen(
 
                                                                     Text(
                                                                         text = "$price $currencySymbol",
-                                                                        color = Color.Red,
+                                                                        color = BluePrimary,
                                                                         fontSize = 14.sp,
                                                                         fontWeight = FontWeight.Bold
                                                                     )
@@ -605,26 +626,30 @@ fun ProductDetailsScreen(
         ProductBottomBar(
             isFavorite = isFavorite,
             onFavoriteClick = {
-                if (isFavorite) {
-                    // Show confirmation dialog before removing
-                    val details = (productState as? NetworkState.Success<ProductResponse>)?.data?.product
-                    if (details != null) {
-                        productToRemove = productDetailsToProduct(details)
-                        showRemoveDialog = true
+                if (customerData.isLogged) {
+                    if (isFavorite) {
+                        // Show confirmation dialog before removing
+                        val details = (productState as? NetworkState.Success<ProductResponse>)?.data?.product
+                        if (details != null) {
+                            productToRemove = productDetailsToProduct(details)
+                            showRemoveDialog = true
+                        }
+                    } else {
+                        isFavorite = true
+                        val details = (productState as? NetworkState.Success<ProductResponse>)?.data?.product
+                        if (details != null) {
+                            val productForFav = productDetailsToProduct(details)
+                            favViewModel.insertFavProduct(
+                                product = productForFav,
+                                listId = customerData.favListId,
+                                onFavListCreated = { newFavListId ->
+                                    customerData.favListId = newFavListId
+                                }
+                            )
+                        }
                     }
                 } else {
-                    isFavorite = true
-                    val details = (productState as? NetworkState.Success<ProductResponse>)?.data?.product
-                    if (details != null) {
-                        val productForFav = productDetailsToProduct(details)
-                        favViewModel.insertFavProduct(
-                            product = productForFav,
-                            listId = customerData.favListId,
-                            onFavListCreated = { newFavListId ->
-                                customerData.favListId = newFavListId
-                            }
-                        )
-                    }
+                    showGuestDialog = true
                 }
             },
             onAddToCart = {
@@ -668,8 +693,9 @@ fun ProductDetailsScreen(
                             }
                         }
                     }
-                } else {
-                    Toast.makeText(context, "Please login first", Toast.LENGTH_SHORT).show()
+                }
+                else {
+                    showGuestDialog = true
                 }
             },
             onBuyNow = {
@@ -695,6 +721,21 @@ fun ProductDetailsScreen(
                 showRemoveDialog = false
                 productToRemove = null
             }
+        )
+    }
+
+    // Guest User Dialog
+    if (showGuestDialog) {
+        val guestLottieComposition by rememberLottieComposition(
+            LottieCompositionSpec.RawRes(R.raw.l)
+        )
+        GuestUserDialog(
+            onDismiss = { showGuestDialog = false },
+            onLoginClick = {
+                showGuestDialog = false
+                navController.navigate("login")
+            },
+            lottieComposition = guestLottieComposition
         )
     }
 }
@@ -858,7 +899,7 @@ fun ProductBottomBar(
                     text = "Add to cart",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    fontSize = 16.sp
                 )
             }
             // Buy now button
@@ -874,7 +915,7 @@ fun ProductBottomBar(
                     text = "Buy now",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    fontSize = 16.sp
                 )
             }
         }

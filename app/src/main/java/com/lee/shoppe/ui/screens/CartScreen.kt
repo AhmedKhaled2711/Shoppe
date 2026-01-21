@@ -69,10 +69,12 @@ import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.DraftOrderResponse
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
+import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.theme.Dark
 import com.lee.shoppe.ui.theme.HeaderColor
+import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.CartViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -96,7 +98,11 @@ import kotlinx.coroutines.launch
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var showDeleteItemDialog by remember { mutableStateOf(false) }
     var pendingDeleteProductId by remember { mutableStateOf<Long?>(null) }
+    var isOffline by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        isOffline = !isNetworkConnected(context)
+    }
     // Compute real cart item count for header
     val cartItemCount = when (cartProductsState) {
         is NetworkState.Success -> {
@@ -144,121 +150,134 @@ import kotlinx.coroutines.launch
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+    if (isOffline) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
         ) {
-            // Professional Header
-            CartHeader(
-                cartItemCount = cartItemCount,
-                onDeleteAllClick = {
+            NetworkErrorBox(show = true)
+        }
+    }
+    else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Professional Header
+                CartHeader(
+                    cartItemCount = cartItemCount,
+                    onDeleteAllClick = {
+                        if (customerData.isLogged && customerData.cartListId > 0) {
+                            showDeleteAllDialog = true
+                        }
+                    }
+                )
+                // SnackbarHost for feedback
+                SnackbarHost(hostState = snackbarHostState)
+                // Main Content
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                ) {
+                    when {
+                        // Guest User State
+                        !customerData.isLogged -> {
+                            GuestUserState(
+                                lottieComposition = guestLottieComposition,
+                                onLoginClick = { navController.navigate("login") }
+                            )
+                        }
+                        // Network Error State
+                        cartProductsState is NetworkState.Failure -> {
+                            NetworkErrorState(
+                                lottieComposition = networkLottieComposition
+                            )
+                        }
+                        // Loading State
+                        cartProductsState is NetworkState.Loading -> {
+                            LoadingState()
+                        }
+                        // Success State
+                        cartProductsState is NetworkState.Success -> {
+                            val cartData = (cartProductsState as NetworkState.Success<DraftOrderResponse>).data
+                            val lineItems = cartData.draft_order.line_items
+                            // Filter out dummy items (items with title "dummy" or null product_id)
+                            val realLineItems = lineItems.filter {
+                                it.title != "dummy" && it.product_id != null && it.sku != null
+                            }
+                            if (realLineItems.isEmpty()) {
+                                // Empty cart state
+                                EmptyCartState(lottieComposition = lottieComposition)
+                            } else {
+                                // Cart with items
+                                CartContent(
+                                    lineItems = realLineItems,
+                                    onRemoveItem = { productId ->
+                                        pendingDeleteProductId = productId
+                                        showDeleteItemDialog = true
+                                    },
+                                    onUpdateQuantity = { productId, quantity ->
+                                        if (customerData.isLogged && customerData.cartListId > 0) {
+                                            cartViewModel.updateProductQuantity(productId, quantity, customerData.cartListId)
+                                        }
+                                    },
+                                    snackbarHostState = snackbarHostState,
+                                    coroutineScope = coroutineScope,
+                                    navController = navController,
+                                    customerEmail = customerData.email,
+                                    currency = customerData.currency,
+                                    titlesList = realLineItems.map { it.title ?: "" },
+                                    onCheckout = onCheckout
+                                )
+                            }
+                        }
+                        else -> {
+                            // Idle state
+                            IdleState()
+                        }
+                    }
+                }
+            }
+            // Confirm delete all dialog
+            DeleteCartDialog(
+                show = showDeleteAllDialog,
+                title = stringResource(R.string.clear_cart_title),
+                subtitle = stringResource(R.string.clear_cart_message),
+                confirmText = stringResource(R.string.clear_all),
+                onCancel = { showDeleteAllDialog = false },
+                onConfirm = {
+                    showDeleteAllDialog = false
                     if (customerData.isLogged && customerData.cartListId > 0) {
-                        showDeleteAllDialog = true
+                        cartViewModel.clearCart(customerData.cartListId)
                     }
                 }
             )
-            // SnackbarHost for feedback
-            SnackbarHost(hostState = snackbarHostState)
-            // Main Content
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f)
-            ) {
-                when {
-                    // Guest User State
-                    !customerData.isLogged -> {
-                        GuestUserState(
-                            lottieComposition = guestLottieComposition,
-                            onLoginClick = { navController.navigate("login") }
-                        )
+            // Confirm delete item dialog
+            DeleteCartDialog(
+                show = showDeleteItemDialog && pendingDeleteProductId != null,
+                title = stringResource(R.string.remove_item_title),
+                subtitle = stringResource(R.string.remove_item_message),
+                confirmText = stringResource(R.string.remove),
+                onCancel = { showDeleteItemDialog = false; pendingDeleteProductId = null },
+                onConfirm = {
+                    showDeleteItemDialog = false
+                    val productId = pendingDeleteProductId
+                    if (productId != null && customerData.isLogged && customerData.cartListId > 0) {
+                        cartViewModel.removeProductFromCart(productId, customerData.cartListId)
                     }
-                    // Network Error State
-                    cartProductsState is NetworkState.Failure -> {
-                        NetworkErrorState(
-                            lottieComposition = networkLottieComposition
-                        )
-                    }
-                    // Loading State
-                    cartProductsState is NetworkState.Loading -> {
-                        LoadingState()
-                    }
-                    // Success State
-                    cartProductsState is NetworkState.Success -> {
-                        val cartData = (cartProductsState as NetworkState.Success<DraftOrderResponse>).data
-                        val lineItems = cartData.draft_order.line_items
-                        // Filter out dummy items (items with title "dummy" or null product_id)
-                        val realLineItems = lineItems.filter { 
-                            it.title != "dummy" && it.product_id != null && it.sku != null 
-                        }
-                        if (realLineItems.isEmpty()) {
-                            // Empty cart state
-                            EmptyCartState(lottieComposition = lottieComposition)
-                        } else {
-                            // Cart with items
-                            CartContent(
-                                lineItems = realLineItems,
-                                onRemoveItem = { productId ->
-                                    pendingDeleteProductId = productId
-                                    showDeleteItemDialog = true
-                                },
-                                onUpdateQuantity = { productId, quantity ->
-                                    if (customerData.isLogged && customerData.cartListId > 0) {
-                                        cartViewModel.updateProductQuantity(productId, quantity, customerData.cartListId)
-                                    }
-                                },
-                                snackbarHostState = snackbarHostState,
-                                coroutineScope = coroutineScope,
-                                navController = navController,
-                                customerEmail = customerData.email,
-                                currency = customerData.currency,
-                                titlesList = realLineItems.map { it.title ?: "" },
-                                onCheckout = onCheckout
-                            )
-                        }
-                    }
-                    else -> {
-                        // Idle state
-                        IdleState()
-                    }
+                    pendingDeleteProductId = null
                 }
-            }
+            )
         }
-        // Confirm delete all dialog
-        DeleteCartDialog(
-            show = showDeleteAllDialog,
-            title = stringResource(R.string.clear_cart_title),
-            subtitle = stringResource(R.string.clear_cart_message),
-            confirmText = stringResource(R.string.clear_all),
-            onCancel = { showDeleteAllDialog = false },
-            onConfirm = {
-                showDeleteAllDialog = false
-                if (customerData.isLogged && customerData.cartListId > 0) {
-                    cartViewModel.clearCart(customerData.cartListId)
-                }
-            }
-        )
-        // Confirm delete item dialog
-        DeleteCartDialog(
-            show = showDeleteItemDialog && pendingDeleteProductId != null,
-            title = stringResource(R.string.remove_item_title),
-            subtitle = stringResource(R.string.remove_item_message),
-            confirmText = stringResource(R.string.remove),
-            onCancel = { showDeleteItemDialog = false; pendingDeleteProductId = null },
-            onConfirm = {
-                showDeleteItemDialog = false
-                val productId = pendingDeleteProductId
-                if (productId != null && customerData.isLogged && customerData.cartListId > 0) {
-                    cartViewModel.removeProductFromCart(productId, customerData.cartListId)
-                }
-                pendingDeleteProductId = null
-            }
-        )
     }
+
+
 }
 
 @Composable

@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,10 +29,13 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,14 +60,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.lee.shoppe.R
+import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.viewmodel.AuthenticationViewModel
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupScreen(
     onCreateClick: () -> Unit = {},
     onSignInClick: () -> Unit = {},
-    viewModel: AuthenticationViewModel = hiltViewModel()
+    onSkip: () -> Unit = {},
+    viewModel: AuthenticationViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.signupUiState.collectAsState()
     val context = LocalContext.current
@@ -98,27 +106,42 @@ fun SignupScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
-            // Scrollable Form Content
+            // Form Content
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Skip Button with Ripple Effect
+                val interactionSource = remember { MutableInteractionSource() }
+                
                 TextButton(
-                    onClick = { /* Handle skip */ },
-                    modifier = Modifier.align(Alignment.End)
+                    onClick = onSkip,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 8.dp, top = 8.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    interactionSource = interactionSource
                 ) {
                     Text(
-                        stringResource(R.string.skip).uppercase(),
-                        color = Color.Gray,
-                        fontSize = 16.sp
+                        text = stringResource(R.string.skip).uppercase(),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.5.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
-                    }
+                }
 
                 Box(
                     modifier = Modifier
@@ -156,7 +179,12 @@ fun SignupScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    isError = uiState.firstNameError
+                    isError = uiState.firstNameError,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = BluePrimary,
+                        cursorColor = BluePrimary,
+                        focusedLabelColor = BluePrimary
+                    )
                 )
                 OutlinedTextField(
                     value = uiState.lastName,
@@ -166,7 +194,12 @@ fun SignupScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    isError = uiState.lastNameError
+                    isError = uiState.lastNameError,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = BluePrimary,
+                        cursorColor = BluePrimary,
+                        focusedLabelColor = BluePrimary
+                    )
                 )
 
                 AnimatedVisibility(visible = uiState.firstNameError || uiState.lastNameError) {
@@ -191,7 +224,12 @@ fun SignupScreen(
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-                    isError = uiState.emailError
+                    isError = uiState.emailError,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = BluePrimary,
+                        cursorColor = BluePrimary,
+                        focusedLabelColor = BluePrimary
+                    )
                 )
 
                 if (uiState.emailError) {
@@ -226,7 +264,12 @@ fun SignupScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    isError = uiState.passwordError
+                    isError = uiState.passwordError,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = BluePrimary,
+                        cursorColor = BluePrimary,
+                        focusedLabelColor = BluePrimary
+                    )
                 )
 
                 OutlinedTextField(
@@ -252,7 +295,12 @@ fun SignupScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    isError = uiState.confirmPasswordError
+                    isError = uiState.confirmPasswordError,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = BluePrimary,
+                        cursorColor = BluePrimary,
+                        focusedLabelColor = BluePrimary
+                    )
                 )
 
                 AnimatedVisibility(visible = uiState.passwordError || uiState.confirmPasswordError) {

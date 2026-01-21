@@ -64,18 +64,21 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.airbnb.lottie.LottieComposition
-import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.airbnb.lottie.compose.LottieAnimation
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.ProductResponse
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
+import com.lee.shoppe.ui.components.GuestUserDialog
+import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 import com.lee.shoppe.ui.theme.BlueLight
 import com.lee.shoppe.ui.theme.BluePrimary
+import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.CategoryViewModel
 import com.lee.shoppe.ui.viewmodel.FavViewModel
 import kotlinx.coroutines.launch
@@ -99,13 +102,19 @@ fun CategoryScreen(
     val customerData = CustomerData.getInstance(context)
     val sheetState = rememberModalBottomSheetState()
     var showRemoveDialog by remember { mutableStateOf(false) }
+    var showGuestDialog by remember { mutableStateOf(false) }
     var productToRemove by remember { mutableStateOf<com.lee.shoppe.data.model.Product?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    var isOffline by remember { mutableStateOf(false) }
 
     // Load products on first composition
     LaunchedEffect(Unit) {
         categoryViewModel.getProducts("")
+    }
+
+    LaunchedEffect(Unit) {
+        isOffline = !isNetworkConnected(context)
     }
 
     // Show Snackbar for HTTP 429 or too many requests
@@ -122,156 +131,187 @@ fun CategoryScreen(
             }
         }
     }
-
-    Box {
-        Column(
+    if (isOffline) {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Main content with horizontal padding
+            NetworkErrorBox(show = true)
+        }
+    }
+    else {
+        Box {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                    .fillMaxSize()
+                    .background(Color.White)
             ) {
-                SearchBarCategory(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = {
-                        searchQuery = it
-                        categoryViewModel.searchProducts(it.text)
-                    },
-                    onFilterClick = { showFilterSheet = true }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                CategoryToggleRow(
-                    selected = mainCategory,
-                    onCategorySelected = {
-                        mainCategory = it
-                        categoryViewModel.filterProducts(mainCategory, subCategory)
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Product Grid or State
-                Box(modifier = Modifier.weight(1f)) {
-                    when (productsState) {
-                        is NetworkState.Loading -> {
-                            LoadingWithMessages(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.White),
-                                mainMessage = stringResource(R.string.loading_products),
-                                secondaryMessage = stringResource(R.string.please_wait),
-                                loadingIndicatorColor = BluePrimary
-                            )
+                // Main content with horizontal padding
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    SearchBarCategory(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = {
+                            searchQuery = it
+                            categoryViewModel.searchProducts(it.text)
+                        },
+                        onFilterClick = { showFilterSheet = true }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    CategoryToggleRow(
+                        selected = mainCategory,
+                        onCategorySelected = {
+                            mainCategory = it
+                            categoryViewModel.filterProducts(mainCategory, subCategory)
                         }
-                        is NetworkState.Success -> {
-                            val products = (productsState as NetworkState.Success<ProductResponse>).data.products ?: emptyList()
-                            // Check favorite status for all products when they are loaded
-                            LaunchedEffect(products) {
-                                if (customerData.isLogged && customerData.favListId > 0) {
-                                    products.forEach { product ->
-                                        product.id?.let { id ->
-                                            favViewModel.isFavProduct(
-                                                id = id,
-                                                listId = customerData.favListId,
-                                                favTrue = {
-                                                    favoriteStates = favoriteStates.toMutableMap().apply { put(id, true) }
-                                                },
-                                                favFalse = {
-                                                    favoriteStates = favoriteStates.toMutableMap().apply { put(id, false) }
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Product Grid or State
+                    Box(modifier = Modifier.weight(1f)) {
+                        when (productsState) {
+                            is NetworkState.Loading -> {
+                                LoadingWithMessages(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.White),
+                                    mainMessage = stringResource(R.string.loading_products),
+                                    secondaryMessage = stringResource(R.string.please_wait),
+                                    loadingIndicatorColor = BluePrimary
+                                )
                             }
-                            if (products.isEmpty()) {
-                                EmptyStateLottie(lottieComposition)
-                            } else {
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
-                                    contentPadding = PaddingValues(8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    items(products, key = { it.id ?: 0L }) { product ->
-                                        val productId = product.id ?: 0L
-                                        val isFav = favoriteStatesSnapshot[productId] ?: false
-                                        val index = products.indexOfFirst { it.id == productId }
-                                        
-                                        StaggeredAnimatedItem(index = index) {
-                                            ProductCard(
-                                                product = product,
-                                                onFavoriteClick = {
-                                                    if (customerData.isLogged) {
-                                                        if (isFav) {
-                                                            productToRemove = product
-                                                            showRemoveDialog = true
-                                                        } else {
-                                                            favViewModel.insertFavProduct(product, customerData.favListId)
-                                                            favoriteStates = favoriteStates.toMutableMap().apply { put(productId, true) }
-                                                        }
+                            is NetworkState.Success -> {
+                                val products = (productsState as NetworkState.Success<ProductResponse>).data.products ?: emptyList()
+                                // Check favorite status for all products when they are loaded
+                                LaunchedEffect(products) {
+                                    if (customerData.isLogged && customerData.favListId > 0) {
+                                        products.forEach { product ->
+                                            product.id?.let { id ->
+                                                favViewModel.isFavProduct(
+                                                    id = id,
+                                                    listId = customerData.favListId,
+                                                    favTrue = {
+                                                        favoriteStates = favoriteStates.toMutableMap().apply { put(id, true) }
+                                                    },
+                                                    favFalse = {
+                                                        favoriteStates = favoriteStates.toMutableMap().apply { put(id, false) }
                                                     }
-                                                },
-                                                onCardClick = {
-                                                    navController.navigate("product_details/${product.id}")
-                                                },
-                                                isFavorite = isFav,
-                                               // modifier = Modifier
-                                            )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                if (products.isEmpty()) {
+                                    EmptyStateLottie(lottieComposition)
+                                } else {
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Fixed(2),
+                                        contentPadding = PaddingValues(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        items(products, key = { it.id ?: 0L }) { product ->
+                                            val productId = product.id ?: 0L
+                                            val isFav = favoriteStatesSnapshot[productId] ?: false
+                                            val index = products.indexOfFirst { it.id == productId }
+
+                                            StaggeredAnimatedItem(index = index) {
+                                                ProductCard(
+                                                    product = product,
+                                                    onFavoriteClick = {
+                                                        if (customerData.isLogged) {
+                                                            if (isFav) {
+                                                                productToRemove = product
+                                                                showRemoveDialog = true
+                                                            } else {
+                                                                favViewModel.insertFavProduct(product, customerData.favListId)
+                                                                favoriteStates = favoriteStates.toMutableMap().apply { put(productId, true) }
+                                                            }
+                                                        }
+                                                        else {
+                                                            showGuestDialog = true
+                                                        }
+                                                    },
+                                                    onCardClick = {
+                                                        navController.navigate("product_details/${product.id}")
+                                                    },
+                                                    isFavorite = isFav,
+                                                    // modifier = Modifier
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
+                            is NetworkState.Failure -> {
+                                EmptyStateLottie(lottieComposition)
+                            }
+                            else -> {}
                         }
-                        is NetworkState.Failure -> {
-                            EmptyStateLottie(lottieComposition)
-                        }
-                        else -> {}
                     }
                 }
             }
-        }
-        // Bottom Sheet Filter
-        if (showFilterSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showFilterSheet = false },
-                sheetState = sheetState,
-                containerColor = Color.White
-            ) {
-                FilterSheetContent(
-                    mainCategory = mainCategory,
-                    subCategory = subCategory,
-                    onCategoryChange = { mainCategory = it },
-                    onSubCategoryChange = { subCategory = it },
-                    onApply = { from, to ->
-                        categoryViewModel.filterProducts(mainCategory, subCategory)
-                        categoryViewModel.filterProductsByPrice(from, to)
-                        showFilterSheet = false
+            // Bottom Sheet Filter
+            if (showFilterSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showFilterSheet = false },
+                    sheetState = sheetState,
+                    containerColor = Color.White
+                ) {
+                    FilterSheetContent(
+                        mainCategory = mainCategory,
+                        subCategory = subCategory,
+                        onCategoryChange = { mainCategory = it },
+                        onSubCategoryChange = { subCategory = it },
+                        onApply = { from, to ->
+                            categoryViewModel.filterProducts(mainCategory, subCategory)
+                            categoryViewModel.filterProductsByPrice(from, to)
+                            showFilterSheet = false
+                        },
+                        onClose = { showFilterSheet = false }
+                    )
+                }
+            }
+            // Remove from Favorite Dialog
+            DeleteCartDialog(
+                show = showRemoveDialog && productToRemove != null,
+                title = stringResource(R.string.remove_from_favorites),
+                subtitle = stringResource(R.string.confirm_remove_favorite),
+                confirmText = stringResource(R.string.remove),
+                onCancel = { showRemoveDialog = false; productToRemove = null },
+                onConfirm = {
+                    productToRemove?.let { product ->
+                        favViewModel.deleteFavProduct(product.id ?: 0, customerData.favListId)
+                        favoriteStates = favoriteStates.toMutableMap().apply { put(product.id ?: 0, false) }
+                    }
+                    showRemoveDialog = false
+                    productToRemove = null
+                }
+            )
+            // Guest User Dialog
+            if (showGuestDialog) {
+                val guestLottieComposition by rememberLottieComposition(
+                    LottieCompositionSpec.RawRes(R.raw.l)
+                )
+                GuestUserDialog(
+                    onDismiss = { showGuestDialog = false },
+                    onLoginClick = {
+                        showGuestDialog = false
+                        navController.navigate("login")
                     },
-                    onClose = { showFilterSheet = false }
+                    lottieComposition = guestLottieComposition
                 )
             }
         }
-        // Remove from Favorite Dialog
-        DeleteCartDialog(
-            show = showRemoveDialog && productToRemove != null,
-            title = stringResource(R.string.remove_from_favorites),
-            subtitle = stringResource(R.string.confirm_remove_favorite),
-            confirmText = stringResource(R.string.remove),
-            onCancel = { showRemoveDialog = false; productToRemove = null },
-            onConfirm = {
-                productToRemove?.let { product ->
-                    favViewModel.deleteFavProduct(product.id ?: 0, customerData.favListId)
-                    favoriteStates = favoriteStates.toMutableMap().apply { put(product.id ?: 0, false) }
-                }
-                showRemoveDialog = false
-                productToRemove = null
-            }
-        )
     }
+
+
 }
+
+
 
 @Composable
 fun EmptyStateLottie(lottieComposition: LottieComposition?) {

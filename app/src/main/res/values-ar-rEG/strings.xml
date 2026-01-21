@@ -316,7 +316,7 @@
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
     <string name="login">تسجيل الدخول</string>
-
+    <string name="maybe_later">ربما لاحقًا</string>
     <string name="build_number">2025.07.30</string>
     <string name="copyright">© 2024 Shoppe. جميع الحقوق محفوظة.</string>
     <string name="you_might_like">قد يعجبك</string>

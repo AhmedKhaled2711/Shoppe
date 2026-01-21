@@ -35,6 +35,7 @@ import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.components.animations.StaggeredAnimatedItem
 import com.lee.shoppe.ui.screens.dialogBox.EmptyState
+import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
 import com.lee.shoppe.ui.theme.*
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.FavViewModel
@@ -102,7 +103,12 @@ fun FavoriteScreen(
     val isNetworkConnected = isNetworkConnected(context)
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val guestLottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.l))
+    var isOffline by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        isOffline = !isNetworkConnected(context)
+    }
     // State
     var favoriteProducts by remember { mutableStateOf<List<Product>>(emptyList()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -214,132 +220,153 @@ fun FavoriteScreen(
         }
     }
 
-    // Main UI
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            FavoriteHeader(favoriteProducts.size)
-        }
-    ) { paddingValues ->
+    if (isOffline) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .pullRefresh(pullRefreshState)
+                .background(Color.White)
         ) {
-            // Pull to refresh indicator
-            PullRefreshIndicator(
-                refreshing = isRefreshing,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = Color.White,
-                contentColor = BluePrimary
-            )
-            when (favProductsState) {
-                is NetworkState.Loading -> {
-                    LoadingWithMessages(
-                        modifier = Modifier.fillMaxSize(),
-                        mainMessage = stringResource(R.string.loading_favorites),
-                        secondaryMessage = stringResource(R.string.please_wait_loading_favorites),
-                        loadingIndicatorColor = BluePrimary,
-                        spacing = 16.dp,
-                        messageSpacing = 8.dp
+            NetworkErrorBox(show = true)
+        }
+    }
+    else {
+        // Main UI
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                FavoriteHeader(favoriteProducts.size)
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .pullRefresh(pullRefreshState)
+            ) {
+                // Pull to refresh indicator
+                PullRefreshIndicator(
+                    refreshing = isRefreshing,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    backgroundColor = Color.White,
+                    contentColor = BluePrimary
+                )
+                // Check for guest user first
+                if (!customerData.isLogged) {
+                    GuestUserState(
+                        lottieComposition = guestLottieComposition,
+                        onLoginClick = { navController.navigate("login") }
                     )
-                }
-                is NetworkState.Failure -> {
-                    isRefreshing = false // Hide refresh indicator on error
-                    val error = (favProductsState as NetworkState.Failure).error
-                    Log.e("FavoriteScreen", "Error loading favorites: ${error.message}")
-                    if (favoriteProducts.isEmpty()) {
-                        EmptyState(
-                            lottieComposition,
-                            stringResource(R.string.error_loading_favorites),
-                            stringResource(R.string.please_try_again_later)
-                        )
-                    }
-                }
-                NetworkState.Idle -> {
-                    if (customerData.favListId <= 0) {
-                        EmptyState(
-                            lottieComposition,
-                            stringResource(R.string.no_favorites_yet),
-                            stringResource(R.string.sign_in_to_see_favorites)
-                        )
-                    } else {
-                        // Show loading state when initializing
-                        LoadingWithMessages(
-                            modifier = Modifier.fillMaxSize(),
-                            mainMessage = stringResource(R.string.loading_favorites),
-                            secondaryMessage = stringResource(R.string.please_wait_loading_favorites),
-                            loadingIndicatorColor = BluePrimary,
-                            spacing = 16.dp,
-                            messageSpacing = 8.dp
-                        )
-                    }
-                }
-                is NetworkState.Success -> {
-                    isRefreshing = false // Hide refresh indicator when data is loaded
-                    if (favoriteProducts.isEmpty()) {
-                        EmptyState(
-                            lottieComposition,
-                            stringResource(R.string.no_favorites_yet),
-                            stringResource(R.string.your_favorites_will_appear_here)
-                        )
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            contentPadding = PaddingValues(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(favoriteProducts) { product ->
-                                StaggeredAnimatedItem(
-                                    index = favoriteProducts.indexOf(product),
-                                    delayPerItemMs = 50
+                } else {
+                    when (favProductsState) {
+                        is NetworkState.Loading -> {
+                            LoadingWithMessages(
+                                modifier = Modifier.fillMaxSize(),
+                                mainMessage = stringResource(R.string.loading_favorites),
+                                secondaryMessage = stringResource(R.string.please_wait_loading_favorites),
+                                loadingIndicatorColor = BluePrimary,
+                                spacing = 16.dp,
+                                messageSpacing = 8.dp
+                            )
+                        }
+                        is NetworkState.Failure -> {
+                            isRefreshing = false // Hide refresh indicator on error
+                            val error = (favProductsState as NetworkState.Failure).error
+                            Log.e("FavoriteScreen", "Error loading favorites: ${error.message}")
+                            if (favoriteProducts.isEmpty()) {
+                                EmptyState(
+                                    lottieComposition,
+                                    stringResource(R.string.error_loading_favorites),
+                                    stringResource(R.string.please_try_again_later)
+                                )
+                            }
+                        }
+                        is NetworkState.Idle -> {
+                            if (customerData.favListId <= 0) {
+                                EmptyState(
+                                    lottieComposition,
+                                    stringResource(R.string.no_favorites_yet),
+                                    stringResource(R.string.sign_in_to_see_favorites)
+                                )
+                            }
+                            else {
+                                // Show loading state when initializing
+                                LoadingWithMessages(
+                                    modifier = Modifier.fillMaxSize(),
+                                    mainMessage = stringResource(R.string.loading_favorites),
+                                    secondaryMessage = stringResource(R.string.please_wait_loading_favorites),
+                                    loadingIndicatorColor = BluePrimary,
+                                    spacing = 16.dp,
+                                    messageSpacing = 8.dp
+                                )
+                            }
+                        }
+                        is NetworkState.Success -> {
+                            isRefreshing = false // Hide refresh indicator when data is loaded
+                            if (favoriteProducts.isEmpty()) {
+                                EmptyState(
+                                    lottieComposition,
+                                    stringResource(R.string.no_favorites_yet),
+                                    stringResource(R.string.your_favorites_will_appear_here)
+                                )
+                            } else {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(2),
+                                    contentPadding = PaddingValues(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
-                                    ProductCard(
-                                        product = product,
-                                        onFavoriteClick = {
-                                            productToDelete = product
-                                            showDeleteDialog = true
-                                        },
-                                        onCardClick = {
-                                            navController.navigate("product_details/${product.id}")
-                                        },
-                                        isFavorite = true
-                                    )
+                                    items(favoriteProducts) { product ->
+                                        StaggeredAnimatedItem(
+                                            index = favoriteProducts.indexOf(product),
+                                            delayPerItemMs = 50
+                                        ) {
+                                            ProductCard(
+                                                product = product,
+                                                onFavoriteClick = {
+                                                    productToDelete = product
+                                                    showDeleteDialog = true
+                                                },
+                                                onCardClick = {
+                                                    navController.navigate("product_details/${product.id}")
+                                                },
+                                                isFavorite = true
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
+            // Delete confirmation dialog
+            if (showDeleteDialog) {
+                DeleteCartDialog(
+                    show = true,
+                    title = stringResource(R.string.remove_from_favorites),
+                    subtitle = stringResource(R.string.are_you_sure_remove_favorite),
+                    confirmText = stringResource(R.string.remove),
+                    onCancel = { showDeleteDialog = false },
+                    onConfirm = {
+                        productToDelete?.let { product ->
+                            if (customerData.isLogged || customerData.isGuestWithPreservedData) {
+                                favViewModel.deleteFavProduct(
+                                    id = product.id ?: 0,
+                                    listId = customerData.favListId
+                                )
+                                // Remove from local list
+                                favoriteProducts = favoriteProducts.filter { it.id != product.id }
+                            }
+                            showDeleteDialog = false
+                            productToDelete = null
+                        }
+                    }
+                )
+            }
         }
     }
 
-    // Delete confirmation dialog
-    if (showDeleteDialog) {
-        DeleteCartDialog(
-            show = true,
-            title = stringResource(R.string.remove_from_favorites),
-            subtitle = stringResource(R.string.are_you_sure_remove_favorite),
-            confirmText = stringResource(R.string.remove),
-            onCancel = { showDeleteDialog = false },
-            onConfirm = {
-                productToDelete?.let { product ->
-                    if (customerData.isLogged || customerData.isGuestWithPreservedData) {
-                        favViewModel.deleteFavProduct(
-                            id = product.id ?: 0,
-                            listId = customerData.favListId
-                        )
-                        // Remove from local list
-                        favoriteProducts = favoriteProducts.filter { it.id != product.id }
-                    }
-                    showDeleteDialog = false
-                    productToDelete = null
-                }
-            }
-        )
-    }
 }

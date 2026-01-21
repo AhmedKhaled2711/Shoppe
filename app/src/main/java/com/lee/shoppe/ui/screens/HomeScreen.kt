@@ -3,6 +3,7 @@ package com.lee.shoppe.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,6 +62,7 @@ import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import com.lee.shoppe.R
 import com.lee.shoppe.data.model.BrandResponse
+import com.lee.shoppe.data.model.CustomerData
 import com.lee.shoppe.data.model.PriceRule
 import com.lee.shoppe.data.model.PriceRuleX
 import com.lee.shoppe.data.model.Product
@@ -68,6 +70,7 @@ import com.lee.shoppe.data.model.SmartCollection
 import com.lee.shoppe.data.network.networking.NetworkState
 import com.lee.shoppe.ui.components.LoadingWithMessages
 import com.lee.shoppe.ui.screens.dialogBox.NetworkErrorBox
+import com.lee.shoppe.ui.theme.BluePrimary
 import com.lee.shoppe.ui.utils.isNetworkConnected
 import com.lee.shoppe.ui.viewmodel.CategoryViewModel
 import com.lee.shoppe.ui.viewmodel.HomeViewModel
@@ -379,6 +382,7 @@ fun HomeScreen(
                                             items(products) { product ->
                                                 ProductCard(
                                                     product = product,
+                                                    customerData = CustomerData.getInstance(context = context),
                                                     onClick = {
                                                         navController.navigate("product_details/${product.id}")
                                                     }
@@ -414,14 +418,24 @@ fun HomeScreen(
 @Composable
 private fun ProductCard(
     product: Product,
+    customerData: CustomerData,
     onClick: () -> Unit
 ) {
-    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    
+    val interactionSource = remember { MutableInteractionSource() }
+    // Process product title once
+    val displayTitle = remember(product.title) {
+        product.title?.let { title ->
+            val titleParts = title.split("|")
+            val rawTitle = titleParts.getOrNull(1)?.trim() ?: ""
+            val wordList = rawTitle.split(" ")
+            if (wordList.size > 3) wordList.take(3).joinToString(" ") + "..." else rawTitle
+        } ?: ""
+    }
     Card(
         onClick = onClick,
         modifier = Modifier
             .width(160.dp)
+            .padding(vertical = 10.dp)
             .height(240.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
@@ -461,7 +475,7 @@ private fun ProductCard(
             ) {
                 // Product Title
                 Text(
-                    text = product.title ?: "",
+                    text = displayTitle ?: "",
                     color = Color(0xFF1A1A1A),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
@@ -473,21 +487,22 @@ private fun ProductCard(
                 )
                 
                 Spacer(modifier = Modifier.height(6.dp))
-                
+
                 // Price
-                val price = product.variants?.firstOrNull()?.price ?: "0.00"
+                val price = product.variants?.get(0)?.price ?: "0.0"
+                val currencySymbol = when (customerData.currency) {
+                    "USD" -> "$"
+                    "EGY" -> "EGP"
+                    "EUR" -> "€"
+                    "GBP" -> "£"
+                    else -> customerData.currency
+                }
+
                 Text(
-                    text = "$$price",
-                    color = Color(0xFF0066FF),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    style = androidx.compose.ui.text.TextStyle(
-                        shadow = androidx.compose.ui.graphics.Shadow(
-                            color = Color(0x1A0066FF),
-                            offset = androidx.compose.ui.geometry.Offset(0f, 1f),
-                            blurRadius = 2f
-                        )
-                    )
+                    text = "$price $currencySymbol",
+                    color = BluePrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

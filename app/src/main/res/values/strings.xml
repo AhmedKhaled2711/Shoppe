@@ -328,6 +328,7 @@ at least one upper letter, one lowercase letter, and one digit</string>
     <!-- Profile Screen -->
     <string name="welcome_guest">Welcome, Guest!</string>
     <string name="login">Login</string>
+    <string name="maybe_later">Maybe Later</string>
     <string name="personal">Personal</string>
     <string name="manage_addresses">Manage Addresses</string>
     <string name="orders">Orders</string>

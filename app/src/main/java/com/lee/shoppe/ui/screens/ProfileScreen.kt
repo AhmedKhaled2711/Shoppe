@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,9 +31,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,47 +72,87 @@ fun ProfileScreen(navController: NavController) {
     val showDeleteDialog = remember { mutableStateOf(false) }
     val showLanguageDialog = remember { mutableStateOf(false) }
     val showCurrencyDialog = remember { mutableStateOf(false) }
+    var isOffline by remember { mutableStateOf(false) }
 
-    if (!isNetworkConnected) {
-        Box(Modifier.fillMaxSize()) {
-            NetworkErrorBox(show = true)
-        }
-        return
+    LaunchedEffect(Unit) {
+        isOffline = !isNetworkConnected(context)
     }
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White)
-    ) {
-        val scrollState = rememberScrollState()
-        Column(
+    if (isOffline) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp)
+                .fillMaxSize()
+                .background(Color.White)
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
-            // Header
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = BluePrimary,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            // User Info or Login
-            if (customerData.isLogged) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(BlueLight, RoundedCornerShape(16.dp))
-                        .padding(vertical = 24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            NetworkErrorBox(show = true)
+        }
+    }
+    else {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+        ) {
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                // Header
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = BluePrimary,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                // User Info or Login
+                if (customerData.isLogged) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(BlueLight, RoundedCornerShape(16.dp))
+                            .padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Filled.PersonOutline,
+                                contentDescription = stringResource(R.string.user_avatar),
+                                tint = BluePrimary,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White, CircleShape)
+                                    .padding(8.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = customerData.name.ifBlank { stringResource(R.string.default_name) },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = HeaderColor
+                            )
+                            Text(
+                                text = customerData.email.ifBlank { stringResource(R.string.default_email) },
+                                fontSize = 15.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(BlueLight, RoundedCornerShape(16.dp))
+                            .padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.PersonOutline,
-                            contentDescription = stringResource(R.string.user_avatar),
+                            contentDescription = "User Avatar",
                             tint = BluePrimary,
                             modifier = Modifier
                                 .size(64.dp)
@@ -118,157 +162,139 @@ fun ProfileScreen(navController: NavController) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = customerData.name.ifBlank { stringResource(R.string.default_name) },
+                            text = stringResource(R.string.welcome_guest),
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = HeaderColor
                         )
-                        Text(
-                            text = customerData.email.ifBlank { stringResource(R.string.default_email) },
-                            fontSize = 15.sp,
-                            color = Color.Gray
-                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { navController.navigate("login") },
+                            modifier = Modifier
+                                .width(160.dp)
+                                .height(40.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = BluePrimary
+                            ),
+                            shape = RoundedCornerShape(16)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.login),
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(BlueLight, RoundedCornerShape(16.dp))
-                        .padding(vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PersonOutline,
-                        contentDescription = "User Avatar",
-                        tint = BluePrimary,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(Color.White, CircleShape)
-                            .padding(8.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.welcome_guest),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = HeaderColor
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { navController.navigate("login") },
-                        colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
-                    ) {
-                        Text(stringResource(R.string.login), color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(32.dp))
-            if (customerData.isLogged) {
-                // Personal Section
-                SectionHeader(stringResource(R.string.personal))
+                Spacer(modifier = Modifier.height(32.dp))
+                if (customerData.isLogged) {
+                    // Personal Section
+                    SectionHeader(stringResource(R.string.personal))
 //                ProfileListItem("Profile") {
 //                    navController.navigate("profile_details")
 //                }
 //                DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem(stringResource(R.string.manage_addresses)) {
-                    navController.navigate("address_list")
-                }
-                DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem(stringResource(R.string.orders)) {
-                    navController.navigate("orders?forceRefresh=true")
-                }
-                DividerLine()
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ProfileListItem(stringResource(R.string.manage_addresses)) {
+                        navController.navigate("address_list")
+                    }
+                    DividerLine()
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ProfileListItem(stringResource(R.string.orders)) {
+                        navController.navigate("orders?forceRefresh=true")
+                    }
+                    DividerLine()
 //                Spacer(modifier = Modifier.height(10.dp))
 //                ProfileListItem("Payment methods") {
 //                    navController.navigate("payment")
 //                }
 //                DividerLine()
 
-                Spacer(modifier = Modifier.height(24.dp))
-                // Shop Section
-                SectionHeader(stringResource(R.string.shop))
+                    Spacer(modifier = Modifier.height(24.dp))
+                    // Shop Section
+                    SectionHeader(stringResource(R.string.shop))
 //                ProfileListItem("Country", "EGY") {
 //                    showCurrencyDialog.value = true
 //                }
 //                DividerLine()
 //                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem(stringResource(R.string.currency), customerData.currency.ifBlank { "$ USD" }) {
-                    showCurrencyDialog.value = true
-                }
-                DividerLine()
+                    ProfileListItem(stringResource(R.string.currency), customerData.currency.ifBlank { "$ USD" }) {
+                        showCurrencyDialog.value = true
+                    }
+                    DividerLine()
 //                Spacer(modifier = Modifier.height(10.dp))
 //                ProfileListItem("Sizes", "UK") {
 //                    coroutineScope.launch { snackbarHostState.showSnackbar("Sizes coming soon") }
 //                }
 //                DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem(stringResource(R.string.terms_and_conditions)) {
-                    navController.navigate("terms_and_conditions")
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ProfileListItem(stringResource(R.string.terms_and_conditions)) {
+                        navController.navigate("terms_and_conditions")
+                    }
+                    DividerLine()
+                    Spacer(modifier = Modifier.height(24.dp))
+                    // Account Section
+                    SectionHeader(stringResource(R.string.account))
+                    val currentLanguage = when (LanguageUtils.getLanguage(context)) {
+                        "ar" -> stringResource(R.string.language_arabic)
+                        else -> stringResource(R.string.language_english)
+                    }
+                    ProfileListItem(stringResource(R.string.language), currentLanguage) {
+                        showLanguageDialog.value = true
+                    }
+                    DividerLine()
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ProfileListItem(stringResource(R.string.about_shoppe)) {
+                        navController.navigate("about")
+                    }
+                    DividerLine()
+                    Spacer(modifier = Modifier.height(24.dp))
+                    // Logout
+                    Button(
+                        onClick = { showLogoutDialog.value = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = BlueLight),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.logout), color = BluePrimary, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Delete Account
+                    Text(
+                        text = stringResource(R.string.delete_my_account),
+                        color = RedAccent,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .clickable { showDeleteDialog.value = true }
+                    )
                 }
-                DividerLine()
-                Spacer(modifier = Modifier.height(24.dp))
-                // Account Section
-                SectionHeader(stringResource(R.string.account))
-                val currentLanguage = when (LanguageUtils.getLanguage(context)) {
-                    "ar" -> stringResource(R.string.language_arabic)
-                    else -> stringResource(R.string.language_english)
-                }
-                ProfileListItem(stringResource(R.string.language), currentLanguage) {
-                    showLanguageDialog.value = true
-                }
-                DividerLine()
-                Spacer(modifier = Modifier.height(10.dp))
-                ProfileListItem(stringResource(R.string.about_shoppe)) {
-                    navController.navigate("about")
-                }
-                DividerLine()
-                Spacer(modifier = Modifier.height(24.dp))
-                // Logout
-                Button(
-                    onClick = { showLogoutDialog.value = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = BlueLight),
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.weight(1f))
+                // Footer
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    Text(stringResource(R.string.logout), color = BluePrimary, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = BluePrimary
+                    )
+                    Text(
+                        text = stringResource(R.string.version_format, "1.0", "Jul", 2025),
+                        color = Color.Gray,
+                        fontSize = 13.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                // Delete Account
-                Text(
-                    text = stringResource(R.string.delete_my_account),
-                    color = RedAccent,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .clickable { showDeleteDialog.value = true }
-                )
             }
-            Spacer(modifier = Modifier.weight(1f))
-            // Footer
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = BluePrimary
-                )
-                Text(
-                    text = stringResource(R.string.version_format, "1.0", "Jul", 2025),
-                    color = Color.Gray,
-                    fontSize = 13.sp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
         }
-        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
+
+
 
     // Professional Logout Dialog using DeleteCartDialog
     DeleteCartDialog(

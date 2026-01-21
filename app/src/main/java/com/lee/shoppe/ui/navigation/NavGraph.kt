@@ -336,6 +336,11 @@ fun ECommerceNavHost(
                     },
                     onSignInClick = {
                         navController.navigate(Screen.Login.route)
+                    },
+                    onSkip = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Signup.route) { inclusive = true }
+                        }
                     }
                 )
             }
