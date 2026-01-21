@@ -142,48 +142,6 @@ app/src/main/java/com/lee/shoppe/
 - **Espresso** - UI testing
 - **Compose Testing** - UI component testing
 
-## 📱 App Screenshots
-
-### 🎯 Onboarding & Authentication
-<p align="center">
-  <img src="screenshots/01_onboarding_1_welcome.png" width="180" />
-  <img src="screenshots/01_onboarding_2_features.png" width="180" />
-  <img src="screenshots/01_onboarding_3_getstarted.png" width="180" />
-  <img src="screenshots/02_auth_1_start.png" width="180" />
-  <img src="screenshots/02_auth_2_login.png" width="180" />
-</p>
-
-### 🏠 Main Navigation & Home
-<p align="center">
-  <img src="screenshots/03_main_home.png" width="180" />
-  <img src="screenshots/04_home_1_featured.png" width="180" />
-  <img src="screenshots/04_home_2_categories.png" width="180" />
-</p>
-
-### 🛍️ Shopping Experience
-<p align="center">
-  <img src="screenshots/05_products_1_category.png" width="180" />
-  <img src="screenshots/05_products_2_details.png" width="180" />
-  <img src="screenshots/06_shopping_1_cart.png" width="180" />
-  <img src="screenshots/06_shopping_2_favorites.png" width="180" />
-</p>
-
-### 👤 User Management & Orders
-<p align="center">
-  <img src="screenshots/07_user_1_profile.png" width="180" />
-  <img src="screenshots/07_user_2_addresses.png" width="180" />
-  <img src="screenshots/09_order_1_chooseaddress.png" width="180" />
-  <img src="screenshots/10_management_1_orders.png" width="180" />
-</p>
-
-### 🗺️ Maps & Location
-<p align="center">
-  <img src="screenshots/08_maps_1_picker.png" width="180" />
-  <img src="screenshots/08_maps_2_selection.png" width="180" />
-</p>
-
-*📸 For detailed screenshots guide, see [SCREENSHOTS_GUIDE.md](SCREENSHOTS_GUIDE.md)*
-
 ## 📋 Requirements
 
 ### Prerequisites
@@ -206,21 +164,18 @@ git clone https://github.com/yourusername/Shoppe.git
 cd Shoppe
 ```
 
-### 2. Configure API Keys (SECURE METHOD)
-
-⚠️ **IMPORTANT**: For security reasons, API keys are stored in `local.properties` (not committed to Git).
-
-1. Create `local.properties` file in project root (already exists in this repo)
-2. Add your API keys to `local.properties`:
-
+### 2. Configure API Keys
+Create `local.properties` file in project root and add:
 ```properties
 # API Keys - DO NOT COMMIT TO GIT
 SHOPIFY_API_KEY=your_shopify_api_key
 SHOPIFY_PASSWORD=your_shopify_password
 STRIPE_API_KEY=your_stripe_api_key
-```
 
-🔒 **Security Note**: Never commit API keys to version control. The `local.properties` file is already in `.gitignore`.
+# SDK Path
+sdk.dir=C:\\Users\\YOUR_USERNAME\\AppData\\Local\\Android\\Sdk
+```
+Or add to `gradle.properties` (also protected by .gitignore)
 
 ### 3. Configure Google Maps
 Open `app/src/main/AndroidManifest.xml` and update:
@@ -304,12 +259,11 @@ Onboarding → Start → Login/Signup → Home
 
 ## 🔒 Security Considerations
 
-- **API Keys Protection** - All sensitive keys stored in `local.properties` (excluded from Git)
-- **HTTPS Only** - All network communications use secure protocols
-- **Input Validation** - Proper sanitization of user inputs
-- **Secure Payments** - Payment processing through trusted Stripe integration
-- **Authentication** - Firebase Auth with secure token management
-- **No Hardcoded Secrets** - BuildConfig reads from secure local storage
+- API keys stored in local.properties (protected by .gitignore)
+- HTTPS for all network communications
+- Input validation and sanitization
+- Secure payment processing with Stripe
+- User authentication with Firebase
 
 ## 🧪 Testing
 
